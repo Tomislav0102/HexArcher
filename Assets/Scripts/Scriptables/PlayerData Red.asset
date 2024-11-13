@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 555c30d21eb2dbc449f59c6809ff1ab0, type: 3}
+  m_Name: PlayerData Red
+  m_EditorClassIdentifier: 
+  myName: 
+  myLevel: 
+  myAutheticationId: 
+  myLeaderboardRank: 0
+  playerColor: 1
+  netObj: {fileID: 0}
+  playerId: 0
+  playerControl: {fileID: 0}
+  colMain: {r: 1, g: 0.49411768, b: 0.2509804, a: 1}
+  colGradientTrail:
+    serializedVersion: 2
+    key0: {r: 1, g: 0.49411765, b: 0.2509804, a: 1}
+    key1: {r: 1, g: 0.49411765, b: 0.2509804, a: 0}
+    key2: {r: 0, g: 0, b: 0, a: 0}
+    key3: {r: 0, g: 0, b: 0, a: 0}
+    key4: {r: 0, g: 0, b: 0, a: 0}
+    key5: {r: 0, g: 0, b: 0, a: 0}
+    key6: {r: 0, g: 0, b: 0, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 0
+    ctime1: 65535
+    ctime2: 0
+    ctime3: 0
+    ctime4: 0
+    ctime5: 0
+    ctime6: 0
+    ctime7: 0
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_ColorSpace: 0
+    m_NumColorKeys: 2
+    m_NumAlphaKeys: 2
+  matMain: {fileID: 2100000, guid: f37c92752f93ec8488321d30307d7192, type: 2}
+  matsHex:
+  - {fileID: 2100000, guid: b2b9821a08c97e34eb1021c87d572e5f, type: 2}
+  - {fileID: 2100000, guid: 559734f9c05395041badf41c93c13a78, type: 2}
+  - {fileID: 2100000, guid: 3c4a3e6ad68cf1a4f9f26e80f7e25c7a, type: 2}
+  - {fileID: 2100000, guid: 1ae98e9c96a661e43870c0457af377bc, type: 2}
+  - {fileID: 2100000, guid: 875603ee0a58e8b47a6c543edc72cbb9, type: 2}
+  - {fileID: 2100000, guid: d164a590b24f203479da9425746d3e3f, type: 2}
+  - {fileID: 2100000, guid: ec960bea845235f499f4cfe613c2d218, type: 2}
+  - {fileID: 2100000, guid: c2e55a8906fa454459cc356e90d17984, type: 2}
+  - {fileID: 2100000, guid: 2d6f477e57305954280640b64d7ecc5e, type: 2}
+  - {fileID: 2100000, guid: 9242c7d430ea9c24fbbe70951bcf42af, type: 2}

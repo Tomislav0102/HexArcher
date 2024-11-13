@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "656951977330",
+    "project_id": "hexarcher-cb093",
+    "storage_bucket": "hexarcher-cb093.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:656951977330:android:86261976fcc9ff3a0b29eb",
+        "android_client_info": {
+          "package_name": "com.TAR.HexArcher"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDa8RK8QnSrARVr9-rDjYBxu3xBjgogNQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
