@@ -20,7 +20,6 @@ using Random = UnityEngine.Random;
 
 public class MyLobbyManager : MonoBehaviour
 {
-    public static MyLobbyManager Instance { get; private set; }
     [SerializeField] string env = "dev";
     [SerializeField] string lobbyName = "Lobby";
     [SerializeField] int maxPlayers = 4;
@@ -59,10 +58,6 @@ public class MyLobbyManager : MonoBehaviour
     bool _activeUpdates = true;
     bool _oneHitBtnCreate, _oneHitBtnJoin, _oneHitBtnReady;
 
-    void Awake()
-    {
-        Instance = this;
-    }
 
     void Start()
     {
@@ -132,7 +127,7 @@ public class MyLobbyManager : MonoBehaviour
 
         await Authenticate(PlayerPrefs.GetString(Utils.PlName_Str));
         await CreateLobby();
-        StartCoroutine(MySceneManager.Instance.NewSceneAfterFadeIn(MainGameType.Multiplayer));
+        StartCoroutine(Launch.Instance.mySceneManager.NewSceneAfterFadeIn(MainGameType.Multiplayer));
     }
 
     async void Btn_QuickJoin()
@@ -169,7 +164,7 @@ public class MyLobbyManager : MonoBehaviour
         if (_currentLobby == null)
         {
             await CreateLobby();
-            StartCoroutine(MySceneManager.Instance.NewSceneAfterFadeIn(MainGameType.Multiplayer, true, false));
+            StartCoroutine(Launch.Instance.mySceneManager.NewSceneAfterFadeIn(MainGameType.Multiplayer, true, false));
         }
     }
     #endregion
@@ -246,7 +241,7 @@ public class MyLobbyManager : MonoBehaviour
             };
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(hostData.IPv4Address, hostData.Port, hostData.AllocationIDBytes, hostData.Key, hostData.ConnectionData);
             NetworkManager.Singleton.StartHost();
-            MySceneManager.Instance.SubscribeAll();
+            Launch.Instance.mySceneManager.SubscribeAll();
             _activeUpdates = true;
             print($"Created lobby: {_currentLobby.Name}  with  relay code: {relayCode}");
         }
@@ -282,7 +277,7 @@ public class MyLobbyManager : MonoBehaviour
             };
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(joinData.IPv4Address, joinData.Port, joinData.AllocationIDBytes, joinData.Key, joinData.ConnectionData, joinData.HostConnectionData);
             NetworkManager.Singleton.StartClient();
-            MySceneManager.Instance.SubscribeAll();
+            Launch.Instance.mySceneManager.SubscribeAll();
             _activeUpdates = false;
             print($"starting client with {relayCode}");
         }
@@ -315,7 +310,7 @@ public class MyLobbyManager : MonoBehaviour
             JoinAllocation joinAllocation = await _relayManager.JoinRelay(this.relayCode);
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(joinAllocation, ConnectionType()));
             NetworkManager.Singleton.StartClient();
-            MySceneManager.Instance.SubscribeAll();
+            Launch.Instance.mySceneManager.SubscribeAll();
             _activeUpdates = false;
             print($"starting client with relay code {relayCode}");
         }

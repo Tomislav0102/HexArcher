@@ -56,17 +56,16 @@ public class MainMenuManager : MonoBehaviour
         BtnMethodMapSize(PlayerPrefs.GetInt(Utils.Size_Int));
         BtnMethodDiff(PlayerPrefs.GetInt(Utils.Difficulty_Int));
         Utils.FadeOut?.Invoke(true);
-        
-        Utils.ActivateGo(MyLobbyManager.Instance.gameObject);
-        DatabaseManager.Instance.DownloadLeaderboard();
-        MyLobbyManager.Instance.Init();
+        Utils.ActivateGo(Launch.Instance.myLobbyManager.gameObject);
+        Launch.Instance.myDatabaseManager.DownloadLeaderboard();
+        Launch.Instance.myLobbyManager.Init();
         if (NetworkManager.Singleton.IsListening)
         {
-            print(("network manager is listening, shuting down network"));
+            print(("network manager is listening, shutting down network"));
             NetworkManager.Singleton.Shutdown();
         }
 
-        windSlider.value = PlayerPrefs.GetFloat(Utils.WindAmmount_Fl);
+        windSlider.value = PlayerPrefs.GetFloat(Utils.WindAmount_Fl);
         windSlider.onValueChanged.AddListener(WindChange);
 
         _canUseButtonSounds = true;
@@ -139,7 +138,7 @@ public class MainMenuManager : MonoBehaviour
     }
 
 
-    void WindChange(float ammount) => PlayerPrefs.SetFloat(Utils.WindAmmount_Fl, ammount);
+    void WindChange(float ammount) => PlayerPrefs.SetFloat(Utils.WindAmount_Fl, ammount);
     
     #region BUTTONS
     void BtnMethodSinglePlay()
@@ -148,15 +147,15 @@ public class MainMenuManager : MonoBehaviour
         _oneHitExitScene = true;
 
         audioManager.PlaySFX(audioManager.uiButton);
-        Utils.DeActivateGo(MyLobbyManager.Instance.gameObject);
+        Utils.DeActivateGo(Launch.Instance.myLobbyManager.gameObject);
         NetworkManager.Singleton.GetComponent<UnityTransport>().SetConnectionData(Unity.Networking.Transport.NetworkEndPoint.AnyIpv4);
         NetworkManager.Singleton.StartHost();
-        StartCoroutine(MySceneManager.Instance.NewSceneAfterFadeIn(MainGameType.Singleplayer));
-        MySceneManager.Instance.SubscribeAll();
+        StartCoroutine(Launch.Instance.mySceneManager.NewSceneAfterFadeIn(MainGameType.Singleplayer));
+        Launch.Instance.mySceneManager.SubscribeAll();
         
         if (!Utils.PracticeSp)
         {
-            PlayerPrefs.SetFloat(Utils.WindAmmount_Fl, 0f);
+            PlayerPrefs.SetFloat(Utils.WindAmount_Fl, 0f);
             PlayerPrefs.SetInt(Utils.TrajectoryVisible_Int, 0);
         }
     }
@@ -164,7 +163,7 @@ public class MainMenuManager : MonoBehaviour
     {
         Utils.PracticeSp = true;
         PlayerPrefs.SetInt(Utils.TrajectoryVisible_Int, 1);
-        PlayerPrefs.SetFloat(Utils.WindAmmount_Fl, 0f);
+        PlayerPrefs.SetFloat(Utils.WindAmount_Fl, 0f);
 
         BtnMethodSinglePlay();
     }

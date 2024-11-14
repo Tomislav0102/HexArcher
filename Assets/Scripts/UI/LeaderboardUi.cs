@@ -17,7 +17,7 @@ public class LeaderboardUi : MonoBehaviour
     
     private void Awake()
     {
-        _db = DatabaseManager.Instance;
+        _db = Launch.Instance.myDatabaseManager;
         _totalOnSingleScreen = parDisplays.childCount;
         _displaysGo = new GameObject[_totalOnSingleScreen];
         _displaysOrd = new TextMeshProUGUI[_totalOnSingleScreen];
@@ -42,7 +42,7 @@ public class LeaderboardUi : MonoBehaviour
         btnNext.interactable = false;
         Utils.DeActivateGo(parDisplays.gameObject);
         Utils.ActivateOneArrayElement(_displaysGo);
-        if (DatabaseManager.Instance.dataLoaded)
+        if (_db.dataLoaded)
         {
             Utils.ActivateGo(parDisplays.gameObject);
             int maxCounter = _totalOnSingleScreen;

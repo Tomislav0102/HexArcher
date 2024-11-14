@@ -4,6 +4,7 @@ using UnityEngine;
 using Sirenix.OdinInspector;
 using TMPro;
 using Unity.Netcode;
+using UnityEngine.Serialization;
 
 public class GameManager : NetworkBehaviour
 {
@@ -48,13 +49,13 @@ public class GameManager : NetworkBehaviour
     [Title("Public network variables", TitleAlignment = TitleAlignments.Centered)]
     public NetworkVariable<GenLevel> difficultyNet = new NetworkVariable<GenLevel>();
     public NetworkVariable<PlayerColor> playerTurnNet = new NetworkVariable<PlayerColor>();
+    public NetworkVariable<PlayerColor> playerCanShootNet = new NetworkVariable<PlayerColor>();
     public NetworkVariable<PlayerColor> playerVictoriousNet = new NetworkVariable<PlayerColor>();
-    public NetworkVariable<bool> oneShotPerTurnNet = new NetworkVariable<bool>();
     public NetworkList<int> scoreNet; //can't initialize here (unity bug)
     public NetworkList<byte> hexStateNet;
     public NetworkList<sbyte> hexValNet;
     public NetworkVariable<float> forceNet = new NetworkVariable<float>();
-    public NetworkVariable<float> windAmmountNet = new NetworkVariable<float>();
+    public NetworkVariable<float> windAmountNet = new NetworkVariable<float>();
     public NetworkVariable<bool> trajectoryVisible = new NetworkVariable<bool>();
     
     private void Awake()
@@ -83,25 +84,19 @@ public class GameManager : NetworkBehaviour
             }
             _skyboxIndexNet.Value = (byte)Random.Range(0, _matsSkyboxSp.Length);
             playerVictoriousNet.Value = PlayerColor.Undefined;
-            oneShotPerTurnNet.Value = true;
             playerTurnNet.OnValueChanged += NetVarEv_PlayerTurnChange;
             playerVictoriousNet.OnValueChanged += NetVarEv_PlayerVictorious;
-            windAmmountNet.Value = PlayerPrefs.GetFloat(Utils.WindAmmount_Fl);
+            windAmountNet.Value = PlayerPrefs.GetFloat(Utils.WindAmount_Fl);
             trajectoryVisible.Value = PlayerPrefs.GetInt(Utils.TrajectoryVisible_Int) == 1;
             
             NetworkManager.Singleton.OnClientDisconnectCallback += CallEv_ClientDisconnected;
-
-            // if (NetworkManager.Singleton.ConnectedClients.Count > 1) //restart
-            // {
-            //     StopAllCoroutines();
-            //     Utils.GameStarted?.Invoke();
-            //     botManager.EndBot();
-            // }
+            
+            
         }
         else
         {
             gridManager.GridLateJoin();
-            ChangeVisualMarkersRpc(playerTurnNet.Value);
+            ChangeVisualMarkers_EveryoneRpc(playerTurnNet.Value);
             Utils.DeActivateGo(botManager.gameObject);
         }
 
@@ -112,8 +107,8 @@ public class GameManager : NetworkBehaviour
         RenderSettings.skybox = chosenSkybox;
         RenderSettings.customReflectionTexture = chosenSkybox.GetTexture("_Tex");
 
-        windManager.WindChange(float.MinValue, windAmmountNet.Value);
-        windAmmountNet.OnValueChanged += windManager.WindChange;
+        windManager.WindChange(float.MinValue, windAmountNet.Value);
+        windAmountNet.OnValueChanged += windManager.WindChange;
         drawTrajectory.showTrajectory = trajectoryVisible.Value;
 
         if (Utils.GameType == MainGameType.Singleplayer && !Utils.PracticeSp)
@@ -172,12 +167,12 @@ public class GameManager : NetworkBehaviour
         {
             Utils.DeActivateGo(playerDatas[i].playerControl.bowControl.gameObject);
         }
-
-        if (Utils.GameType == MainGameType.Multiplayer && NetworkManager.Singleton.ConnectedClients.Count > 1) CallEv_PlayerVictoriousRpc(newValue);
+        playerCanShootNet.Value = PlayerColor.None;
+        if (Utils.GameType == MainGameType.Multiplayer && NetworkManager.Singleton.ConnectedClients.Count > 1) PlayerVictorious_EveryoneRpc(newValue);
     }
 
     [Rpc(SendTo.Everyone)]
-    void CallEv_PlayerVictoriousRpc(PlayerColor newValue)
+    void PlayerVictorious_EveryoneRpc(PlayerColor newValue)
     {
         switch (newValue)
         {
@@ -185,56 +180,55 @@ public class GameManager : NetworkBehaviour
                 if (IsServer)
                 {
                     audioManager.PlaySFX(audioManager.win);
-                    DatabaseManager.Instance.LocalScore += Utils.ScoreGlobalValues.x;
+                    Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreGlobalValues.x;
                 }
                 else
                 {
                     audioManager.PlaySFX(audioManager.loose);
-                    DatabaseManager.Instance.LocalScore += Utils.ScoreGlobalValues.y;
+                    Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreGlobalValues.y;
                 }
                 break;
             case PlayerColor.Red:
                 if (IsServer)
                 {
                     audioManager.PlaySFX(audioManager.loose);
-                    DatabaseManager.Instance.LocalScore += Utils.ScoreGlobalValues.y;
+                    Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreGlobalValues.y;
                 }
                 else
                 {
                     audioManager.PlaySFX(audioManager.win);
-                    DatabaseManager.Instance.LocalScore += Utils.ScoreGlobalValues.x;
+                    Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreGlobalValues.x;
                 }
                 break;
             case PlayerColor.None:
                 audioManager.PlaySFX(audioManager.draw);
                 break;
         }
-        DatabaseManager.Instance.UploadMyScore();
+        Launch.Instance.myDatabaseManager.UploadMyScore();
 
     }
     private void NetVarEv_PlayerTurnChange(PlayerColor previousValue, PlayerColor newValue)
     {
-        oneShotPerTurnNet.Value = true;
-        ChangeVisualMarkersRpc(newValue);
+        ChangeVisualMarkers_EveryoneRpc(newValue);
     }
     #endregion
 
     #region REGISTRATIONS
     [Rpc(SendTo.Server)]
-    public void SpawnPlayersRpc(ulong obj)
+    public void SpawnPlayers_ServerRpc(ulong obj)
     {
-        int numOfplayers = NetworkManager.Singleton.ConnectedClientsList.Count;
+        int numOfPlayers = NetworkManager.Singleton.ConnectedClientsList.Count;
         
         StopAllCoroutines();
         botManager.EndBot();
-        NetworkObject no = NetworkManager.Singleton.ConnectedClientsList[numOfplayers - 1].PlayerObject;
+        NetworkObject no = NetworkManager.Singleton.ConnectedClientsList[numOfPlayers - 1].PlayerObject;
         if (no != null)
         {
             print("no is present");
             return;
         }
 
-        if (numOfplayers > 1)
+        if (numOfPlayers > 1)
         {
             Utils.GameStarted?.Invoke();
             botManager.EndBot();
@@ -249,7 +243,7 @@ public class GameManager : NetworkBehaviour
     }
 
     [Rpc(SendTo.Everyone)]
-    public void RegisterPlayerRpc(NetworkObjectReference networkObjectReference)
+    public void RegisterPlayer_EveryoneRpc(NetworkObjectReference networkObjectReference)
     {
         if (networkObjectReference.TryGet(out NetworkObject no))
         {
@@ -267,10 +261,10 @@ public class GameManager : NetworkBehaviour
                     break;
                 case MainGameType.Multiplayer:
                     int ind = no.IsOwnedByServer ? 0 : 1;
-                    nam = MyLobbyManager.Instance.GetPlayerName(ind);
-                    level = MyLobbyManager.Instance.GetPlayerLevel(ind);
-                    id = MyLobbyManager.Instance.GetPlayerId(ind);
-                    leaderboard = PlayerPrefs.GetInt(Utils.LBrank_Int);
+                    nam = Launch.Instance.myLobbyManager.GetPlayerName(ind);
+                    level = Launch.Instance.myLobbyManager.GetPlayerLevel(ind);
+                    id = Launch.Instance.myLobbyManager.GetPlayerId(ind);
+                    leaderboard = PlayerPrefs.GetInt(Utils.LbRank_Int);
                     if (leaderboard > 0) leaderboard++;
                     break;
             }
@@ -284,17 +278,17 @@ public class GameManager : NetworkBehaviour
             playerDatas[index].playerId = no.OwnerClientId;
             playerDatas[index].playerControl = no.GetComponent<PlayerControl>();
 
-            if (index == 1) ChangeOwnershipOfBowTableRpc(no.OwnerClientId);
+            if (index == 1) ChangeOwnershipOfBowTable_ServerRpc(no.OwnerClientId);
         }
 
     }
     [Rpc(SendTo.Server)]
-    void ChangeOwnershipOfBowTableRpc(ulong obj) => bowTablesNet[1].ChangeOwnership(obj);
+    void ChangeOwnershipOfBowTable_ServerRpc(ulong obj) => bowTablesNet[1].ChangeOwnership(obj);
     #endregion
 
     #region GAME FLOW
     [Rpc(SendTo.Everyone)]
-    void ChangeVisualMarkersRpc(PlayerColor newValue)
+    void ChangeVisualMarkers_EveryoneRpc(PlayerColor newValue)
     {
         for (int i = 0; i < 2; i++)
         {
@@ -305,25 +299,25 @@ public class GameManager : NetworkBehaviour
     }
     
     [Rpc(SendTo.Server)]
-    public void NextPlayerRpc(bool countGridMisses = true, string caller = "")
+    public void NextPlayer_ServerRpc(bool countGridMisses = true, string caller = "")
     {
         if (playerVictoriousNet.Value != PlayerColor.Undefined || _nextPlayerSwitch) return;
         StartCoroutine(ResetNextPlayerSwitch());
-        if (countGridMisses)
-        {
-            _counterMisses++;
-            if (_counterMisses >= 4)
-            {
-                print("4 misses in a row, match is over");
-                DecideVictor();
-                return;
-            }
-        }
-        else _counterMisses = 0;
+        // if (countGridMisses)
+        // {
+        //     _counterMisses++;
+        //     if (_counterMisses >= 4)
+        //     {
+        //         print("4 misses in a row, match is over");
+        //         DecideVictor();
+        //         return;
+        //     }
+        // }
+        // else _counterMisses = 0;
         int val = (int)playerTurnNet.Value;
         val = (1 + val) % 2;
         playerTurnNet.Value = (PlayerColor)val;
-       // print($"next player is { playerTurnNet.Value }, called by {caller}");
+        print($"next player is { playerTurnNet.Value }, called by {caller}");
     }
     IEnumerator ResetNextPlayerSwitch()
     {
@@ -332,7 +326,7 @@ public class GameManager : NetworkBehaviour
         _nextPlayerSwitch = false;
     }
     [Rpc(SendTo.Server)]
-    public void ScoringRpc()
+    public void Scoring_ServerRpc()
     {
         if (playerVictoriousNet.Value != PlayerColor.Undefined) return;
 
@@ -383,7 +377,7 @@ public class GameManager : NetworkBehaviour
         else playerVictoriousNet.Value = PlayerColor.None;
     }
     [Rpc(SendTo.Server)]
-    public void DestroyRpc(NetworkObjectReference networkObjectReference)
+    public void Destroy_ServerRpc(NetworkObjectReference networkObjectReference)
     {
         if(networkObjectReference.TryGet(out NetworkObject no))
         {
@@ -395,10 +389,6 @@ public class GameManager : NetworkBehaviour
 
     #region SHOOTING
     [Rpc(SendTo.Server)]
-    public void DisableShootingRpc() => oneShotPerTurnNet.Value = false;
-
-
-    [Rpc(SendTo.Server)]
     public void SetForceNetRpc(float val) => forceNet.Value = val;
 
     [Rpc(SendTo.Server)]
@@ -409,6 +399,9 @@ public class GameManager : NetworkBehaviour
         no.Spawn();
         no.ChangeOwnership(ownerId);
         SpawnArrow_EveryoneRpc(no);
+
+        if (playerCanShootNet.Value == PlayerColor.Blue) playerCanShootNet.Value = PlayerColor.Red;
+        else playerCanShootNet.Value = PlayerColor.Blue;
     }
 
     [Rpc(SendTo.Everyone)]
@@ -429,7 +422,7 @@ public class GameManager : NetworkBehaviour
 
     #region DEBUGS
 
-    public void NextPlayerDebug() => NextPlayerRpc(false, "from UI debug");
+    public void NextPlayerDebug() => NextPlayer_ServerRpc(false, "from UI debug");
     
     [ContextMenu("Utils.GameType")]
     void Metoda1() => print(Utils.GameType);
@@ -440,14 +433,21 @@ public class GameManager : NetworkBehaviour
     [ContextMenu("Change wind")]
     void Metoda4()
     {
-        windAmmountNet.Value = Random.Range(-0.5f, 0.5f);
+        windAmountNet.Value = Random.Range(-0.5f, 0.5f);
        // print($"wind is {windAmmountNet.Value * CONST_WINDSCALE}");
-        print($"wind is {windAmmountNet.Value * 20}");
+        print($"wind is {windAmountNet.Value * 20}");
     }
+
     [ContextMenu("Next player")]
-    void Metoda5() => NextPlayerRpc(false);
+    void Metoda5()
+    {
+        if (playerCanShootNet.Value == PlayerColor.Blue) playerCanShootNet.Value = PlayerColor.Red;
+        else playerCanShootNet.Value = PlayerColor.Blue;
+        NextPlayer_ServerRpc(false);
+
+    }
     [ContextMenu("SpawnPlayerAndRegisterRpc")]
-    void Metoda6() => SpawnPlayersRpc(NetworkManager.Singleton.LocalClientId);
+    void Metoda6() => SpawnPlayers_ServerRpc(NetworkManager.Singleton.LocalClientId);
     [ContextMenu("Blue wins")]
     void Metoda7() => playerVictoriousNet.Value = PlayerColor.Blue;
     [ContextMenu("Red wins")]

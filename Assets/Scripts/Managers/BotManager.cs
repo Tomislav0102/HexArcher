@@ -1,5 +1,5 @@
 using DG.Tweening;
-//using Sirenix.OdinInspector
+using Sirenix.OdinInspector;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -34,9 +34,9 @@ public class BotManager : MonoBehaviour
     [SerializeField] GameObject bow;
 
     #region CHOOSING BEST HEX
-    /*[ShowInInspector]*//*[ReadOnly]*/ List<ParentHex> _finalListForBot = new List<ParentHex>(); //all hexes sorted by their value
-    /*[ShowInInspector]*//*[ReadOnly]*/ ParentHex _target; //chosen hex to target
-    readonly int[] _maxNumOfBestHexes = new int[] { 10, 3, 1 };
+    [ShowInInspector][ReadOnly] List<ParentHex> _finalListForBot = new List<ParentHex>(); //all hexes sorted by their value
+    [ShowInInspector][ReadOnly] ParentHex _target; //chosen hex to target
+    int[] _maxNumOfBestHexes = new int[] { 10, 3, 1 };
     #endregion
 
     #region SHOOTING AT CHOSEN HEX
@@ -87,7 +87,7 @@ public class BotManager : MonoBehaviour
 
 
 
-    //[Button]
+    [Button]
     void BotMethod()
     {
         List<ParentHex> allFree = gm.gridManager.AllTilesByType(TileState.Free);

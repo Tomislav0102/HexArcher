@@ -74,7 +74,7 @@ public class UiManager : NetworkBehaviour
         else if (Utils.GameType == MainGameType.Multiplayer)
         {
             displayJoinCode.enabled = true;
-            displayJoinCode.text = $"Join code: {MyLobbyManager.Instance.relayCode}";
+            displayJoinCode.text = $"Join code: {Launch.Instance.myLobbyManager.relayCode}";
             NetworkManager.Singleton.OnClientConnectedCallback += CallEv_ClinetConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback += CallEv_ClentDisconnected;
         }
@@ -88,7 +88,7 @@ public class UiManager : NetworkBehaviour
     }
     void CallEv_ClentDisconnected(ulong obj)
     {
-        displayJoinCode.text = $"Join code: {MyLobbyManager.Instance.relayCode}";
+        displayJoinCode.text = $"Join code: {Launch.Instance.myLobbyManager.relayCode}";
     }
 
     public override void OnNetworkDespawn()
@@ -145,7 +145,7 @@ public class UiManager : NetworkBehaviour
         _oneHitExitScene = true;
         gm.audioManager.PlaySFX(gm.audioManager.uiButton);
         MainGameType mainGameType = NetworkManager.Singleton.ConnectedClients.Count > 1 ? MainGameType.Multiplayer : MainGameType.Singleplayer;
-        StartCoroutine(MySceneManager.Instance.NewSceneAfterFadeIn(mainGameType, true));
+        StartCoroutine(Launch.Instance.mySceneManager.NewSceneAfterFadeIn(mainGameType, true));
     }
 
     void BtnMethodTutDone()

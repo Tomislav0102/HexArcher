@@ -6,7 +6,6 @@ using Firebase.Extensions;
 
 public class DatabaseManager : MonoBehaviour
 {
-    public static DatabaseManager Instance;
     [SerializeField] bool useDatabase = true;
     FirebaseFirestore _db;
 
@@ -21,18 +20,17 @@ public class DatabaseManager : MonoBehaviour
     public List<int> scores = new List<int>();
     public int LocalScore
     {
-        get => PlayerPrefs.GetInt(Utils.LBlocalScore_Int);
+        get => PlayerPrefs.GetInt(Utils.LbLocalScore_Int);
         set
         {
             int val = value;
             if (val < 0) val = 0;
-            PlayerPrefs.SetInt(Utils.LBlocalScore_Int, val);
+            PlayerPrefs.SetInt(Utils.LbLocalScore_Int, val);
         }
     }
     
     private void Awake()
     {
-        Instance = this;
         _db = FirebaseFirestore.DefaultInstance;
     }
     private void Start()
@@ -55,7 +53,7 @@ public class DatabaseManager : MonoBehaviour
         dataLoaded = true;
         
         int myPos = GetMyPositionOnLeaderboard(Utils.MyIdLeaderboard());
-        PlayerPrefs.SetInt(Utils.LBrank_Int, myPos);
+        PlayerPrefs.SetInt(Utils.LbRank_Int, myPos);
         if (myPos < 0) return; //no entry in LB
         if (LocalScore > scores[myPos]) LocalScore = scores[myPos]; //user has tampered with playerprefs. local score can't be higher than cloud score
     }
@@ -124,7 +122,7 @@ public class DatabaseManager : MonoBehaviour
     public void DownloadLeaderboard()
     {
         if (!useDatabase) return;
-        PlayerPrefs.SetInt(Utils.LBrank_Int, -1);
+        PlayerPrefs.SetInt(Utils.LbRank_Int, -1);
         _dataNamesFromCloud.Clear();
         _dataIdsFromCloud.Clear();
 

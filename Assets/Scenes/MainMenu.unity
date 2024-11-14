@@ -4148,7 +4148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abb2ad4d3282aa84ba0ffad0854c47c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hasInternet: 0
+  hasInternet: 1
   mainUIelements:
   - {fileID: 5173763350183405450}
   - {fileID: 1051903496254269516}
@@ -10323,7 +10323,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'Version
 
-    12/11/2024'
+    14/11/2024'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

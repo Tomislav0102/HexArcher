@@ -9,15 +9,10 @@ using Unity.Services.Authentication;
 
 public class MySceneManager : NetworkBehaviour
 {
-    public static MySceneManager Instance;
     string _sceneMainMenu = "MainMenu";
     string _sceneGame = "Game";
 
 
-    private void Awake()
-    {
-        Instance = this;
-    }
     private void Start()
     {
         DontDestroyOnLoad(this);
@@ -74,11 +69,11 @@ public class MySceneManager : NetworkBehaviour
     {
         if (IsServer) //host leaves or disconnects
         {
-            MyLobbyManager.Instance.DeleteLobby();
+            Launch.Instance.myLobbyManager.DeleteLobby();
         }
         else
         {
-            MyLobbyManager.Instance.ClientDisconnectingRpc(AuthenticationService.Instance.PlayerId);
+            Launch.Instance.myLobbyManager.ClientDisconnectingRpc(AuthenticationService.Instance.PlayerId);
         }
         StartCoroutine(NewSceneAfterFadeIn(MainGameType.MainMenu));
         base.OnNetworkDespawn();
@@ -89,12 +84,12 @@ public class MySceneManager : NetworkBehaviour
     private void CallEv_SynchronizeComplete(ulong clientId)
     {
         print($"OnSynchronizeComplete {clientId}");
-        /*if(!IsServer)*/ GameManager.Instance.SpawnPlayersRpc(clientId);
+        /*if(!IsServer)*/ GameManager.Instance.SpawnPlayers_ServerRpc(clientId);
     }
     private void CallEv_LoadEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
         print($"OnLoadEventCompleted, scene name is {sceneName}");
-        GameManager.Instance.SpawnPlayersRpc(NetworkManager.Singleton.LocalClientId);
+        GameManager.Instance.SpawnPlayers_ServerRpc(NetworkManager.Singleton.LocalClientId);
     }
 
     #region

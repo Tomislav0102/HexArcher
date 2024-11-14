@@ -1,4 +1,3 @@
-//using Sirenix.OdinInspector
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,10 +12,10 @@ public class Arrow : NetworkBehaviour
     public Transform myTransform;
     [SerializeField] Rigidbody myRigidbody;
     float _arrowLength;
-    const int CONST_EDGESIDEWAYS = 15;
-    const int CONST_EDGEFORWARD = 30;
-    const int CONST_EDGEBACK = -10;
-    const int CONST_EDGEVERTICAL = -2;
+    const int CONST_EdgeSideways = 15;
+    const int CONST_EdgeForward = 30;
+    const int CONST_EdgeBack = -10;
+    const int CONST_EdgeVertical = -2;
     Ray _ray;
     RaycastHit _hit;
     RaycastHit2D _hit2D;
@@ -45,7 +44,7 @@ public class Arrow : NetworkBehaviour
             force = gm.playerDatas[gm.indexInSo].playerControl.shooting.power;
         }
         myRigidbody.velocity = force * myTransform.forward;
-        StartCoroutine(ArrowDirewctionWhileFlying());
+        StartCoroutine(ArrowDirectionWhileFlying());
     }
     public void ReleaseByBot(Vector3 vel)
     {
@@ -55,10 +54,10 @@ public class Arrow : NetworkBehaviour
         myRigidbody.useGravity = true;
         myRigidbody.isKinematic = false;
         myRigidbody.velocity = vel;
-        StartCoroutine(ArrowDirewctionWhileFlying());
+        StartCoroutine(ArrowDirectionWhileFlying());
     }
 
-    IEnumerator ArrowDirewctionWhileFlying()
+    IEnumerator ArrowDirectionWhileFlying()
     {
         while (_flying)
         {
@@ -81,10 +80,10 @@ public class Arrow : NetworkBehaviour
         
         if (!_oneHitNextPlayer && IsTooFarAway())
         {
-            gm.NextPlayerRpc(true, "arrow update");
+            gm.NextPlayer_ServerRpc(true, "arrow update");
             _oneHitNextPlayer = true;
         }
-        if (myTransform.position.y < CONST_EDGEVERTICAL)
+        if (myTransform.position.y < CONST_EdgeVertical)
         {
            // print($"arrow fell too low {myTransform.position}");
             EndMe();
@@ -92,10 +91,10 @@ public class Arrow : NetworkBehaviour
         
         bool IsTooFarAway()
         {
-            return myTransform.position.z > CONST_EDGEFORWARD ||
-                   myTransform.position.z < CONST_EDGEBACK ||
-                   myTransform.position.x > CONST_EDGESIDEWAYS ||
-                   myTransform.position.x < -CONST_EDGESIDEWAYS;
+            return myTransform.position.z > CONST_EdgeForward ||
+                   myTransform.position.z < CONST_EdgeBack ||
+                   myTransform.position.x > CONST_EdgeSideways ||
+                   myTransform.position.x < -CONST_EdgeSideways;
         }
 
     }
@@ -104,7 +103,6 @@ public class Arrow : NetworkBehaviour
     {
         if (!IsOwner) return;
         if (!_flying) return;
-        
         CheckCollisions();
     }
 
@@ -126,11 +124,11 @@ public class Arrow : NetworkBehaviour
             else
             {
                 gm.audioManager.PlaySFX(gm.audioManager.arrowHit, myTransform);
-                gm.NextPlayerRpc(false, "arrow hit something else (this should not happen)");
+                gm.NextPlayer_ServerRpc(false, "arrow hit something else (this should not happen)");
             }
             print($"arrow hit {_hitCollider.name}");
             //EndMe();
-            gm.DestroyRpc(NetworkObject);
+            gm.Destroy_ServerRpc(NetworkObject);
         }
     }
 
@@ -138,9 +136,9 @@ public class Arrow : NetworkBehaviour
     {
         if(!_oneHitNextPlayer)
         {
-            gm.NextPlayerRpc(true, "arrow EndMe");
+            gm.NextPlayer_ServerRpc(true, "arrow EndMe");
             _oneHitNextPlayer = true;
         }
-        gm.DestroyRpc(NetworkObject);
+        gm.Destroy_ServerRpc(NetworkObject);
     }
 }

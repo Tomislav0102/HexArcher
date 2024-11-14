@@ -45,7 +45,7 @@ public class ParentHex : TileParent
                         _colliders[i].enabled = false;
                     }
                     UpdateTakenHexRpc(CurrentValue);
-                    gm.ScoringRpc();
+                    gm.Scoring_ServerRpc();
                     gm.hexValNet[transform.GetSiblingIndex()] = CurrentValue;
                     break;
             }
@@ -105,7 +105,7 @@ public class ParentHex : TileParent
             {
                 if (_oneShotNeighbourCheckIn) return;
                 _oneShotNeighbourCheckIn = true;
-                gm.NextPlayerRpc(false, "NeighboursCheckIn");
+                gm.NextPlayer_ServerRpc(false, "NeighboursCheckIn");
             }
         }
     }
@@ -164,7 +164,7 @@ public class ParentHex : TileParent
         NeighboursCheckIn = _myNeighbours.Count;
         if (_myNeighbours.Count == 0)
         {
-            gm.NextPlayerRpc(false, "HexHit");
+            gm.NextPlayer_ServerRpc(false, "HexHit");
             return;
         }
         foreach (ParentHex item in _myNeighbours)

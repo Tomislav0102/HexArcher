@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,22 +22,22 @@ public class Utils
     public static System.Action PlayerXpUpdated;
 
     #region STRINGS FOR PLAYERPREFS 
-    //sufix is Type
-    public static string Difficulty_Int = "difficullty AI";
+    //suffix is Type
+    public static string Difficulty_Int = "difficulty AI";
     public static string Size_Int = "size of grid";
-    public static string Xp_Int = "experince player";
+    public static string Xp_Int = "experience player";
     public static string Bow_Int = "chosen bow player";
     public static string PlName_Str = "name player";
-    public static string WindAmmount_Fl = "wind ammout";
+    public static string WindAmount_Fl = "wind amount";
     public static string TrajectoryVisible_Int = "trajectory is visible"; 
-    static string LBid_Str = "leaderboard id";
-    public static string LBrank_Int = "leaderboard rank";
-    public static string LBlocalScore_Int = "local score";
+    static string lBidStr = "leaderboard id";
+    public static string LbRank_Int = "leaderboard rank";
+    public static string LbLocalScore_Int = "local score";
     #endregion
 
     public static MainGameType GameType;
     public static bool PracticeSp;
-    public static int WaitTimeStartGame = 20;
+    public static int WaitTimeStartGame = 2;
     public static Vector2Int ScoreGlobalValues = new Vector2Int(10, -3);
 
 
@@ -50,11 +49,11 @@ public class Utils
             $"XP: {PlayerPrefs.GetInt(Xp_Int)}\n" +
             $"Bow: {PlayerPrefs.GetInt(Bow_Int)} \n" +
             $"Player name: {PlayerPrefs.GetString(PlName_Str)} \n" +
-            $"Wind ammount: {PlayerPrefs.GetFloat(WindAmmount_Fl)} \n" +
+            $"Wind amount: {PlayerPrefs.GetFloat(WindAmount_Fl)} \n" +
             $"Trajectory visible: {PlayerPrefs.GetInt(TrajectoryVisible_Int)} \n" +
-            $"LB id: {PlayerPrefs.GetString(LBid_Str)} \n" +
-            $"LB rank: {PlayerPrefs.GetInt(LBrank_Int)} \n" +
-            $"LB local score: {PlayerPrefs.GetInt(LBlocalScore_Int)}");
+            $"LB id: {PlayerPrefs.GetString(lBidStr)} \n" +
+            $"LB rank: {PlayerPrefs.GetInt(LbRank_Int)} \n" +
+            $"LB local score: {PlayerPrefs.GetInt(LbLocalScore_Int)}");
     }
 
 
@@ -69,12 +68,12 @@ public class Utils
         }
         else
         {
-          //  Debug.Log("no internet connection");
+           // Debug.Log("no internet connection");
             isConnected?.Invoke(false);
         }
     }
     public static void ActivateGo(GameObject go)
-    {
+    {   
         if (go != null && !go.activeInHierarchy) go.SetActive(true);
     }
     public static void DeActivateGo(GameObject go)
@@ -142,8 +141,8 @@ public class Utils
 
     public static string MyIdLeaderboard()
     {
-        if (!PlayerPrefs.HasKey(LBid_Str)) PlayerPrefs.SetString(LBid_Str, System.Guid.NewGuid().ToString());
-        return PlayerPrefs.GetString(LBid_Str);
+        if (!PlayerPrefs.HasKey(lBidStr)) PlayerPrefs.SetString(lBidStr, System.Guid.NewGuid().ToString());
+        return PlayerPrefs.GetString(lBidStr);
     }
 
     public static string[] PurgedString(string stInput)

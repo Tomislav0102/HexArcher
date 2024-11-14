@@ -20,7 +20,7 @@ public class BowShooting : MonoBehaviour
     Transform _myTransform;
 
     [ReadOnly] public float power;
-    bool _oneHitArrowNothced;
+    bool _oneHitArrowNotched;
     public bool controllerPullingString;
 
 
@@ -44,12 +44,12 @@ public class BowShooting : MonoBehaviour
 
         if (controllerPullingString)
         {
-            if (!_oneHitArrowNothced && gm.oneShotPerTurnNet.Value)
+            if (!_oneHitArrowNotched && gm.playerTurnNet.Value == gm.playerCanShootNet.Value)
             {
-                _oneHitArrowNothced = true;
+                _oneHitArrowNotched = true;
                 gm.SpawnArrow_ServerRpc(NetworkManager.Singleton.LocalClientId, _myTransform.position, _myTransform.rotation);
             }
-            if (_oneHitArrowNothced && _pullAmount > 0.3f && !_oneHitAudioDraw)
+            if (_oneHitArrowNotched && _pullAmount > 0.3f && !_oneHitAudioDraw)
             {
                 _oneHitAudioDraw = true;
                 gm.audioManager.PlayOnMyAudioSource(audioSource, gm.audioManager.bowDraw);
@@ -106,14 +106,13 @@ public class BowShooting : MonoBehaviour
     {
         if (gm.spawnedArrow == null) return;
 
-        gm.DisableShootingRpc();
         gm.SetForceNetRpc(_pullAmount * power);
         gm.ShowTrails_EveryoneRpc(gm.indexInSo);
         gm.spawnedArrow.Release();
         _pullAmount = 0.0f;
 
         controllerPullingString = false;
-        _oneHitArrowNothced = false;
+        _oneHitArrowNotched = false;
         gm.spawnedArrow = null;
         playerControl.LineRendererLengthRpc(Vector3.zero);
 
@@ -125,7 +124,6 @@ public class BowShooting : MonoBehaviour
     [ContextMenu("Shoot")]
     void TestShoot()
     {
-        gm.DisableShootingRpc();
         gm.SetForceNetRpc(power);
         gm.SpawnArrow_ServerRpc(NetworkManager.Singleton.LocalClientId, _myTransform.position, _myTransform.rotation);
         gm.ShowTrails_EveryoneRpc(gm.indexInSo);

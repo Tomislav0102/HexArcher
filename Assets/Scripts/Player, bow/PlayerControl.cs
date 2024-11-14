@@ -72,7 +72,7 @@ public class PlayerControl : NetworkBehaviour
             Utils.GameStarted?.Invoke();
             gm.botManager.EndBot();
         }
-        gm.RegisterPlayerRpc(NetworkObject);
+        gm.RegisterPlayer_EveryoneRpc(NetworkObject);
 
     }
 
