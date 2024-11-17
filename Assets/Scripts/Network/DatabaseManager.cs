@@ -2,6 +2,9 @@
 using UnityEngine;
 using Firebase.Firestore;
 using Firebase.Extensions;
+#if(UNITY_EDITOR)
+using ParrelSync;
+#endif
 
 
 public class DatabaseManager : MonoBehaviour
@@ -31,6 +34,7 @@ public class DatabaseManager : MonoBehaviour
     
     private void Awake()
     {
+        if(AimIclone()) return;
         _db = FirebaseFirestore.DefaultInstance;
     }
     private void Start()
@@ -39,14 +43,26 @@ public class DatabaseManager : MonoBehaviour
     }
     private void OnEnable()
     {
+        if(AimIclone()) return;
         Utils.DatabaseClientSynced += CallEv_DataSynced;
     }
 
     private void OnDisable()
     {
+        if(AimIclone()) return;
         Utils.DatabaseClientSynced -= CallEv_DataSynced;
     }
 
+    public bool AimIclone()
+    {
+        #if UNITY_EDITOR
+        if (ClonesManager.IsClone())
+        {
+            return true;
+        }
+        #endif
+        return false;
+    }
     private void CallEv_DataSynced()
     {
         print("leaderboard data loaded");

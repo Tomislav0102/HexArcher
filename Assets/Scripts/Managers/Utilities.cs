@@ -11,6 +11,7 @@ using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 //using Firebase.Firestore;
 using UnityEngine.Networking;
+using UnityEngine.Rendering;
 using Random = UnityEngine.Random;
 
 public class Utils
@@ -234,7 +235,7 @@ public enum ArrowState
 public interface ITargetForArrow
 {
     Transform MyMainTransform { get; set; } //used for parenting arrow
-    void HitMe();
+    void HitMe(PlayerColor arrowColor);
 }
 #endregion
 
@@ -318,7 +319,7 @@ public class GridManager
     [SerializeField] GameObject levelToCreate;
     [SerializeField] Transform containerFinal;
 
-    readonly Vector2Int _dim = new Vector2Int(10, 10);
+    Vector2Int _dim = new Vector2Int(10, 10);
     ParentHex[,] _tilesInGame;
     [HideInInspector] public float scale = 0.2f;
     GenSize _size;
@@ -353,7 +354,11 @@ public class GridManager
         {
             for (int i = 0; i < 100; i++)
             {
-                containerFinal.GetChild(i).GetComponent<ParentHex>().Tstate = levelToCreate.transform.GetChild(i).GetComponent<TileParent>()._tState;
+                TileState tss =  levelToCreate.transform.GetChild(i).GetComponent<TileParent>()._tState;
+                gm.hexValNet.Add(0);
+                gm.hexStateNet.Add((byte)tss);
+                containerFinal.GetChild(i).GetComponent<ParentHex>().Tstate = tss;
+
             }
             return;
         }

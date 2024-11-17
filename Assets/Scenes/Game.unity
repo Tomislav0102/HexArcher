@@ -1652,7 +1652,7 @@ MonoBehaviour:
     spawnPoint: {fileID: 565676637}
   botManager: {fileID: 1186171306}
   gridManager:
-    levelToCreate: {fileID: 0}
+    levelToCreate: {fileID: 4980773094642428337, guid: cadc736202f6913438fd9ceb91445263, type: 3}
     containerFinal: {fileID: 1329646946}
     scale: 0.2
   poolManager:
@@ -1753,13 +1753,13 @@ MonoBehaviour:
     m_InternalValue: 0
   playerTurnNet:
     m_InternalValue: 0
-  playerVictoriousNet:
+  playerCanShootNet:
     m_InternalValue: 0
-  oneShotPerTurnNet:
+  playerVictoriousNet:
     m_InternalValue: 0
   forceNet:
     m_InternalValue: 0
-  windAmmountNet:
+  windAmountNet:
     m_InternalValue: 0
   trajectoryVisible:
     m_InternalValue: 0

@@ -8,6 +8,9 @@ using Sirenix.OdinInspector;
 using UnityEngine.SceneManagement;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
+#if(UNITY_EDITOR)
+using ParrelSync;
+#endif
 
 
 public class MainMenuManager : MonoBehaviour
@@ -57,7 +60,7 @@ public class MainMenuManager : MonoBehaviour
         BtnMethodDiff(PlayerPrefs.GetInt(Utils.Difficulty_Int));
         Utils.FadeOut?.Invoke(true);
         Utils.ActivateGo(Launch.Instance.myLobbyManager.gameObject);
-        Launch.Instance.myDatabaseManager.DownloadLeaderboard();
+        if(!Launch.Instance.myDatabaseManager.AimIclone()) Launch.Instance.myDatabaseManager.DownloadLeaderboard();
         Launch.Instance.myLobbyManager.Init();
         if (NetworkManager.Singleton.IsListening)
         {

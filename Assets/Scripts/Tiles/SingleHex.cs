@@ -7,7 +7,6 @@ public class SingleHex : MonoBehaviour, ITargetForArrow
     public Transform MyMainTransform { get; set; }
     ParentHex _mParentHex; 
     Transform _myTransform;
-    sbyte _ordinal;
 
     void Awake()
     {
@@ -15,13 +14,9 @@ public class SingleHex : MonoBehaviour, ITargetForArrow
         MyMainTransform = _myTransform.parent.parent;
         _mParentHex = MyMainTransform.GetComponent<ParentHex>();
     }
-    void Start()
-    {
-        _ordinal = (sbyte)(_myTransform.GetSiblingIndex() + 1);
-    }
 
-    public void HitMe()
+    public void HitMe(PlayerColor arrowColor)
     {
-        if (_mParentHex != null) _mParentHex.HexHit(_ordinal);
+        if (_mParentHex != null) _mParentHex.HexHit((sbyte)(_myTransform.GetSiblingIndex() + 1), arrowColor);
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 using TMPro;
 using DG.Tweening;
 
-public class PowerUp : MonoBehaviour, ITargetForArrow
+public class PowerUp : MonoBehaviour//, ITargetForArrow
 {
     [SerializeField] MeshRenderer mesh;
     [SerializeField] Collider coll;

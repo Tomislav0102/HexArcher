@@ -1,6 +1,6 @@
+using System;
 using DG.Tweening;
 using Sirenix.OdinInspector;
-using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Netcode;
@@ -16,7 +16,7 @@ public class ParentHex : TileParent
     Collider2D[] _colliders;
     GameObject[] _displayValues;
     GameObject[] _spritesOrange, _spritesTeal;
-    const int CONST_HEXNUM = 10;
+    const int CONST_HexNum = 10;
 
     [Title("Final Hex")]
     [SerializeField] Transform finalHexagonTransform;
@@ -39,12 +39,12 @@ public class ParentHex : TileParent
                     Utils.DeActivateGo(gameObject);
                     break;
                 case TileState.Taken: //can't be hit anymore
-                    _allAinimationsDone?.Invoke();
-                    for (int i = 0; i < CONST_HEXNUM; i++)
+                    _allAnimationsDone?.Invoke();
+                    for (int i = 0; i < CONST_HexNum; i++)
                     {
                         _colliders[i].enabled = false;
                     }
-                    UpdateTakenHexRpc(CurrentValue);
+                    UpdateTakenHex_EveryoneRpc(CurrentValue);
                     gm.Scoring_ServerRpc();
                     gm.hexValNet[transform.GetSiblingIndex()] = CurrentValue;
                     break;
@@ -67,21 +67,21 @@ public class ParentHex : TileParent
         get => _currentValueNet.Value;
         private set
         {
-            _currentValueNet.Value = value;
+           _currentValueNet.Value = value;
             sbyte positiveValue = (sbyte)Mathf.Abs(value);
-            for (int i = 0; i < CONST_HEXNUM; i++)
+            for (int i = 0; i < CONST_HexNum; i++)
             {
                 _colliders[i].enabled = i >= positiveValue;
             }
 
-            UpdateColorsRpc(value);
+            UpdateColors_EveryoneRpc(value);
 
             if (positiveValue > 9)
             {
                 _currentValueNet.Value = _hitValue;
                 Tstate = TileState.Taken;
             }
-            else UpdateTextsRpc(positiveValue);
+            else UpdateTexts_EveryoneRpc(positiveValue);
 
         }
     }
@@ -89,7 +89,7 @@ public class ParentHex : TileParent
 
 
     sbyte PlayerModifier() => (sbyte)(gm.playerTurnNet.Value == PlayerColor.Blue ? 1 : -1);
-    const float CONST_TIME = 0.2f;
+    const float CONST_Time = 0.2f;
 
     /// <summary>
     /// Turn is over after all this hex and all its neighbours have updated their 'CurrentValue'.
@@ -111,17 +111,16 @@ public class ParentHex : TileParent
     }
     [ShowInInspector]
     [ReadOnly]
-    int _neighboursCheckIn; //not part of getter beacuse of server issues
-    bool _oneShotNeighbourCheckIn; //safety bool, makes sure '_gm.NextPlayer()' is triggered only once, probablly redundant
-    System.Action _allAinimationsDone; //event used to communicate between hex and its neighbours
+    int _neighboursCheckIn; 
+    bool _oneShotNeighbourCheckIn; //safety bool, makes sure '_gm.NextPlayer()' is triggered only once, probably redundant
+    System.Action _allAnimationsDone; //event used to communicate between hex and its neighbours
     sbyte _hitValue;
 
     [HideInInspector] public int valueForBot; 
-    [Title("Testing")]
-    public sbyte hitValue = 5;
-    [Button]
-   [ContextMenu("Score hit")]
-    void TestHit() => HexHit(hitValue);
+    // [Title("Testing")]
+    // public sbyte hitValueTest = 8;
+    // [Button]
+    // void TestHit() => HexHit(hitValueTest);
 
 
     private void Awake()
@@ -150,12 +149,14 @@ public class ParentHex : TileParent
         }
     }
 
-    public void HexHit(sbyte ordinal)
+    public void HexHit(sbyte ordinal, PlayerColor arrowColor)
     {
         if (Tstate == TileState.InActive || Tstate == TileState.Taken) return;
 
         gm.audioManager.PlayOnMyAudioSource(aSource, gm.audioManager.hexHit);
-        CurrentValue = _hitValue = (sbyte)(ordinal * PlayerModifier());
+        int mod = arrowColor == PlayerColor.Blue ? 1 : -1;
+       // CurrentValue = _hitValue = (sbyte)(ordinal * PlayerModifier());
+        CurrentValue = _hitValue = (sbyte)(ordinal * mod);
         gm.hexValNet[transform.GetSiblingIndex()] = CurrentValue;
         Tstate = TileState.Taken;
         Utils.ActivateOneArrayElement(_displayValues);
@@ -179,19 +180,20 @@ public class ParentHex : TileParent
         switch ((TileState)stateFromByte)
         {
             case TileState.Free:
-                if (val > 0)
+                switch (val)
                 {
-                    spriteRenderer.enabled = false;
-                    Utils.ActivateOneArrayElement(_displayValues, positiveValue);
-                    _finalHexMesh.material = gm.playerDatas[0].matsHex[1];
-                    Utils.ActivateOneArrayElement(_spritesTeal, positiveValue);
-                }
-                else if (val < 0)
-                {
-                    spriteRenderer.enabled = false;
-                    Utils.ActivateOneArrayElement(_displayValues, positiveValue);
-                    _finalHexMesh.material = gm.playerDatas[1].matsHex[1];
-                    Utils.ActivateOneArrayElement(_spritesOrange, positiveValue);
+                    case > 0:
+                        spriteRenderer.enabled = false;
+                        Utils.ActivateOneArrayElement(_displayValues, positiveValue);
+                        _finalHexMesh.material = gm.playerDatas[0].matsHex[1];
+                        Utils.ActivateOneArrayElement(_spritesTeal, positiveValue);
+                        break;
+                    case < 0:
+                        spriteRenderer.enabled = false;
+                        Utils.ActivateOneArrayElement(_displayValues, positiveValue);
+                        _finalHexMesh.material = gm.playerDatas[1].matsHex[1];
+                        Utils.ActivateOneArrayElement(_spritesOrange, positiveValue);
+                        break;
                 }
                 break;
             case TileState.InActive:
@@ -220,52 +222,46 @@ public class ParentHex : TileParent
     }
 
     #region RPC CALLS
+    [Rpc(SendTo.Server)]
+    void SetCurrentValue_ServerRpc(sbyte bat) =>  _currentValueNet.Value = bat;
     [Rpc(SendTo.Everyone)]
-    private void UpdateColorsRpc(sbyte value)
+    void UpdateColors_EveryoneRpc(sbyte value)
     {
         sbyte positiveValue = (sbyte)Mathf.Abs(value);
         spriteRenderer.enabled = false;
         Utils.ActivateOneArrayElement(_spritesTeal);
         Utils.ActivateOneArrayElement(_spritesOrange);
-        if (value > 0)
+        switch (value)
         {
-            _finalHexMesh.material = gm.playerDatas[0].matsHex[1];
-            Utils.ActivateOneArrayElement(_spritesTeal, positiveValue);
-        }
-        else if (value < 0)
-        {
-            _finalHexMesh.material = gm.playerDatas[1].matsHex[1];
-            Utils.ActivateOneArrayElement(_spritesOrange, positiveValue);
-        }
-        else
-        {
-            _finalHexMesh.material = gm.playerDatas[2].matsHex[1];
-            spriteRenderer.enabled = true;
+            case > 0:
+                _finalHexMesh.material = gm.playerDatas[0].matsHex[1];
+                Utils.ActivateOneArrayElement(_spritesTeal, positiveValue);
+                break;
+            case < 0:
+                _finalHexMesh.material = gm.playerDatas[1].matsHex[1];
+                Utils.ActivateOneArrayElement(_spritesOrange, positiveValue);
+                break;
+            default:
+                _finalHexMesh.material = gm.playerDatas[2].matsHex[1];
+                spriteRenderer.enabled = true;
+                break;
         }
     }
     [Rpc(SendTo.Everyone)]
-    void UpdateTextsRpc(sbyte val, bool hideAll = false)
+    void UpdateTexts_EveryoneRpc(sbyte val, bool hideAll = false)
     {
         if(hideAll) Utils.ActivateOneArrayElement(_displayValues);
         else Utils.ActivateOneArrayElement(_displayValues, val);
     }
-    [Rpc(SendTo.Everyone)]
-    void UpdateFinalHexRpc()
-    {
-        finalHexScore.enabled = false;
-        finalHexFrameMesh.material = gm.playerDatas[2].matMain;
-        finalHexFrameMesh.enabled = false;
-        finalHexagonTransform.localEulerAngles = new Vector3(60f, -90f, -90f);
-    }
 
     [Rpc(SendTo.Everyone)]
-    void HexAnimationFromPoolRpc(Vector3 spawnPosition, sbyte val)
+    void HexAnimationFromPool_EveryoneRpc(Vector3 spawnPosition, sbyte val)
     {
         RingsPooled hr = gm.poolManager.GetHexRing();
         hr.SpawnMeOnClient(spawnPosition, val);
     }
     [Rpc(SendTo.Everyone)]
-    void UpdateTakenHexRpc(sbyte val) 
+    void UpdateTakenHex_EveryoneRpc(sbyte val) 
     {
         spriteRenderer.enabled = false;
 
@@ -278,7 +274,7 @@ public class ParentHex : TileParent
         finalHexFrameMesh.material = gm.playerDatas[val > 0 ? 0 : 1].matMain;
         finalHexFrameMesh.enabled = true;
 
-        finalHexagonTransform.DOLocalRotate(new Vector3(60f, 90f, -90f), CONST_TIME);
+        finalHexagonTransform.DOLocalRotate(new Vector3(60f, 90f, -90f), CONST_Time);
     }
     #endregion
 
@@ -287,19 +283,19 @@ public class ParentHex : TileParent
     /// <summary>
     /// This method is called if one of its neighbour is hit directly.
     /// </summary>
-    /// <param name="hitValue">Hit value of hit neioghbour.</param>
+    /// <param name="hitValue">Hit value of hit neighbour.</param>
     /// <param name="callbackFinishedAnimation">Reports to 'ParentHex' that started it, that animation is done and 'CurrentValue' is updated.</param>
     void ActivateFromDirectHit(sbyte hitValue, System.Action callbackFinishedAnimation)
     {
         _hitValue = (sbyte)(hitValue + CurrentValue);
-        _allAinimationsDone = callbackFinishedAnimation;
+        _allAnimationsDone = callbackFinishedAnimation;
         CheckCurrentValue();
     }
     
 
     /// <summary>
     /// This method and 'AnimateHexagon' call each other until 'CurrentValue' is updated.
-    /// This should be done in one frame (and one method) but is separated beacuse of animations
+    /// This should be done in one frame (and one method) but is separated because of animations
     /// </summary>
     void CheckCurrentValue()
     {
@@ -315,8 +311,8 @@ public class ParentHex : TileParent
         }
         else
         {
-            _allAinimationsDone?.Invoke();
-            _allAinimationsDone = null;
+            _allAnimationsDone?.Invoke();
+            _allAnimationsDone = null;
             gm.hexValNet[transform.GetSiblingIndex()] = CurrentValue;
         }
 
@@ -331,10 +327,10 @@ public class ParentHex : TileParent
             CurrentValue += currValueChange;
             CheckCurrentValue();
         });
-        HexAnimationFromPoolRpc(center.position, CurrentValue);
+        HexAnimationFromPool_EveryoneRpc(center.position, CurrentValue);
         if (CurrentValue == 0) return;
-        if (increase) UpdateColorsRpc((sbyte)(CurrentValue + currValueChange));
-        else UpdateColorsRpc((sbyte)(CurrentValue - currValueChange));
+        if (increase) UpdateColors_EveryoneRpc((sbyte)(CurrentValue + currValueChange));
+        else UpdateColors_EveryoneRpc((sbyte)(CurrentValue - currValueChange));
     }
 
     #endregion

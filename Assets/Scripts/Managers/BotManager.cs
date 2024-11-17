@@ -82,12 +82,11 @@ public class BotManager : MonoBehaviour
     private void NetVarEv_NextTurn(PlayerColor previousValue, PlayerColor newValue)
     {
         if (!IsActive || newValue == PlayerColor.Blue) return;
-        BotMethod();
+       // BotMethod();
     }
 
 
 
-    [Button]
     void BotMethod()
     {
         List<ParentHex> allFree = gm.gridManager.AllTilesByType(TileState.Free);

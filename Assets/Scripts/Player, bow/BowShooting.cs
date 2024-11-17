@@ -58,7 +58,8 @@ public class BowShooting : MonoBehaviour
         }
         else
         {
-            ReleaseString();
+           // ReleaseString();
+           gm.SetArrowReleasedNetRpc(gm.playerDatas[gm.indexInSo].playerColor);
         }
 
         if(Input.GetKeyDown(KeyCode.K)) TestShoot();

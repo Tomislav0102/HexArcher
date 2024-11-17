@@ -30,10 +30,19 @@ public class Arrow : NetworkBehaviour
         gm = GameManager.Instance;
         _arrowLength = Vector3.Distance(myTransform.position, tip.position);
         myRigidbody.useGravity = false;
+        gm.arrowReleased.OnValueChanged += NetVarEv_Released;
     }
 
-    public void Release()
+    public override void OnNetworkDespawn()
     {
+        base.OnNetworkDespawn();
+        gm.arrowReleased.OnValueChanged -= NetVarEv_Released;
+    }
+
+    void NetVarEv_Released(PlayerColor previousvalue, PlayerColor newvalue)
+    {
+        if (previousvalue == newvalue) return;
+        if (!IsOwner) return;
         _flying = true;
         myRigidbody.useGravity = true;
         myRigidbody.isKinematic = false;
@@ -43,6 +52,25 @@ public class Arrow : NetworkBehaviour
         {
             force = gm.playerDatas[gm.indexInSo].playerControl.shooting.power;
         }
+        print($"force is {force} and power is {gm.playerDatas[gm.indexInSo].playerControl.shooting.power}");
+        myRigidbody.velocity = force * myTransform.forward;
+        StartCoroutine(ArrowDirectionWhileFlying());
+
+    }
+
+    public void Release()
+    {
+        if (!IsOwner) return;
+        _flying = true;
+        myRigidbody.useGravity = true;
+        myRigidbody.isKinematic = false;
+
+        float force = gm.forceNet.Value;
+        if (Mathf.Approximately(force, 0f))
+        {
+            force = gm.playerDatas[gm.indexInSo].playerControl.shooting.power;
+        }
+        print($"force is {force} and power is {gm.playerDatas[gm.indexInSo].playerControl.shooting.power}");
         myRigidbody.velocity = force * myTransform.forward;
         StartCoroutine(ArrowDirectionWhileFlying());
     }
@@ -80,13 +108,12 @@ public class Arrow : NetworkBehaviour
         
         if (!_oneHitNextPlayer && IsTooFarAway())
         {
-            gm.NextPlayer_ServerRpc(true, "arrow update");
+            gm.NextPlayer_ServerRpc(true, $"arrow update from pos {myTransform.position}");
             _oneHitNextPlayer = true;
         }
         if (myTransform.position.y < CONST_EdgeVertical)
         {
-           // print($"arrow fell too low {myTransform.position}");
-            EndMe();
+            EndMe($"arrow {NetworkManager.Singleton.LocalClientId} fell too low");
         }
         
         bool IsTooFarAway()
@@ -102,7 +129,7 @@ public class Arrow : NetworkBehaviour
     private void FixedUpdate()
     {
         if (!IsOwner) return;
-        if (!_flying) return;
+       // if (!_flying) return;
         CheckCollisions();
     }
 
@@ -114,31 +141,27 @@ public class Arrow : NetworkBehaviour
 
         _hit2D = Physics2D.GetRayIntersection(_ray, _arrowLength + extraLength, gm.layTargets);
         _hitCollider = _hit2D.collider;
-        if (_hitCollider != null)
+        if (_hitCollider != null && _hitCollider.TryGetComponent(out ITargetForArrow tar))
         {
-            if (_hitCollider.TryGetComponent(out ITargetForArrow tar))
-            {
-                _oneHitNextPlayer = true;
-                tar.HitMe();
-            }
-            else
-            {
-                gm.audioManager.PlaySFX(gm.audioManager.arrowHit, myTransform);
-                gm.NextPlayer_ServerRpc(false, "arrow hit something else (this should not happen)");
-            }
-            print($"arrow hit {_hitCollider.name}");
-            //EndMe();
+            _oneHitNextPlayer = true;
+            tar.HitMe(gm.playerTurnNet.Value);
+            print($"arrow owned by {NetworkManager.Singleton.LocalClientId} hit {_hitCollider.name}");
             gm.Destroy_ServerRpc(NetworkObject);
         }
     }
 
-    void EndMe()
+    void EndMe(string message = null)
     {
         if(!_oneHitNextPlayer)
         {
-            gm.NextPlayer_ServerRpc(true, "arrow EndMe");
+            gm.NextPlayer_ServerRpc(true, $"arrow EndMe {message}");
             _oneHitNextPlayer = true;
         }
         gm.Destroy_ServerRpc(NetworkObject);
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        print($"collider arrow triggered {other.name}");
     }
 }

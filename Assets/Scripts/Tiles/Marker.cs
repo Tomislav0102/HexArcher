@@ -7,7 +7,6 @@ using UnityEngine;
 /// <summary>
 /// Used in editor only.
 /// Holds data for generation of levels in game.
-/// Notice '[ExecuteInEditMode]' attribute - you've been warned
 /// </summary>
 [ExecuteInEditMode]
 [System.Serializable]
@@ -19,7 +18,6 @@ public class Marker : TileParent
         set
         {
             _tState = value;
-            numTS = (int)value;
             switch (value)
             {
                 case TileState.Free:
@@ -32,8 +30,7 @@ public class Marker : TileParent
                     break;
             }
         }
-    }
-    [HideInInspector] public int numTS; //decribes 'TileState' enum beacuse of problems with serialization
+    } 
     [HideInInspector] public bool done = false; //called after it becomes prefab (once created, levels can't be edited)
 
 #if (UNITY_EDITOR)

@@ -51,6 +51,7 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<PlayerColor> playerTurnNet = new NetworkVariable<PlayerColor>();
     public NetworkVariable<PlayerColor> playerCanShootNet = new NetworkVariable<PlayerColor>();
     public NetworkVariable<PlayerColor> playerVictoriousNet = new NetworkVariable<PlayerColor>();
+    public NetworkVariable<PlayerColor> arrowReleased = new NetworkVariable<PlayerColor>();
     public NetworkList<int> scoreNet; //can't initialize here (unity bug)
     public NetworkList<byte> hexStateNet;
     public NetworkList<sbyte> hexValNet;
@@ -392,12 +393,15 @@ public class GameManager : NetworkBehaviour
     public void SetForceNetRpc(float val) => forceNet.Value = val;
 
     [Rpc(SendTo.Server)]
+    public void SetArrowReleasedNetRpc(PlayerColor pc) => arrowReleased.Value = pc;
+
+    [Rpc(SendTo.Server)]
     public void SpawnArrow_ServerRpc(ulong ownerId, Vector3 pos, Quaternion rot)
     {
         GameObject go = Instantiate(arrowPrefab, pos, rot);
         NetworkObject no = go.GetComponent<NetworkObject>();
         no.Spawn();
-        no.ChangeOwnership(ownerId);
+       // no.ChangeOwnership(ownerId);
         SpawnArrow_EveryoneRpc(no);
 
         if (playerCanShootNet.Value == PlayerColor.Blue) playerCanShootNet.Value = PlayerColor.Red;
@@ -452,6 +456,10 @@ public class GameManager : NetworkBehaviour
     void Metoda7() => playerVictoriousNet.Value = PlayerColor.Blue;
     [ContextMenu("Red wins")]
     void Metoda8() => playerVictoriousNet.Value = PlayerColor.Red;
+    [ContextMenu("hexStateNet count")]
+    void Metoda9() => print(hexStateNet.Count);
+    [ContextMenu("hexValNet count")]
+    void Metoda10() => print(hexValNet.Count);
     #endregion
 }
 
