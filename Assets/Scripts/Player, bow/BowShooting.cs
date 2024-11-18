@@ -47,7 +47,8 @@ public class BowShooting : MonoBehaviour
             if (!_oneHitArrowNotched && gm.playerTurnNet.Value == gm.playerCanShootNet.Value)
             {
                 _oneHitArrowNotched = true;
-                gm.SpawnArrow_ServerRpc(NetworkManager.Singleton.LocalClientId, _myTransform.position, _myTransform.rotation);
+               // gm.SpawnArrow_ServerRpc(NetworkManager.Singleton.LocalClientId, _myTransform.position, _myTransform.rotation);
+               gm.SpawnArrowLocal(_myTransform.position, _myTransform.rotation);
             }
             if (_oneHitArrowNotched && _pullAmount > 0.3f && !_oneHitAudioDraw)
             {
@@ -58,15 +59,12 @@ public class BowShooting : MonoBehaviour
         }
         else
         {
-           // ReleaseString();
-           gm.SetArrowReleasedNetRpc(gm.playerDatas[gm.indexInSo].playerColor);
+            ReleaseString();
         }
-
-        if(Input.GetKeyDown(KeyCode.K)) TestShoot();
     }
     private void LateUpdate()
     {
-        if (!controllerPullingString || !gm.MyTurn() || gm.spawnedArrow == null) return;
+        if (!controllerPullingString || !gm.MyTurn() || gm.arrowLocal == null) return;
         ProcessNotchedArrow();
     }
 
@@ -95,7 +93,7 @@ public class BowShooting : MonoBehaviour
             rot = Quaternion.LookRotation(pullDir.normalized);
         }
 
-        gm.spawnedArrow.myTransform.SetPositionAndRotation(endPoint, rot);
+        gm.arrowLocal.transform.SetPositionAndRotation(endPoint, rot);
         _pullAmount = (_myTransform.position - endPoint).magnitude / _maxLength;
       //  _pullAmount = Mathf.Clamp(_pullAmount, 0f, 1f);
         if (gm.drawTrajectory.showTrajectory) gm.SetForceNetRpc(_pullAmount * power); 
@@ -105,16 +103,16 @@ public class BowShooting : MonoBehaviour
 
     public void ReleaseString()
     {
-        if (gm.spawnedArrow == null) return;
-
+        if (gm.arrowLocal == null) return;
+        
         gm.SetForceNetRpc(_pullAmount * power);
         gm.ShowTrails_EveryoneRpc(gm.indexInSo);
-        gm.spawnedArrow.Release();
+       // gm.spawnedArrow.Release();
         _pullAmount = 0.0f;
 
         controllerPullingString = false;
         _oneHitArrowNotched = false;
-        gm.spawnedArrow = null;
+        gm.arrowLocal = null;
         playerControl.LineRendererLengthRpc(Vector3.zero);
 
         gm.audioManager.PlayOnMyAudioSource(audioSource, gm.audioManager.bowRelease);
@@ -122,12 +120,5 @@ public class BowShooting : MonoBehaviour
     }
 
 
-    [ContextMenu("Shoot")]
-    void TestShoot()
-    {
-        gm.SetForceNetRpc(power);
-        gm.SpawnArrow_ServerRpc(NetworkManager.Singleton.LocalClientId, _myTransform.position, _myTransform.rotation);
-        gm.ShowTrails_EveryoneRpc(gm.indexInSo);
-    }
 }
 

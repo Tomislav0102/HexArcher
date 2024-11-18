@@ -82,6 +82,7 @@ public class Utils
         if (go != null && go.activeInHierarchy) go.SetActive(false);
     }
 
+
     public static GameObject[] AllChildrenGameObjects(Transform parGos)
     {
         GameObject[] gos = new GameObject[parGos.childCount];
@@ -225,7 +226,6 @@ public enum BowState
 }
 public enum ArrowState
 {
-    Idle,
     Notched,
     Flying
 }

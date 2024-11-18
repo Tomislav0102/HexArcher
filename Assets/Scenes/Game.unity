@@ -1637,7 +1637,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   indexInSo: 0
-  spawnedArrow: {fileID: 0}
   playerDatas:
   - {fileID: 11400000, guid: 61dd7ead418ec0641a0824dec3afad15, type: 2}
   - {fileID: 11400000, guid: 574fc70eed2788d43bbffe5349b73be6, type: 2}
@@ -1737,9 +1736,12 @@ MonoBehaviour:
   layHands:
     serializedVersion: 2
     m_Bits: 16384
-  playerPrefab: {fileID: 1856004313744711676, guid: e9cdb009a1f64dc4e8216c509a81a39b, type: 3}
-  arrowPrefab: {fileID: 8261931198052434484, guid: 69b8a14720e699c449817cefaaccabe0, type: 3}
-  bowPrefab: {fileID: 7771739351024192724, guid: 4cedc315e31267642abf0fd40b926b0f, type: 3}
+  prefabPlayer: {fileID: 1856004313744711676, guid: e9cdb009a1f64dc4e8216c509a81a39b, type: 3}
+  prefabArrowLocal: {fileID: 5423421532028743676, guid: a9b8b9e9791e5ee41857c7abb13fdbaf, type: 3}
+  prefabArrowNotMe: {fileID: 8057447922751399955, guid: 763f74b72017f704f9867eb56de4f6d2, type: 3}
+  arrowLocal: {fileID: 0}
+  arrowNotMe: {fileID: 0}
+  prefabBow: {fileID: 7771739351024192724, guid: 4cedc315e31267642abf0fd40b926b0f, type: 3}
   bowTablesNet:
   - {fileID: 982143164932457978}
   - {fileID: 565676636}

@@ -1,15 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Netcode;
 using UnityEngine;
 
-public class Arrow : NetworkBehaviour
+public class ArrowLocal : ArrowMain
 {
-    GameManager gm;
+
     [SerializeField] Transform tip;
-    public TrailRenderer trail;
-    public Transform myTransform;
     [SerializeField] Rigidbody myRigidbody;
     float _arrowLength;
     const int CONST_EdgeSideways = 15;
@@ -22,45 +19,16 @@ public class Arrow : NetworkBehaviour
     Collider2D _hitCollider;
 
     bool _flying;
-    bool _oneHitNextPlayer;
 
-    public override void OnNetworkSpawn()
+    void Start()
     {
-        base.OnNetworkSpawn();
-        gm = GameManager.Instance;
         _arrowLength = Vector3.Distance(myTransform.position, tip.position);
         myRigidbody.useGravity = false;
-      //  gm.arrowReleased.OnValueChanged += NetVarEv_Released;
     }
 
-    public override void OnNetworkDespawn()
-    {
-        base.OnNetworkDespawn();
-      //  gm.arrowReleased.OnValueChanged -= NetVarEv_Released;
-    }
-
-    void NetVarEv_Released(PlayerColor previousvalue, PlayerColor newvalue)
-    {
-        if (previousvalue == newvalue) return;
-        if (!IsOwner) return;
-        _flying = true;
-        myRigidbody.useGravity = true;
-        myRigidbody.isKinematic = false;
-
-        float force = gm.forceNet.Value;
-        if (Mathf.Approximately(force, 0f))
-        {
-            force = gm.playerDatas[gm.indexInSo].playerControl.shooting.power;
-        }
-        print($"force is {force} and power is {gm.playerDatas[gm.indexInSo].playerControl.shooting.power}");
-        myRigidbody.velocity = force * myTransform.forward;
-        StartCoroutine(ArrowDirectionWhileFlying());
-
-    }
 
     public void Release()
     {
-        if (!IsOwner) return;
         _flying = true;
         myRigidbody.useGravity = true;
         myRigidbody.isKinematic = false;
@@ -97,7 +65,8 @@ public class Arrow : NetworkBehaviour
 
     void Update()
     {
-        if (!IsOwner) return;
+        gm.DataPass_NotMeRpc(myTransform.position, myTransform.rotation);
+        
         if (!_flying)
         {
             bool draw = !Mathf.Approximately(0f, gm.forceNet.Value);
@@ -106,18 +75,22 @@ public class Arrow : NetworkBehaviour
         }
         gm.drawTrajectory.Trajectory(false);
         
-        if (!_oneHitNextPlayer && IsTooFarAway())
+        if (!oneHitNextPlayer && IsTooFarAway())
         {
+            bool b = myTransform.position.z > CONST_EdgeForward ||
+                     myTransform.position.z < CONST_EdgeBack ||
+                     myTransform.position.x > CONST_EdgeSideways ||
+                     myTransform.position.x < -CONST_EdgeSideways;
             gm.NextPlayer_ServerRpc(true, $"arrow update from pos {myTransform.position}");
-            _oneHitNextPlayer = true;
         }
         if (myTransform.position.y < CONST_EdgeVertical)
         {
-            EndMe($"arrow {NetworkManager.Singleton.LocalClientId} fell too low");
+            DestroyMe($"arrow fell too low");
         }
         
         bool IsTooFarAway()
         {
+            oneHitNextPlayer = true;
             return myTransform.position.z > CONST_EdgeForward ||
                    myTransform.position.z < CONST_EdgeBack ||
                    myTransform.position.x > CONST_EdgeSideways ||
@@ -128,7 +101,6 @@ public class Arrow : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        if (!IsOwner) return;
        // if (!_flying) return;
         CheckCollisions();
     }
@@ -143,25 +115,10 @@ public class Arrow : NetworkBehaviour
         _hitCollider = _hit2D.collider;
         if (_hitCollider != null && _hitCollider.TryGetComponent(out ITargetForArrow tar))
         {
-            _oneHitNextPlayer = true;
+            oneHitNextPlayer = true;
             tar.HitMe(gm.playerTurnNet.Value);
-            print($"arrow owned by {NetworkManager.Singleton.LocalClientId} hit {_hitCollider.name}");
-            gm.Destroy_ServerRpc(NetworkObject);
+            print($"arrow hit {_hitCollider.name}");
         }
     }
 
-    void EndMe(string message = null)
-    {
-        if(!_oneHitNextPlayer)
-        {
-            gm.NextPlayer_ServerRpc(true, $"arrow EndMe {message}");
-            _oneHitNextPlayer = true;
-        }
-        gm.Destroy_ServerRpc(NetworkObject);
-    }
-
-    void OnTriggerEnter(Collider other)
-    {
-        print($"collider arrow triggered {other.name}");
-    }
 }

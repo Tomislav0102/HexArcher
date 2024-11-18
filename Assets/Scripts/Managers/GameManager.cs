@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,6 +6,7 @@ using Sirenix.OdinInspector;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
 
 public class GameManager : NetworkBehaviour
 {
@@ -14,7 +16,7 @@ public class GameManager : NetworkBehaviour
 
     [Title("References", TitleAlignment = TitleAlignments.Centered)]
     public int indexInSo;
-    public Arrow spawnedArrow;
+   // public Arrow spawnedArrow;
     public SoPlayerData[] playerDatas;
     public Camera camMain;
     public UiManager uImanager;
@@ -37,9 +39,12 @@ public class GameManager : NetworkBehaviour
 
     [PropertySpace(SpaceAfter = 0, SpaceBefore = 10)]
     [Title("Players...", TitleAlignment = TitleAlignments.Centered)]
-    [SerializeField] GameObject playerPrefab;
-    public GameObject arrowPrefab;
-    [SerializeField] GameObject bowPrefab;
+    [SerializeField] GameObject prefabPlayer;
+    public GameObject prefabArrowLocal;
+    public GameObject prefabArrowNotMe;
+    public ArrowMain arrowLocal;
+    public ArrowMain arrowNotMe;
+    [SerializeField] GameObject prefabBow;
     public NetworkObject[] bowTablesNet;
     [SerializeField] MeshRenderer[] playerMeshMarker;
     [SerializeField] GameObject[] scoreVisualMarker;
@@ -51,14 +56,12 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<PlayerColor> playerTurnNet = new NetworkVariable<PlayerColor>();
     public NetworkVariable<PlayerColor> playerCanShootNet = new NetworkVariable<PlayerColor>();
     public NetworkVariable<PlayerColor> playerVictoriousNet = new NetworkVariable<PlayerColor>();
-    public NetworkVariable<PlayerColor> arrowReleased = new NetworkVariable<PlayerColor>();
     public NetworkList<int> scoreNet; //can't initialize here (unity bug)
     public NetworkList<byte> hexStateNet;
     public NetworkList<sbyte> hexValNet;
     public NetworkVariable<float> forceNet = new NetworkVariable<float>();
     public NetworkVariable<float> windAmountNet = new NetworkVariable<float>();
     public NetworkVariable<bool> trajectoryVisible = new NetworkVariable<bool>();
-    
     private void Awake()
     {
         Instance = this;
@@ -149,6 +152,30 @@ public class GameManager : NetworkBehaviour
         uImanager.displayStartInfo.text = st;
     }
 
+    public void SpawnArrowLocal(Vector3 pos, Quaternion rot)
+    {
+        if (arrowLocal == null)
+        {
+            print("DataPass_NotMeRpc aServer is  null");
+            GameObject go = Instantiate(prefabArrowLocal, pos, rot);
+            arrowLocal = go.GetComponent<ArrowMain>();
+        }
+
+    }
+    [Rpc(SendTo.NotMe)]
+    public void DataPass_NotMeRpc(Vector3 pos, Quaternion rot)
+    {
+        if (arrowNotMe == null)
+        {
+            print("DataPass_NotMeRpc aServer is  null");
+            GameObject go = Instantiate(prefabArrowNotMe, pos, rot);
+            arrowNotMe = go.GetComponent<ArrowMain>();
+        }
+        
+        if (arrowNotMe.MyArrowState == ArrowState.Flying && !arrowNotMe.trail.enabled) arrowNotMe.trail.enabled = true;
+        arrowNotMe.myTransform.SetPositionAndRotation(pos, rot);
+    }
+
 
     #region CALL EVENTS
     private void CallEv_ClientDisconnected(ulong obj)
@@ -160,7 +187,6 @@ public class GameManager : NetworkBehaviour
         bowTablesNet[1].ChangeOwnership(OwnerClientId);
         bowRacks[1].HideRack();
     }
-
 
     private void NetVarEv_PlayerVictorious(PlayerColor previousValue, PlayerColor newValue)
     {
@@ -239,7 +265,7 @@ public class GameManager : NetworkBehaviour
             StartCoroutine(Countdown());
         }
 
-        GameObject go = Instantiate(playerPrefab);
+        GameObject go = Instantiate(prefabPlayer);
         go.GetComponent<NetworkObject>().SpawnAsPlayerObject(obj, true);
     }
 
@@ -393,33 +419,34 @@ public class GameManager : NetworkBehaviour
     public void SetForceNetRpc(float val) => forceNet.Value = val;
 
     [Rpc(SendTo.Server)]
-    public void SetArrowReleasedNetRpc(PlayerColor pc) => arrowReleased.Value = pc;
+    public void SetArrowReleasedNetRpc(PlayerColor pc) {}
+    //public void SetArrowReleasedNetRpc(PlayerColor pc) => arrowReleased.Value = pc;
 
-    [Rpc(SendTo.Server)]
-    public void SpawnArrow_ServerRpc(ulong ownerId, Vector3 pos, Quaternion rot)
-    {
-        GameObject go = Instantiate(arrowPrefab, pos, rot);
-        NetworkObject no = go.GetComponent<NetworkObject>();
-        no.Spawn();
-       // no.ChangeOwnership(ownerId);
-        SpawnArrow_EveryoneRpc(no);
-
-        if (playerCanShootNet.Value == PlayerColor.Blue) playerCanShootNet.Value = PlayerColor.Red;
-        else playerCanShootNet.Value = PlayerColor.Blue;
-    }
-
-    [Rpc(SendTo.Everyone)]
-    void SpawnArrow_EveryoneRpc(NetworkObjectReference networkObjectReference)
-    {
-        networkObjectReference.TryGet(out NetworkObject no);
-        spawnedArrow = no.GetComponent<Arrow>();
-    }
+    // [Rpc(SendTo.Server)]
+    // public void SpawnArrow_ServerRpc(ulong ownerId, Vector3 pos, Quaternion rot)
+    // {
+    //     GameObject go = Instantiate(arrowPrefabLocal, pos, rot);
+    //     NetworkObject no = go.GetComponent<NetworkObject>();
+    //     no.Spawn();
+    //     no.ChangeOwnership(ownerId);
+    //     SpawnArrow_EveryoneRpc(no);
+    //     
+    //     if (playerCanShootNet.Value == PlayerColor.Blue) playerCanShootNet.Value = PlayerColor.Red;
+    //     else playerCanShootNet.Value = PlayerColor.Blue;
+    // }
+    //
+    // [Rpc(SendTo.Everyone)]
+    // void SpawnArrow_EveryoneRpc(NetworkObjectReference networkObjectReference)
+    // {
+    //     networkObjectReference.TryGet(out NetworkObject no);
+    //    // spawnedArrow = no.GetComponent<Arrow>();
+    // }
     [Rpc(SendTo.Everyone)]
     public void ShowTrails_EveryoneRpc(int colOrdinal)
     {
-        if(spawnedArrow == null) return;
-        spawnedArrow.trail.colorGradient = playerDatas[colOrdinal].colGradientTrail;
-        spawnedArrow.trail.enabled = true;
+        // if(spawnedArrow == null) return;
+        // spawnedArrow.trail.colorGradient = playerDatas[colOrdinal].colGradientTrail;
+        // spawnedArrow.trail.enabled = true;
     }
 
     #endregion

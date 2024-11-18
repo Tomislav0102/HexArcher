@@ -106,7 +106,7 @@ public class BotManager : MonoBehaviour
                                  .SetEase(Ease.OutElastic)
                                  .OnComplete(() =>
                                  {
-                                     _arrow = Instantiate(gm.arrowPrefab, arrowSpawnPoint.position, Quaternion.identity).GetComponent<Arrow>();
+                                     _arrow = Instantiate(gm.prefabArrowLocal, arrowSpawnPoint.position, Quaternion.identity).GetComponent<Arrow>();
                                      _arrow.GetComponent<NetworkObject>().Spawn();
                                      _arrow.ReleaseByBot(vel);
                                      gm.audioManager.PlayOnMyAudioSource(audioSource, gm.audioManager.bowRelease);
