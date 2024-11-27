@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 555c30d21eb2dbc449f59c6809ff1ab0, type: 3}
   m_Name: PlayerData Red
   m_EditorClassIdentifier: 
-  myName: 
-  myLevel: 
-  myAutheticationId: 
-  myLeaderboardRank: 0
+  myName: Player82
+  myLevel: 5
+  myAutheticationId: vXyidDMdu7ltdOEFMvKdmMgF6M99
+  myLeaderboardRank: 306
   playerColor: 1
   netObj: {fileID: 0}
-  playerId: 0
+  playerId: 1
   playerControl: {fileID: 0}
   colMain: {r: 1, g: 0.49411768, b: 0.2509804, a: 1}
   colGradientTrail:

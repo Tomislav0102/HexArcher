@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -49,10 +50,27 @@ public class ConsoleInUI : MonoBehaviour
 
     void LogCallback(string logString, string stackTrace, LogType type)
     {
-        NewLineInConsole(/*"LogCallback - " + */logString);
+        Color col = Color.white;
+        switch (type)
+        {
+            case LogType.Error:
+                col = Color.red;
+                break;
+            case LogType.Assert:
+                break;
+            case LogType.Warning:
+                col = Color.yellow;
+                break;
+            case LogType.Log:
+                break;
+            case LogType.Exception:
+                col = Color.cyan;
+                break;
+        }
+        NewLineInConsole(/*"LogCallback - " + */logString, col);
     }
 
-    void NewLineInConsole(string st)
+    void NewLineInConsole(string st, Color col)
     {
         for (int i = _consoleLines.Length - 1; i > 0; i--)
         {
@@ -60,6 +78,7 @@ public class ConsoleInUI : MonoBehaviour
         }
        // _consoleLines[0].text = $"{_counterConsoleLine} - {st} -{System.DateTime.Now.TimeOfDay}";
         _consoleLines[0].text = $"{_counterConsoleLine} - {st}";
+        _consoleLines[0].color = col;
         _counterConsoleLine++;
     }
 

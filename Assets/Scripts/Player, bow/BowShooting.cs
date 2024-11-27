@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -23,7 +24,8 @@ public class BowShooting : MonoBehaviour
     bool _oneHitArrowNotched;
     public bool controllerPullingString;
 
-
+    [SerializeField] bool vRSimulation = true; //only for keyboard control
+    
     void Awake()
     {
         gm = GameManager.Instance;
@@ -37,6 +39,19 @@ public class BowShooting : MonoBehaviour
         Utils.DeActivateGo(end.gameObject);
     }
 
+    void OnEnable()
+    {
+        gm.playerTurnNet.OnValueChanged += NetVarEv_PlayerTurn;
+    }
+
+    void OnDisable()
+    {
+        gm.playerTurnNet.OnValueChanged -= NetVarEv_PlayerTurn;
+    }
+    private void NetVarEv_PlayerTurn(PlayerColor previousValue, PlayerColor newValue)
+    {
+        _oneHitArrowNotched = false;
+    }
 
     private void Update()
     {
@@ -44,12 +59,13 @@ public class BowShooting : MonoBehaviour
 
         if (controllerPullingString)
         {
-            if (!_oneHitArrowNotched && gm.playerTurnNet.Value == gm.playerCanShootNet.Value)
+            if (!_oneHitArrowNotched)
             {
                 _oneHitArrowNotched = true;
-               // gm.SpawnArrow_ServerRpc(NetworkManager.Singleton.LocalClientId, _myTransform.position, _myTransform.rotation);
-               gm.SpawnArrowLocal(_myTransform.position, _myTransform.rotation);
+               gm.SpawnRealArrow(_myTransform.position, _myTransform.rotation);
             }
+            
+            //audio
             if (_oneHitArrowNotched && _pullAmount > 0.3f && !_oneHitAudioDraw)
             {
                 _oneHitAudioDraw = true;
@@ -59,12 +75,15 @@ public class BowShooting : MonoBehaviour
         }
         else
         {
-            ReleaseString();
+            if (!vRSimulation) ReleaseString();
         }
+        
+        if (Input.GetKeyDown(KeyCode.K) && vRSimulation) TestShooting();
+
     }
     private void LateUpdate()
     {
-        if (!controllerPullingString || !gm.MyTurn() || gm.arrowLocal == null) return;
+        if (!controllerPullingString || !gm.MyTurn() || gm.arrowReal == null) return;
         ProcessNotchedArrow();
     }
 
@@ -93,30 +112,33 @@ public class BowShooting : MonoBehaviour
             rot = Quaternion.LookRotation(pullDir.normalized);
         }
 
-        gm.arrowLocal.transform.SetPositionAndRotation(endPoint, rot);
+        gm.arrowReal.transform.SetPositionAndRotation(endPoint, rot);
         _pullAmount = (_myTransform.position - endPoint).magnitude / _maxLength;
-      //  _pullAmount = Mathf.Clamp(_pullAmount, 0f, 1f);
-        if (gm.drawTrajectory.showTrajectory) gm.SetForceNetRpc(_pullAmount * power); 
+        gm.forceArrow = _pullAmount * power; 
 
         playerControl.LineRendererLengthRpc(_myTransform.InverseTransformPoint(endPoint));
     }
 
     public void ReleaseString()
     {
-        if (gm.arrowLocal == null) return;
-        
-        gm.SetForceNetRpc(_pullAmount * power);
-        gm.ShowTrails_EveryoneRpc(gm.indexInSo);
-       // gm.spawnedArrow.Release();
+        if (gm.arrowReal == null) return;
+        gm.arrowReal.Release(Vector3.zero);
         _pullAmount = 0.0f;
-
         controllerPullingString = false;
         _oneHitArrowNotched = false;
-        gm.arrowLocal = null;
+        gm.arrowReal = null;
         playerControl.LineRendererLengthRpc(Vector3.zero);
 
         gm.audioManager.PlayOnMyAudioSource(audioSource, gm.audioManager.bowRelease);
         _oneHitAudioDraw = false;
+    }
+
+    void TestShooting()
+    {
+        _oneHitArrowNotched = true;
+        gm.SpawnRealArrow(_myTransform.position, _myTransform.rotation);
+        gm.forceArrow = 1 * power;
+        gm.arrowReal.Release(Vector3.zero);
     }
 
 

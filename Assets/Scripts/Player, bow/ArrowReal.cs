@@ -3,14 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ArrowLocal : ArrowMain
+public class ArrowReal : ArrowMain
 {
-
+    bool _oneHitNextPlayer;
     [SerializeField] Transform tip;
     [SerializeField] Rigidbody myRigidbody;
     float _arrowLength;
     const int CONST_EdgeSideways = 15;
-    const int CONST_EdgeForward = 30;
+    const int CONST_EdgeForward = 21;
     const int CONST_EdgeBack = -10;
     const int CONST_EdgeVertical = -2;
     Ray _ray;
@@ -18,44 +18,27 @@ public class ArrowLocal : ArrowMain
     RaycastHit2D _hit2D;
     Collider2D _hitCollider;
 
-    bool _flying;
-
     void Start()
     {
         _arrowLength = Vector3.Distance(myTransform.position, tip.position);
-        myRigidbody.useGravity = false;
     }
 
 
-    public void Release()
+    public override void Release(Vector3 vel)
     {
-        _flying = true;
+        base.Release(vel);
         myRigidbody.useGravity = true;
         myRigidbody.isKinematic = false;
-
-        float force = gm.forceNet.Value;
-        if (Mathf.Approximately(force, 0f))
-        {
-            force = gm.playerDatas[gm.indexInSo].playerControl.shooting.power;
-        }
-        print($"force is {force} and power is {gm.playerDatas[gm.indexInSo].playerControl.shooting.power}");
-        myRigidbody.velocity = force * myTransform.forward;
-        StartCoroutine(ArrowDirectionWhileFlying());
-    }
-    public void ReleaseByBot(Vector3 vel)
-    {
-        _flying = true;
-        trail.colorGradient = gm.playerDatas[1].colGradientTrail;
-        trail.enabled = true;
-        myRigidbody.useGravity = true;
-        myRigidbody.isKinematic = false;
-        myRigidbody.velocity = vel;
-        StartCoroutine(ArrowDirectionWhileFlying());
+     //   print($"force is {gm.forceArrow} and power is {gm.playerDatas[gm.indexInSo].playerControl.shooting.power}");
+        if(vel == Vector3.zero) myRigidbody.velocity = gm.forceArrow * myTransform.forward;
+        else   myRigidbody.velocity = vel;
+        StartCoroutine(ArrowDirectionWhileFlying(myRigidbody.velocity.magnitude > 0f));
     }
 
-    IEnumerator ArrowDirectionWhileFlying()
+
+    IEnumerator ArrowDirectionWhileFlying(bool rotateObject = true)
     {
-        while (_flying)
+        while (myArrowState == ArrowState.Flying && rotateObject)
         {
             Quaternion velRot = Quaternion.LookRotation(myRigidbody.velocity, Vector3.up);
             myTransform.rotation = velRot;
@@ -65,32 +48,31 @@ public class ArrowLocal : ArrowMain
 
     void Update()
     {
-        gm.DataPass_NotMeRpc(myTransform.position, myTransform.rotation);
+        gm.ShadowArrow_NotMeRpc(myTransform.position, myTransform.rotation);
         
-        if (!_flying)
+        if (myArrowState == ArrowState.Notched)
         {
-            bool draw = !Mathf.Approximately(0f, gm.forceNet.Value);
-            gm.drawTrajectory.Trajectory(myTransform, gm.playerTurnNet.Value, myRigidbody.mass, gm.forceNet.Value, draw);
+            bool draw = !Mathf.Approximately(0f, gm.forceArrow);
+            gm.drawTrajectory.Trajectory(myTransform, gm.playerTurnNet.Value, myRigidbody.mass, gm.forceArrow, draw);
             return;
         }
         gm.drawTrajectory.Trajectory(false);
         
-        if (!oneHitNextPlayer && IsTooFarAway())
+        if (!_oneHitNextPlayer && IsTooFarAway())
         {
-            bool b = myTransform.position.z > CONST_EdgeForward ||
-                     myTransform.position.z < CONST_EdgeBack ||
-                     myTransform.position.x > CONST_EdgeSideways ||
-                     myTransform.position.x < -CONST_EdgeSideways;
+            _oneHitNextPlayer = true;
             gm.NextPlayer_ServerRpc(true, $"arrow update from pos {myTransform.position}");
+            EndMe();
         }
         if (myTransform.position.y < CONST_EdgeVertical)
         {
-            DestroyMe($"arrow fell too low");
+            EndMe(("arrow fell too low"));
         }
+        
+        
         
         bool IsTooFarAway()
         {
-            oneHitNextPlayer = true;
             return myTransform.position.z > CONST_EdgeForward ||
                    myTransform.position.z < CONST_EdgeBack ||
                    myTransform.position.x > CONST_EdgeSideways ||
@@ -101,8 +83,7 @@ public class ArrowLocal : ArrowMain
 
     private void FixedUpdate()
     {
-       // if (!_flying) return;
-        CheckCollisions();
+        if (myArrowState == ArrowState.Flying) CheckCollisions();
     }
 
     void CheckCollisions()
@@ -115,10 +96,21 @@ public class ArrowLocal : ArrowMain
         _hitCollider = _hit2D.collider;
         if (_hitCollider != null && _hitCollider.TryGetComponent(out ITargetForArrow tar))
         {
-            oneHitNextPlayer = true;
+          //  print(gm.playerDatas[gm.indexInSo].playerColor);
+          //  tar.HitMe(gm.playerDatas[gm.indexInSo].playerColor);
+          print(gm.playerTurnNet.Value);
             tar.HitMe(gm.playerTurnNet.Value);
-            print($"arrow hit {_hitCollider.name}");
+            _oneHitNextPlayer = true;
+            EndMe(($"arrow hit {_hitCollider.name}"));
         }
+    }
+
+
+    void EndMe(string message = null)
+    {
+       // if (!string.IsNullOrEmpty(message)) print(message);
+        if (!_oneHitNextPlayer) gm.NextPlayer_ServerRpc();
+        Destroy(gameObject);
     }
 
 }

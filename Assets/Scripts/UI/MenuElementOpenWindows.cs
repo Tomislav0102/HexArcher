@@ -12,6 +12,7 @@ public class MenuElementOpenWindows : MenuElementMain, IPointerClickHandler
     {
         audioManager.PlaySFX(audioManager.uiButton);
         Utils.ActivateOneArrayElement(mm.mainUIelements);
+        
         if (requirePlayerLevel)
         {
             PlayerLeveling.CalculateLevelFromXp(out int lv, out int xp);
@@ -21,6 +22,7 @@ public class MenuElementOpenWindows : MenuElementMain, IPointerClickHandler
                 return;
             }
         }
+        
         if (requireInternet && !mm.hasInternet)
         {
             Utils.ActivateGo(mm.noInternetWindow);

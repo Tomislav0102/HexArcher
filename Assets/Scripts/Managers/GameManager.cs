@@ -5,6 +5,7 @@ using UnityEngine;
 using Sirenix.OdinInspector;
 using TMPro;
 using Unity.Netcode;
+using Unity.Properties;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
@@ -16,9 +17,8 @@ public class GameManager : NetworkBehaviour
 
     [Title("References", TitleAlignment = TitleAlignments.Centered)]
     public int indexInSo;
-   // public Arrow spawnedArrow;
+
     public SoPlayerData[] playerDatas;
-    public Camera camMain;
     public UiManager uImanager;
     public AudioManager audioManager;
     public BowRack[] bowRacks;
@@ -30,6 +30,7 @@ public class GameManager : NetworkBehaviour
 
     [Title("Layers", TitleAlignment = TitleAlignments.Centered)]
     public LayerMask layTargets;
+
     public LayerMask layForTrajectory;
     public LayerMask layBow;
     public LayerMask layHands;
@@ -40,28 +41,28 @@ public class GameManager : NetworkBehaviour
     [PropertySpace(SpaceAfter = 0, SpaceBefore = 10)]
     [Title("Players...", TitleAlignment = TitleAlignments.Centered)]
     [SerializeField] GameObject prefabPlayer;
-    public GameObject prefabArrowLocal;
-    public GameObject prefabArrowNotMe;
-    public ArrowMain arrowLocal;
-    public ArrowMain arrowNotMe;
+
+    public GameObject prefabArrowReal;
+    public GameObject prefabArrowShadow;
+    public ArrowMain arrowReal;
+    public ArrowMain arrowShadow;
+    public float forceArrow;
     [SerializeField] GameObject prefabBow;
     public NetworkObject[] bowTablesNet;
     [SerializeField] MeshRenderer[] playerMeshMarker;
     [SerializeField] GameObject[] scoreVisualMarker;
 
-    bool _nextPlayerSwitch = false;
-
     [Title("Public network variables", TitleAlignment = TitleAlignments.Centered)]
     public NetworkVariable<GenLevel> difficultyNet = new NetworkVariable<GenLevel>();
+
     public NetworkVariable<PlayerColor> playerTurnNet = new NetworkVariable<PlayerColor>();
-    public NetworkVariable<PlayerColor> playerCanShootNet = new NetworkVariable<PlayerColor>();
     public NetworkVariable<PlayerColor> playerVictoriousNet = new NetworkVariable<PlayerColor>();
     public NetworkList<int> scoreNet; //can't initialize here (unity bug)
     public NetworkList<byte> hexStateNet;
     public NetworkList<sbyte> hexValNet;
-    public NetworkVariable<float> forceNet = new NetworkVariable<float>();
     public NetworkVariable<float> windAmountNet = new NetworkVariable<float>();
     public NetworkVariable<bool> trajectoryVisible = new NetworkVariable<bool>();
+
     private void Awake()
     {
         Instance = this;
@@ -69,18 +70,20 @@ public class GameManager : NetworkBehaviour
         Physics.gravity = windManager.gravityVector;
 
         _matsSkyboxSp = Resources.LoadAll<Material>("Skybox materials SP");
+
         scoreNet = new NetworkList<int>(new List<int>()); //must be initialized in Awake
         hexStateNet = new NetworkList<byte>(new List<byte>());
         hexValNet = new NetworkList<sbyte>(new List<sbyte>());
-
         indexInSo = NetworkManager.Singleton.IsHost ? 0 : 1;
     }
+
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+        gridManager.Init();
         if (IsServer)
         {
-            gridManager.Init();
+            gridManager.ChooseGrid();
             difficultyNet.Value = (GenLevel)PlayerPrefs.GetInt(Utils.Difficulty_Int);
             for (int i = 0; i < 2; i++)
             {
@@ -92,18 +95,17 @@ public class GameManager : NetworkBehaviour
             playerVictoriousNet.OnValueChanged += NetVarEv_PlayerVictorious;
             windAmountNet.Value = PlayerPrefs.GetFloat(Utils.WindAmount_Fl);
             trajectoryVisible.Value = PlayerPrefs.GetInt(Utils.TrajectoryVisible_Int) == 1;
-            
+
             NetworkManager.Singleton.OnClientDisconnectCallback += CallEv_ClientDisconnected;
-            
-            
+
         }
         else
         {
-            gridManager.GridLateJoin();
+            gridManager.GridUseNetworkVariables();
             ChangeVisualMarkers_EveryoneRpc(playerTurnNet.Value);
             Utils.DeActivateGo(botManager.gameObject);
         }
-
+        NetworkManager.NetworkTickSystem.Tick += NetworkTick;
         Utils.FadeOut?.Invoke(true);
         audioManager.PlaySFX(audioManager.gameStarted);
 
@@ -126,9 +128,11 @@ public class GameManager : NetworkBehaviour
         base.OnNetworkDespawn();
         if (IsServer)
         {
-            NetworkManager.Singleton.OnClientDisconnectCallback -= CallEv_ClientDisconnected;   
+            NetworkManager.Singleton.OnClientDisconnectCallback -= CallEv_ClientDisconnected;
         }
+        NetworkManager.NetworkTickSystem.Tick -= NetworkTick;
     }
+
     IEnumerator Countdown()
     {
         int seconds = 0;
@@ -152,35 +156,55 @@ public class GameManager : NetworkBehaviour
         uImanager.displayStartInfo.text = st;
     }
 
-    public void SpawnArrowLocal(Vector3 pos, Quaternion rot)
-    {
-        if (arrowLocal == null)
-        {
-            print("DataPass_NotMeRpc aServer is  null");
-            GameObject go = Instantiate(prefabArrowLocal, pos, rot);
-            arrowLocal = go.GetComponent<ArrowMain>();
-        }
 
+
+
+    #region NEW THING
+    [Rpc(SendTo.Everyone)]
+    void ClearAllArrows_EveryoneRpc()
+    {
+         if (arrowReal != null) Destroy(arrowReal.gameObject);
+         if (arrowShadow != null) Destroy(arrowShadow.gameObject);
+    }
+
+    public void SpawnRealArrow(Vector3 pos, Quaternion rot)
+    {
+        arrowReal = Instantiate(prefabArrowReal, pos, rot).GetComponent<ArrowMain>();
+        SpawnShadowArrow_NotMeRpc(pos, rot);
     }
     [Rpc(SendTo.NotMe)]
-    public void DataPass_NotMeRpc(Vector3 pos, Quaternion rot)
+    void SpawnShadowArrow_NotMeRpc(Vector3 pos, Quaternion rot)
     {
-        if (arrowNotMe == null)
-        {
-            print("DataPass_NotMeRpc aServer is  null");
-            GameObject go = Instantiate(prefabArrowNotMe, pos, rot);
-            arrowNotMe = go.GetComponent<ArrowMain>();
-        }
-        
-        if (arrowNotMe.MyArrowState == ArrowState.Flying && !arrowNotMe.trail.enabled) arrowNotMe.trail.enabled = true;
-        arrowNotMe.myTransform.SetPositionAndRotation(pos, rot);
+       // print("ShadowArrow_NotMeRpc spawned");
+        //  ClearAllArrows_EveryoneRpc();
+        GameObject go = Instantiate(prefabArrowShadow, pos, rot);
+        arrowShadow = go.GetComponent<ArrowMain>();
+
     }
+
+    [Rpc(SendTo.NotMe)]
+    public void ShadowArrow_NotMeRpc(Vector3 pos, Quaternion rot)
+    {
+        if (arrowShadow == null)
+        {
+           // print("ShadowArrow_NotMeRpc is null");
+            return;
+        }
+        arrowShadow.myTransform.SetPositionAndRotation(pos, rot);
+        arrowShadow.SetTrail();
+    }
+    #endregion
+
 
 
     #region CALL EVENTS
+    void NetworkTick()
+    {
+        // print($"Tick: {NetworkManager.LocalTime.Tick}");
+    }
+
     private void CallEv_ClientDisconnected(ulong obj)
     {
-        print($"client {obj} disconnected");
         //  print($"client {obj} disconnected, num of clients is {NetworkManager.Singleton.ConnectedClients.Count}");
         if (obj == NetworkManager.Singleton.LocalClientId) return;
         StartCoroutine(Countdown());
@@ -194,7 +218,6 @@ public class GameManager : NetworkBehaviour
         {
             Utils.DeActivateGo(playerDatas[i].playerControl.bowControl.gameObject);
         }
-        playerCanShootNet.Value = PlayerColor.None;
         if (Utils.GameType == MainGameType.Multiplayer && NetworkManager.Singleton.ConnectedClients.Count > 1) PlayerVictorious_EveryoneRpc(newValue);
     }
 
@@ -234,6 +257,7 @@ public class GameManager : NetworkBehaviour
         Launch.Instance.myDatabaseManager.UploadMyScore();
 
     }
+
     private void NetVarEv_PlayerTurnChange(PlayerColor previousValue, PlayerColor newValue)
     {
         ChangeVisualMarkers_EveryoneRpc(newValue);
@@ -245,13 +269,12 @@ public class GameManager : NetworkBehaviour
     public void SpawnPlayers_ServerRpc(ulong obj)
     {
         int numOfPlayers = NetworkManager.Singleton.ConnectedClientsList.Count;
-        
+
         StopAllCoroutines();
         botManager.EndBot();
         NetworkObject no = NetworkManager.Singleton.ConnectedClientsList[numOfPlayers - 1].PlayerObject;
         if (no != null)
         {
-            print("no is present");
             return;
         }
 
@@ -309,11 +332,18 @@ public class GameManager : NetworkBehaviour
         }
 
     }
+
     [Rpc(SendTo.Server)]
     void ChangeOwnershipOfBowTable_ServerRpc(ulong obj) => bowTablesNet[1].ChangeOwnership(obj);
     #endregion
 
     #region GAME FLOW
+    [Rpc(SendTo.Server)]
+    public void SetHexStateNet_ServerRpc(int ord, byte value) => hexStateNet[ord] = value;
+
+    [Rpc(SendTo.Server)]
+    public void SetHexValNet_ServerRpc(int ord, sbyte value) => hexValNet[ord] = value;
+
     [Rpc(SendTo.Everyone)]
     void ChangeVisualMarkers_EveryoneRpc(PlayerColor newValue)
     {
@@ -324,12 +354,12 @@ public class GameManager : NetworkBehaviour
         }
         scoreVisualMarker[(int)newValue].SetActive(true);
     }
-    
+
     [Rpc(SendTo.Server)]
     public void NextPlayer_ServerRpc(bool countGridMisses = true, string caller = "")
     {
-        if (playerVictoriousNet.Value != PlayerColor.Undefined || _nextPlayerSwitch) return;
-        StartCoroutine(ResetNextPlayerSwitch());
+        if (playerVictoriousNet.Value != PlayerColor.Undefined) return;
+        ClearAllArrows_EveryoneRpc();
         // if (countGridMisses)
         // {
         //     _counterMisses++;
@@ -344,18 +374,14 @@ public class GameManager : NetworkBehaviour
         int val = (int)playerTurnNet.Value;
         val = (1 + val) % 2;
         playerTurnNet.Value = (PlayerColor)val;
-        print($"next player is { playerTurnNet.Value }, called by {caller}");
+        // print($"next player is { playerTurnNet.Value }, called by {caller}");
     }
-    IEnumerator ResetNextPlayerSwitch()
-    {
-        _nextPlayerSwitch = true;
-        yield return new WaitForSeconds(1);
-        _nextPlayerSwitch = false;
-    }
+
     [Rpc(SendTo.Server)]
     public void Scoring_ServerRpc()
     {
-        if (playerVictoriousNet.Value != PlayerColor.Undefined) return;
+       // if (playerVictoriousNet.Value != PlayerColor.Undefined) return;
+       if ((int)(playerVictoriousNet.Value) < 2) return; //is gameover
 
         List<int> scoresTemp = new List<int>() { 0, 0 };
         List<ParentHex> freeHex = gridManager.AllTilesByType(TileState.Taken);
@@ -391,6 +417,7 @@ public class GameManager : NetworkBehaviour
         }
 
     }
+
     void DecideVictor()
     {
         if (scoreNet[0] > scoreNet[1])
@@ -403,10 +430,11 @@ public class GameManager : NetworkBehaviour
         }
         else playerVictoriousNet.Value = PlayerColor.None;
     }
+
     [Rpc(SendTo.Server)]
     public void Destroy_ServerRpc(NetworkObjectReference networkObjectReference)
     {
-        if(networkObjectReference.TryGet(out NetworkObject no))
+        if (networkObjectReference.TryGet(out NetworkObject no))
         {
             no.Despawn();
         }
@@ -414,79 +442,55 @@ public class GameManager : NetworkBehaviour
 
     #endregion
 
-    #region SHOOTING
-    [Rpc(SendTo.Server)]
-    public void SetForceNetRpc(float val) => forceNet.Value = val;
-
-    [Rpc(SendTo.Server)]
-    public void SetArrowReleasedNetRpc(PlayerColor pc) {}
-    //public void SetArrowReleasedNetRpc(PlayerColor pc) => arrowReleased.Value = pc;
-
-    // [Rpc(SendTo.Server)]
-    // public void SpawnArrow_ServerRpc(ulong ownerId, Vector3 pos, Quaternion rot)
-    // {
-    //     GameObject go = Instantiate(arrowPrefabLocal, pos, rot);
-    //     NetworkObject no = go.GetComponent<NetworkObject>();
-    //     no.Spawn();
-    //     no.ChangeOwnership(ownerId);
-    //     SpawnArrow_EveryoneRpc(no);
-    //     
-    //     if (playerCanShootNet.Value == PlayerColor.Blue) playerCanShootNet.Value = PlayerColor.Red;
-    //     else playerCanShootNet.Value = PlayerColor.Blue;
-    // }
-    //
-    // [Rpc(SendTo.Everyone)]
-    // void SpawnArrow_EveryoneRpc(NetworkObjectReference networkObjectReference)
-    // {
-    //     networkObjectReference.TryGet(out NetworkObject no);
-    //    // spawnedArrow = no.GetComponent<Arrow>();
-    // }
-    [Rpc(SendTo.Everyone)]
-    public void ShowTrails_EveryoneRpc(int colOrdinal)
-    {
-        // if(spawnedArrow == null) return;
-        // spawnedArrow.trail.colorGradient = playerDatas[colOrdinal].colGradientTrail;
-        // spawnedArrow.trail.enabled = true;
-    }
-
-    #endregion
-
     #region DEBUGS
 
     public void NextPlayerDebug() => NextPlayer_ServerRpc(false, "from UI debug");
-    
+
     [ContextMenu("Utils.GameType")]
     void Metoda1() => print(Utils.GameType);
+
     [ContextMenu("ConnectedClients.Count")]
     void Metoda2() => print(NetworkManager.Singleton.ConnectedClients.Count);
+
     [ContextMenu("Print all playerprefs")]
     void Metoda3() => Utils.DisplayAllPlayerPrefs();
+
     [ContextMenu("Change wind")]
     void Metoda4()
     {
         windAmountNet.Value = Random.Range(-0.5f, 0.5f);
-       // print($"wind is {windAmmountNet.Value * CONST_WINDSCALE}");
+        // print($"wind is {windAmmountNet.Value * CONST_WINDSCALE}");
         print($"wind is {windAmountNet.Value * 20}");
     }
 
     [ContextMenu("Next player")]
     void Metoda5()
     {
-        if (playerCanShootNet.Value == PlayerColor.Blue) playerCanShootNet.Value = PlayerColor.Red;
-        else playerCanShootNet.Value = PlayerColor.Blue;
         NextPlayer_ServerRpc(false);
-
     }
+
     [ContextMenu("SpawnPlayerAndRegisterRpc")]
     void Metoda6() => SpawnPlayers_ServerRpc(NetworkManager.Singleton.LocalClientId);
+
     [ContextMenu("Blue wins")]
     void Metoda7() => playerVictoriousNet.Value = PlayerColor.Blue;
+
     [ContextMenu("Red wins")]
     void Metoda8() => playerVictoriousNet.Value = PlayerColor.Red;
+
     [ContextMenu("hexStateNet count")]
     void Metoda9() => print(hexStateNet.Count);
+
     [ContextMenu("hexValNet count")]
     void Metoda10() => print(hexValNet.Count);
+
+    [ContextMenu("_tilesInGame count")]
+    void Metoda11()
+    {
+        print(gridManager._tilesInGame.Length);
+        print(gridManager._tilesInGame.LongLength);
+        
+    }
     #endregion
 }
 

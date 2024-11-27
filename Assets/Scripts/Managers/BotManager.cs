@@ -55,7 +55,6 @@ public class BotManager : MonoBehaviour
         }
     }
     [SerializeField] Transform arrowSpawnPoint, targetPointer;
-    Arrow _arrow;
     LaunchVelocity _launchVelocity = new LaunchVelocity();
     [SerializeField] AudioSource audioSource;
     Tween _tweenAim;
@@ -100,15 +99,13 @@ public class BotManager : MonoBehaviour
         Vector2 rdn = Random.insideUnitCircle * Precision() * gm.gridManager.scale * 10f;
         Vector3 tarPos = new Vector3(_target.center.position.x + rdn.x, _target.center.position.y + rdn.y, _target.center.position.z);
         targetPointer.position = tarPos;
-
         Vector3 vel = _launchVelocity.Vel(arrowSpawnPoint.position, targetPointer.position, gm.windManager.gravityVector + gm.windManager.windVector);
         _tweenAim = arrowSpawnPoint.DORotate(Quaternion.LookRotation(vel.normalized).eulerAngles, 2f)
                                  .SetEase(Ease.OutElastic)
                                  .OnComplete(() =>
                                  {
-                                     _arrow = Instantiate(gm.prefabArrowLocal, arrowSpawnPoint.position, Quaternion.identity).GetComponent<Arrow>();
-                                     _arrow.GetComponent<NetworkObject>().Spawn();
-                                     _arrow.ReleaseByBot(vel);
+                                     gm.SpawnRealArrow(arrowSpawnPoint.position, arrowSpawnPoint.rotation);
+                                     gm.arrowReal.Release(vel);
                                      gm.audioManager.PlayOnMyAudioSource(audioSource, gm.audioManager.bowRelease);
                                  });
     }

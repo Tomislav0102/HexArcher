@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -82,6 +83,10 @@ public class Utils
         if (go != null && go.activeInHierarchy) go.SetActive(false);
     }
 
+    public static void DestroyGo(GameObject go)
+    {
+        if (go != null) GameObject.Destroy(go);
+    }
 
     public static GameObject[] AllChildrenGameObjects(Transform parGos)
     {
@@ -320,26 +325,15 @@ public class GridManager
     [SerializeField] Transform containerFinal;
 
     Vector2Int _dim = new Vector2Int(10, 10);
-    ParentHex[,] _tilesInGame;
+    public ParentHex[,] _tilesInGame;
     [HideInInspector] public float scale = 0.2f;
     GenSize _size;
 
     public void Init()
     {
-        SharedInit();
-        GridInitialization();
-    }
-    void SharedInit()
-    {
         gm = GameManager.Instance;
         containerFinal.localScale = scale * Vector3.one;
         gm.poolManager.parHexRings.localScale = scale * Vector3.one;
-    }
-
-
-
-    void GridInitialization()
-    {
         _tilesInGame = new ParentHex[_dim.x, _dim.y];
         for (int i = 0; i < _dim.x * _dim.y; i++)
         {
@@ -350,19 +344,37 @@ public class GridManager
             _tilesInGame[x, y] = hex;
         }
 
-        if (levelToCreate != null)
+
+    }
+
+    public void ChooseGrid()
+    {
+        if (gm.hexValNet.Count == 0) 
         {
-            for (int i = 0; i < 100; i++)
+            if (levelToCreate != null)
             {
-                TileState tss =  levelToCreate.transform.GetChild(i).GetComponent<TileParent>()._tState;
-                gm.hexValNet.Add(0);
-                gm.hexStateNet.Add((byte)tss);
-                containerFinal.GetChild(i).GetComponent<ParentHex>().Tstate = tss;
-
+                for (int i = 0; i < 100; i++)
+                {
+                    TileState tss =  levelToCreate.transform.GetChild(i).GetComponent<TileParent>()._tState;
+                    gm.hexValNet.Add(0);
+                    gm.hexStateNet.Add((byte)tss);
+                    containerFinal.GetChild(i).GetComponent<ParentHex>().SetStateAndValue(gm.hexStateNet[i], gm.hexValNet[i]);
+                }
             }
-            return;
+            else
+            {
+                GridRandom();
+            }
         }
+        else
+        {
+            GridUseNetworkVariables();
+        }
+    }
 
+
+    void GridRandom()
+    {
         _size = (GenSize)PlayerPrefs.GetInt(Utils.Size_Int);
         int sizeBorder = 0;
         switch (_size)
@@ -384,9 +396,10 @@ public class GridManager
             {
                 TileState tss = Random.value <= 0.7f ? TileState.Free : TileState.InActive;
                 ParentHex hex = _tilesInGame[i, j];
-                if (hex.pos.x < sizeBorder ||
+                if (tss == TileState.Free && 
+                    (hex.pos.x < sizeBorder ||
                     hex.pos.x > (9 - sizeBorder) ||
-                    hex.pos.y > (9 - sizeBorder * 2)) tss = TileState.InActive;
+                    hex.pos.y > (9 - sizeBorder * 2))) tss = TileState.InActive;
                 hex.startTs = tss;
 
                 gm.hexStateNet.Add((byte)tss);
@@ -394,20 +407,20 @@ public class GridManager
             }
         }
     }
-    public void GridLateJoin()
+    public void GridUseNetworkVariables()
     {
-        SharedInit();
         for (int i = 0; i < containerFinal.childCount; i++)
         {
-            containerFinal.GetChild(i).GetComponent<ParentHex>().ClientLateJoin(gm.hexStateNet[i], gm.hexValNet[i]);
+            containerFinal.GetChild(i).GetComponent<ParentHex>().SetStateAndValue(gm.hexStateNet[i], gm.hexValNet[i]);
         }
     }
 
     #region METHOD VARIABLES
     public List<ParentHex> AllNeighbours(Vector2Int poz, bool includeTaken = false, bool includeInActive = false)
     {
+        //Debug.Log($"AllNeighbours at {poz}");
         bool oddRow = poz.y % 2 == 1;
-        int endCoor = poz.x + (oddRow ? 1 : -1);
+        int endCoordinate = poz.x + (oddRow ? 1 : -1);
         List<ParentHex> neighbours = new List<ParentHex>();
 
         if (poz.x > 0) neighbours.Add(_tilesInGame[poz.x - 1, poz.y]);
@@ -415,12 +428,12 @@ public class GridManager
         if (poz.y > 0)
         {
             neighbours.Add(_tilesInGame[poz.x, poz.y - 1]);
-            if (endCoor >= 0 && endCoor < _dim.x) neighbours.Add(_tilesInGame[endCoor, poz.y - 1]);
+            if (endCoordinate >= 0 && endCoordinate < _dim.x) neighbours.Add(_tilesInGame[endCoordinate, poz.y - 1]);
         }
         if (poz.y < _dim.y - 1)
         {
             neighbours.Add(_tilesInGame[poz.x, poz.y + 1]);
-            if (endCoor >= 0 && endCoor < _dim.x) neighbours.Add(_tilesInGame[endCoor, poz.y + 1]);
+            if (endCoordinate >= 0 && endCoordinate < _dim.x) neighbours.Add(_tilesInGame[endCoordinate, poz.y + 1]);
 
         }
 

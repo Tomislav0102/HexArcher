@@ -1,28 +1,34 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 public class ArrowMain : MonoBehaviour
 {
     protected GameManager gm;
-    protected bool oneHitNextPlayer;
     
-    public TrailRenderer trail;
+    [SerializeField] TrailRenderer trail;
     public Transform myTransform;
-    [SerializeField] protected MeshRenderer myMesh;
-
-
-    public ArrowState MyArrowState;
+    public ArrowState myArrowState;
 
     protected void Awake()
     {
         gm = GameManager.Instance;
     }
 
-    protected virtual void DestroyMe(string message = null)
+    
+    public virtual void Release(Vector3 vel)
     {
-        print(string.IsNullOrEmpty(message) ? "" : message);
-        Destroy(gameObject);
+        myArrowState = ArrowState.Flying;
+    //    print("arrowMain released");
+        SetTrail();
     }
+
+    public void SetTrail()
+    {
+        if(trail.enabled) return;
+        trail.enabled = true;
+        trail.colorGradient = gm.playerDatas[(int)gm.playerTurnNet.Value].colGradientTrail;
+
+    }
+
+
 }

@@ -95,7 +95,6 @@ public class BowControl : MonoBehaviour
     }
     void ReturnBowToRack()
     {
-        print("game started");
         myRigid.velocity = Vector3.zero;
         Bstate = BowState.RackMoving;
         gm.bowRacks[gm.indexInSo].EnterRack(() =>

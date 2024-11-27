@@ -141,9 +141,10 @@ public class MainMenuManager : MonoBehaviour
     }
 
 
-    void WindChange(float ammount) => PlayerPrefs.SetFloat(Utils.WindAmount_Fl, ammount);
+    void WindChange(float amount) => PlayerPrefs.SetFloat(Utils.WindAmount_Fl, amount);
     
     #region BUTTONS
+    [Button]
     void BtnMethodSinglePlay()
     {
         if (_oneHitExitScene) return;

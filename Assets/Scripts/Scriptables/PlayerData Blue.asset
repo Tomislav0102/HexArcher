@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 555c30d21eb2dbc449f59c6809ff1ab0, type: 3}
   m_Name: PlayerData Blue
   m_EditorClassIdentifier: 
-  myName: pp
-  myLevel: 
-  myAutheticationId: 
-  myLeaderboardRank: 0
+  myName: Player82
+  myLevel: 5
+  myAutheticationId: nB7Um3dOmrgFsCDa8mVhnq9RhZmR
+  myLeaderboardRank: 306
   playerColor: 0
   netObj: {fileID: 0}
   playerId: 0
