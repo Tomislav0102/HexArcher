@@ -214,7 +214,7 @@ Material:
     - _ClippingBorderColor: {r: 1, g: 0.19999996, b: 0, a: 1}
     - _Color: {r: 1, g: 0.49411762, b: 0.25097862, a: 1}
     - _ColorHDR: {r: 4, g: 0, b: 0, a: 1}
-    - _EmissionColor: {r: 1.5157166, g: 0.7489423, b: 0.38041517, a: 1}
+    - _EmissionColor: {r: 2.6875207, g: 1.4024467, b: 0.773296, a: 1}
     - _EmissiveColor: {r: 0, g: 0, b: 0, a: 1}
     - _EnvironmentColorX: {r: 1, g: 0, b: 0, a: 1}
     - _EnvironmentColorY: {r: 0, g: 1, b: 0, a: 1}

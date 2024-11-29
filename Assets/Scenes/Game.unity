@@ -1212,7 +1212,7 @@ MonoBehaviour:
     spawnPoint: {fileID: 565676637}
   botManager: {fileID: 1186171306}
   gridManager:
-    levelToCreate: {fileID: 0}
+    levelToCreate: {fileID: 4980773094642428337, guid: cadc736202f6913438fd9ceb91445263, type: 3}
     containerFinal: {fileID: 6881369454749441617}
     scale: 0.2
   poolManager:

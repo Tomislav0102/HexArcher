@@ -2134,9 +2134,8 @@ MonoBehaviour:
   finalHexagonTransform: {fileID: 3556795080153310592}
   finalHexScore: {fileID: 6173577945932610514}
   finalHexFrameMesh: {fileID: 3779914900350695139}
-  startTs: 0
   valueForBot: 0
-  hitValueTest: 8
+  hitValueTest: 1
 --- !u!1 &3791866170399489461
 GameObject:
   m_ObjectHideFlags: 0

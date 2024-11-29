@@ -324,11 +324,13 @@ public class GridManager
     [SerializeField] GameObject levelToCreate;
     [SerializeField] Transform containerFinal;
 
+    const float CONST_ProbabilityToSpawnEmpty = 0.3f;
     Vector2Int _dim = new Vector2Int(10, 10);
-    public ParentHex[,] _tilesInGame;
+    ParentHex[,] _tilesInGame;
     [HideInInspector] public float scale = 0.2f;
     GenSize _size;
-
+    
+    
     public void Init()
     {
         gm = GameManager.Instance;
@@ -349,16 +351,16 @@ public class GridManager
 
     public void ChooseGrid()
     {
-        if (gm.hexValNet.Count == 0) 
+        if (gm.gridValuesNet.Count == 0) 
         {
             if (levelToCreate != null)
             {
                 for (int i = 0; i < 100; i++)
                 {
                     TileState tss =  levelToCreate.transform.GetChild(i).GetComponent<TileParent>()._tState;
-                    gm.hexValNet.Add(0);
-                    gm.hexStateNet.Add((byte)tss);
-                    containerFinal.GetChild(i).GetComponent<ParentHex>().SetStateAndValue(gm.hexStateNet[i], gm.hexValNet[i]);
+                    gm.gridValuesNet.Add(0);
+                    gm.gridTileStatesNet.Add((byte)tss);
+                    containerFinal.GetChild(i).GetComponent<ParentHex>().HexDefinition(gm.gridTileStatesNet[i], gm.gridValuesNet[i]);
                 }
             }
             else
@@ -394,16 +396,17 @@ public class GridManager
         {
             for (int j = 0; j < _dim.y; j++)
             {
-                TileState tss = Random.value <= 0.7f ? TileState.Free : TileState.InActive;
+                TileState tss = Random.value <= CONST_ProbabilityToSpawnEmpty ? TileState.InActive : TileState.Free;
                 ParentHex hex = _tilesInGame[i, j];
                 if (tss == TileState.Free && 
                     (hex.pos.x < sizeBorder ||
                     hex.pos.x > (9 - sizeBorder) ||
                     hex.pos.y > (9 - sizeBorder * 2))) tss = TileState.InActive;
-                hex.startTs = tss;
+                
+                hex.Tstate = tss;
 
-                gm.hexStateNet.Add((byte)tss);
-                gm.hexValNet.Add(0);
+                gm.gridTileStatesNet.Add((byte)tss);
+                gm.gridValuesNet.Add(0);
             }
         }
     }
@@ -411,29 +414,41 @@ public class GridManager
     {
         for (int i = 0; i < containerFinal.childCount; i++)
         {
-            containerFinal.GetChild(i).GetComponent<ParentHex>().SetStateAndValue(gm.hexStateNet[i], gm.hexValNet[i]);
+          //  if(gm.gridTileStatesNet[i] != 0) Debug.Log("kurac");
+            containerFinal.GetChild(i).GetComponent<ParentHex>().HexDefinition(gm.gridTileStatesNet[i], gm.gridValuesNet[i]);
         }
     }
 
+    public void AssignTileState(int ord, byte val)
+    {
+        containerFinal.GetChild(ord).GetComponent<ParentHex>()._tState = (TileState)val;
+    }
+    
     #region METHOD VARIABLES
     public List<ParentHex> AllNeighbours(Vector2Int poz, bool includeTaken = false, bool includeInActive = false)
     {
-        //Debug.Log($"AllNeighbours at {poz}");
+        bool printDebugs = false;
+        if (printDebugs) Debug.Log($"AllNeighbours at {poz}");
         bool oddRow = poz.y % 2 == 1;
         int endCoordinate = poz.x + (oddRow ? 1 : -1);
         List<ParentHex> neighbours = new List<ParentHex>();
-
         if (poz.x > 0) neighbours.Add(_tilesInGame[poz.x - 1, poz.y]);
+        if (printDebugs) Debug.Log($"list count is {neighbours.Count} -- {poz.x - 1}, {poz.y}");
         if (poz.x < _dim.x - 1) neighbours.Add(_tilesInGame[poz.x + 1, poz.y]);
+        if (printDebugs) Debug.Log($"list count is {neighbours.Count} --  {poz.x + 1}, {poz.y}");
         if (poz.y > 0)
         {
             neighbours.Add(_tilesInGame[poz.x, poz.y - 1]);
+            if (printDebugs) Debug.Log($"list count is {neighbours.Count} --  {poz.x}, {poz.y - 1}");
             if (endCoordinate >= 0 && endCoordinate < _dim.x) neighbours.Add(_tilesInGame[endCoordinate, poz.y - 1]);
+            if (printDebugs)  Debug.Log($"list count is {neighbours.Count} --  {endCoordinate}, {poz.y - 1}");
         }
         if (poz.y < _dim.y - 1)
         {
             neighbours.Add(_tilesInGame[poz.x, poz.y + 1]);
+            if (printDebugs)  Debug.Log($"list count is {neighbours.Count} --  {poz.x}, {poz.y + 1}");
             if (endCoordinate >= 0 && endCoordinate < _dim.x) neighbours.Add(_tilesInGame[endCoordinate, poz.y + 1]);
+            if (printDebugs) Debug.Log($"list count is {neighbours.Count} --  {endCoordinate}, {poz.y + 1}");
 
         }
 
@@ -537,7 +552,7 @@ public class WindManager
 {
     public Vector3 gravityVector;
     [Sirenix.OdinInspector.ReadOnly] public Vector3 windVector;
-    const int CONST_WINDSCALE = 20;
+    const int CONST_WindScale = 20;
     [SerializeField] TextMeshProUGUI displayWindValue;
     [SerializeField] Transform windIcon;
     [SerializeField] Cloth flagCloth;
@@ -556,7 +571,7 @@ public class WindManager
             windIcon.localEulerAngles = -a * 90f * Vector3.forward;
             flagCloth.damping = 0f;
         }
-        windVector = new Vector3(newValue * CONST_WINDSCALE * 2f, 0f, 0f);
+        windVector = new Vector3(newValue * CONST_WindScale * 2f, 0f, 0f);
         displayWindValue.text = $"{Mathf.Abs(windVector.x).ToString("F0")} km/h";
         flagCloth.externalAcceleration = windVector;
         Physics.gravity = gravityVector + windVector;
@@ -569,10 +584,10 @@ public class DrawTrajectory
 {
     [SerializeField] LineRenderer trajectoryLr;
     [SerializeField] Gradient[] colorsTrajectory = new Gradient[2];
-    /*[Sirenix.OdinInspector.ReadOnly]*/ public bool showTrajectory;
-    readonly int _linePoints = 10;
-    readonly float _timeBetweenPoints = 0.1f;
-    const float CONST_MINY = -10;
+    [Sirenix.OdinInspector.ReadOnly] public bool showTrajectory;
+    const int CONST_LinePoints = 10;
+    const float CONST_TimeBetweenPoints = 0.1f;
+    const float CONST_MinY = -10;
 
     public void Trajectory(bool draw)
     {
@@ -589,21 +604,21 @@ public class DrawTrajectory
             return;
         }
         trajectoryLr.colorGradient = colorsTrajectory[(int)playerActive];
-        DrawPojection(spawnPoint, projectileMass, strength);
+        DrawProjection(spawnPoint, projectileMass, strength);
     }
 
 
 
-    void DrawPojection(Transform spawnPoint, float projectileMass, float throwStrength)
+    void DrawProjection(Transform spawnPoint, float projectileMass, float throwStrength)
     {
         trajectoryLr.enabled = true;
-        trajectoryLr.positionCount = Mathf.CeilToInt(_linePoints / _timeBetweenPoints) + 1;
+        trajectoryLr.positionCount = Mathf.CeilToInt(CONST_LinePoints / CONST_TimeBetweenPoints) + 1;
         Vector3 startPos = spawnPoint.position;
         Vector3 startVel = (throwStrength / projectileMass) * spawnPoint.forward;
 
         int i = 0;
         trajectoryLr.SetPosition(i, startPos);
-        for (float time = 0; time < _linePoints; time += _timeBetweenPoints)
+        for (float time = 0; time < CONST_LinePoints; time += CONST_TimeBetweenPoints)
         {
             i++;
             Vector3 point = startPos + time * startVel;
@@ -612,7 +627,7 @@ public class DrawTrajectory
             point.z = startPos.z + startVel.z * time + 0.5f * Physics.gravity.z * time * time;
             trajectoryLr.SetPosition(i, point);
 
-            if (point.y < CONST_MINY) //this should replace floor collider
+            if (point.y < CONST_MinY) //this should replace floor collider
             {
                 trajectoryLr.positionCount = i;
                 return;
@@ -632,7 +647,6 @@ public class LaunchVelocity
 {
     Vector3 _projectilePos, _targetPos, _gravity;
     float _maxHeight = 25f;
-  //  LineRenderer _lr;
     float _moveX, _moveZ;
 
     public Vector3 Vel(Vector3 projectile, Vector3 tar, Vector3 gravityWind)
@@ -648,7 +662,7 @@ public class LaunchVelocity
     }
 
 
-    LauncData CalculateLaunchData()
+    LaunchData CalculateLaunchData()
     {
         float displacementY = (_targetPos.y +0.12f) - _projectilePos.y;
         float timeTotal = Mathf.Sqrt(-2 * _maxHeight / _gravity.y) + Mathf.Sqrt(2 * (displacementY - _maxHeight) / _gravity.y);
@@ -661,17 +675,17 @@ public class LaunchVelocity
         Vector3 velXZ = displacementXZ / timeTotal;
 
 
-        return new LauncData(velXZ + velY * (-Mathf.Sign(_gravity.y)), timeTotal);
+        return new LaunchData(velXZ + velY * (-Mathf.Sign(_gravity.y)), timeTotal);
 
     }
 
 
-    struct LauncData
+    struct LaunchData
     {
         public Vector3 initialVel;
         public float time;
 
-        public LauncData(Vector3 initialVel, float time)
+        public LaunchData(Vector3 initialVel, float time)
         {
             this.initialVel = initialVel;
             this.time = time;
@@ -680,55 +694,25 @@ public class LaunchVelocity
 
 }
 
-[System.Serializable]
-class PowerUpsManager 
-{
-    [SerializeField] PowerUp powerUpPrefab; //no pooling
-    List<PowerUp> _allPowerUps = new List<PowerUp>();
-    [SerializeField] Transform[] spawnPoints;
-
-    public void Init()
-    {
-        for (int i = 0; i < spawnPoints.Length; i++)
-        {
-            spawnPoints[i].LookAt(1.5f * Vector3.up);
-            _allPowerUps.Add(GameObject.Instantiate(powerUpPrefab, spawnPoints[i].position, spawnPoints[i].rotation, spawnPoints[i]));
-            RdnMove(i);
-        }
-    }
-    
-    void RdnMove(int ordinal)
-    {
-        float moveSpeed = 1f;
-        float spread = 10f;
-        Vector3 rdn = Random.insideUnitCircle;
-        _allPowerUps[ordinal].MyMainTransform.DOLocalMove(spread * rdn, moveSpeed)
-            .SetSpeedBased(true)
-            .OnComplete(() =>
-            {
-                RdnMove(ordinal);
-            });
-    }
-}
 
 static class PlayerLeveling
 {
-    static int[] _xpMilestones = new int[] { 0, 250, 300, 500, 800, 1000, 1500, 2000, 2500, 3000 };
+    static int[] xpMilestones = new int[] { 0, 250, 300, 500, 800, 1000, 1500, 2000, 2500, 3000 };
 
     public static void CalculateLevelFromXp(out int lv, out int toNext)
     {
         int xp = PlayerPrefs.GetInt(Utils.Xp_Int);
 
-        for (int i = 0; i < _xpMilestones.Length; i++)
+        for (int i = 0; i < xpMilestones.Length; i++)
         {
-            if (xp < _xpMilestones[i])
+            if (xp < xpMilestones[i])
             {
                 lv = i;
-                toNext = _xpMilestones[i] - xp;
+                toNext = xpMilestones[i] - xp;
                 return;
             }
         }
-        lv =  _xpMilestones.Length;
+        lv =  xpMilestones.Length;
         toNext = 0;
     }
 
@@ -761,12 +745,13 @@ static class PlayerLeveling
         
         float Mod(int rank) => 1 + rank * 0.5f;
     }
+    
     #region DEBUG
     public static void GetMeToLevel(int targetLevel)
     {
         CalculateLevelFromXp(out int lv, out int toNext);
         if(targetLevel <= lv || targetLevel > 10) return;
-        PlayerPrefs.SetInt(Utils.Xp_Int, _xpMilestones[targetLevel - 1]);
+        PlayerPrefs.SetInt(Utils.Xp_Int, xpMilestones[targetLevel - 1]);
     }
     #endregion
 }
@@ -775,9 +760,9 @@ public class BowRack
 {
     [SerializeField] Transform meshTr;
     public Transform spawnPoint;
-    const float CONST_STARTY = -1.173f;
-    const int CONST_RISESPEED = 2;
-    const float CONST_FALLSPEED = 0.5f;
+    const float CONST_StartY = -1.173f;
+    const int CONST_RiseSpeed = 2;
+    const float CONST_FallSpeed = 0.5f;
     Tween _tRise, _tFall;
 
     void KillAllTweens()
@@ -788,7 +773,7 @@ public class BowRack
     public void EnterRack(System.Action callBackAtEnd)
     {
         KillAllTweens();
-       _tRise = meshTr.DOLocalMoveY(0f, CONST_RISESPEED)
+       _tRise = meshTr.DOLocalMoveY(0f, CONST_RiseSpeed)
                 .SetUpdate(UpdateType.Fixed)
                 .OnComplete(() =>
                 {
@@ -798,7 +783,7 @@ public class BowRack
     public void HideRack()
     {
         KillAllTweens();
-       _tFall = meshTr.DOLocalMoveY(CONST_STARTY, CONST_FALLSPEED);
+       _tFall = meshTr.DOLocalMoveY(CONST_StartY, CONST_FallSpeed);
     }
 
 }
@@ -957,3 +942,324 @@ public struct PlayerDataNet : System.IEquatable<PlayerDataNet>, INetworkSerializ
 //}
 
 //#endregion
+
+
+//
+// public class ParentHex : TileParent
+// {
+//     GameManager gm;
+//     [Title("Class specific")]
+//     public Transform center;
+//     [SerializeField] AudioSource aSource;
+//     [SerializeField] Transform parColliders, parDisplays, parSpritesOrange, parSpritesTeal;
+//     Collider2D[] _colliders;
+//     GameObject[] _displayValues;
+//     GameObject[] _spritesOrange, _spritesTeal;
+//     const int CONST_HexNum = 10;
+//
+//     [Title("Final Hex")]
+//     [SerializeField] Transform finalHexagonTransform;
+//     MeshRenderer _finalHexMesh;
+//     [SerializeField] TextMeshPro finalHexScore;
+//     [SerializeField] MeshRenderer finalHexFrameMesh;
+//
+//     public TileState Tstate
+//     {
+//         get => _tState;
+//         set
+//         {
+//             _tState = value;
+//             gm.hexStateNet[transform.GetSiblingIndex()] = (byte)value;
+//             switch (value)
+//             {
+//                 case TileState.Free: //can be hit
+//                     break;
+//                 case TileState.InActive: //disabled, not part of game
+//                     Utils.DeActivateGo(gameObject);
+//                     break;
+//                 case TileState.Taken: //can't be hit anymore
+//                     _allAnimationsDone?.Invoke();
+//                     for (int i = 0; i < CONST_HexNum; i++)
+//                     {
+//                         _colliders[i].enabled = false;
+//                     }
+//                     UpdateTakenHex_EveryoneRpc(CurrentValue);
+//                     gm.Scoring_ServerRpc();
+//                     gm.hexValNet[transform.GetSiblingIndex()] = CurrentValue;
+//                     break;
+//             }
+//
+//         }
+//     }
+//     public TileState startTs;
+//     
+//     [ShowInInspector] 
+//     [ReadOnly] 
+//     List<ParentHex> _myNeighbours;
+//
+//     /// <summary>
+//     /// Most important variable for this monobehaviour.
+//     /// Positive value means points for blue, negative is points for red.
+//     /// </summary>
+//     public sbyte CurrentValue
+//     {
+//         get => _currentValueNet.Value;
+//         private set
+//         {
+//            _currentValueNet.Value = value;
+//             sbyte positiveValue = (sbyte)Mathf.Abs(value);
+//             for (int i = 0; i < CONST_HexNum; i++)
+//             {
+//                 _colliders[i].enabled = i >= positiveValue;
+//             }
+//
+//             UpdateColors_EveryoneRpc(value);
+//
+//             if (positiveValue > 9)
+//             {
+//                 _currentValueNet.Value = _hitValue;
+//                 Tstate = TileState.Taken;
+//             }
+//             else UpdateTexts_EveryoneRpc(positiveValue);
+//
+//         }
+//     }
+//     NetworkVariable<sbyte> _currentValueNet = new NetworkVariable<sbyte>();
+//
+//
+//     sbyte PlayerModifier() => (sbyte)(gm.playerTurnNet.Value == PlayerColor.Blue ? 1 : -1);
+//     const float CONST_Time = 0.2f;
+//
+//     /// <summary>
+//     /// Turn is over after all this hex and all its neighbours have updated their 'CurrentValue'.
+//     /// </summary>
+//     int NeighboursCheckIn
+//     {
+//         get => _neighboursCheckIn;
+//         set
+//         {
+//             _neighboursCheckIn = value;
+//             gm.audioManager.PlaySFX(gm.audioManager.hexCounter, finalHexagonTransform);
+//             if (value <= 0) //all neighbours have finished their animations
+//             {
+//                 if (_oneShotNeighbourCheckIn) return;
+//                 _oneShotNeighbourCheckIn = true;
+//                 gm.NextPlayer_ServerRpc(false, "NeighboursCheckIn");
+//             }
+//         }
+//     }
+//     [ShowInInspector]
+//     [ReadOnly]
+//     int _neighboursCheckIn; 
+//     bool _oneShotNeighbourCheckIn; //safety bool, makes sure '_gm.NextPlayer()' is triggered only once, probably redundant
+//     System.Action _allAnimationsDone; //event used to communicate between hex and its neighbours
+//     sbyte _hitValue;
+//
+//     [HideInInspector] public int valueForBot; 
+//     [Title("Testing")]
+//     public sbyte hitValueTest = 8;
+//     [Button]
+//     void TestHit() => HexHit(hitValueTest, gm.playerTurnNet.Value);
+//
+//
+//     private void Awake()
+//     {
+//         gm = GameManager.Instance;
+//         _colliders = Utils.AllChildren<Collider2D>(parColliders);
+//         _displayValues = Utils.AllChildrenGameObjects(parDisplays);
+//         _spritesOrange = Utils.AllChildrenGameObjects(parSpritesOrange);
+//         _spritesTeal = Utils.AllChildrenGameObjects(parSpritesTeal);
+//         _finalHexMesh = finalHexagonTransform.GetComponent<MeshRenderer>();
+//     }
+//
+//     void Start()
+//     {
+//         Tstate = startTs;
+//         CurrentValue = 0;
+//     }
+//
+//
+//     public void HexHit(sbyte ordinal, PlayerColor arrowColor)
+//     {
+//         if (Tstate == TileState.InActive || Tstate == TileState.Taken) return;
+//
+//         gm.audioManager.PlayOnMyAudioSource(aSource, gm.audioManager.hexHit);
+//         int mod = arrowColor == PlayerColor.Blue ? 1 : -1;
+//         CurrentValue = _hitValue = (sbyte)(ordinal * mod);
+//         Tstate = TileState.Taken;
+//         Utils.ActivateOneArrayElement(_displayValues);
+//
+//         _myNeighbours = gm.gridManager.AllNeighbours(pos);
+//         NeighboursCheckIn = _myNeighbours.Count;
+//         if (_myNeighbours.Count == 0)
+//         {
+//             gm.NextPlayer_ServerRpc(false, "HexHit");
+//             return;
+//         }
+//         foreach (ParentHex item in _myNeighbours)
+//         {
+//             item.ActivateFromDirectHit(CurrentValue, () => NeighboursCheckIn--);
+//         }
+//     }
+//
+//     public void ClientLateJoin(byte stateFromByte, sbyte val)
+//     {
+//         sbyte positiveValue = (sbyte)Mathf.Abs(val);
+//         switch ((TileState)stateFromByte)
+//         {
+//             case TileState.Free:
+//                 switch (val)
+//                 {
+//                     case > 0:
+//                         spriteRenderer.enabled = false;
+//                         Utils.ActivateOneArrayElement(_displayValues, positiveValue);
+//                         _finalHexMesh.material = gm.playerDatas[0].matsHex[1];
+//                         Utils.ActivateOneArrayElement(_spritesTeal, positiveValue);
+//                         break;
+//                     case < 0:
+//                         spriteRenderer.enabled = false;
+//                         Utils.ActivateOneArrayElement(_displayValues, positiveValue);
+//                         _finalHexMesh.material = gm.playerDatas[1].matsHex[1];
+//                         Utils.ActivateOneArrayElement(_spritesOrange, positiveValue);
+//                         break;
+//                 }
+//                 break;
+//             case TileState.InActive:
+//                 Utils.DeActivateGo(gameObject);
+//                 return;
+//             case TileState.Taken:
+//                 if (positiveValue != 0)
+//                 {
+//                     spriteRenderer.enabled = false;
+//                     Utils.ActivateOneArrayElement(_spritesTeal);
+//                     Utils.ActivateOneArrayElement(_spritesOrange);
+//                     Utils.ActivateOneArrayElement(_displayValues);
+//                     finalHexScore.text = positiveValue.ToString();
+//                     finalHexScore.color = gm.playerDatas[val > 0 ? 0 : 1].colMain;
+//                     finalHexScore.enabled = true;
+//                     finalHexFrameMesh.material = gm.playerDatas[val > 0 ? 0 : 1].matMain;
+//                     finalHexFrameMesh.enabled = true;
+//                     finalHexagonTransform.localEulerAngles = new Vector3(60f, 90f, -90f);
+//                 }
+//                 if (val > 0) _finalHexMesh.material = gm.playerDatas[0].matsHex[1];
+//                 else _finalHexMesh.material = gm.playerDatas[1].matsHex[1];
+//                 break;
+//         }
+//
+//         enabled = false;
+//     }
+//
+//     #region RPC CALLS
+//     [Rpc(SendTo.Server)]
+//     void SetCurrentValue_ServerRpc(sbyte bat) =>  _currentValueNet.Value = bat;
+//     [Rpc(SendTo.Everyone)]
+//     void UpdateColors_EveryoneRpc(sbyte value)
+//     {
+//         sbyte positiveValue = (sbyte)Mathf.Abs(value);
+//         spriteRenderer.enabled = false;
+//         Utils.ActivateOneArrayElement(_spritesTeal);
+//         Utils.ActivateOneArrayElement(_spritesOrange);
+//         switch (value)
+//         {
+//             case > 0:
+//                 _finalHexMesh.material = gm.playerDatas[0].matsHex[1];
+//                 Utils.ActivateOneArrayElement(_spritesTeal, positiveValue);
+//                 break;
+//             case < 0:
+//                 _finalHexMesh.material = gm.playerDatas[1].matsHex[1];
+//                 Utils.ActivateOneArrayElement(_spritesOrange, positiveValue);
+//                 break;
+//             default:
+//                 _finalHexMesh.material = gm.playerDatas[2].matsHex[1];
+//                 spriteRenderer.enabled = true;
+//                 break;
+//         }
+//     }
+//     [Rpc(SendTo.Everyone)]
+//     void UpdateTexts_EveryoneRpc(sbyte val, bool hideAll = false)
+//     {
+//         if(hideAll) Utils.ActivateOneArrayElement(_displayValues);
+//         else Utils.ActivateOneArrayElement(_displayValues, val);
+//     }
+//
+//     [Rpc(SendTo.Everyone)]
+//     void HexAnimationFromPool_EveryoneRpc(Vector3 spawnPosition, sbyte val)
+//     {
+//         RingsPooled hr = gm.poolManager.GetHexRing();
+//         hr.SpawnMeOnClient(spawnPosition, val);
+//     }
+//     [Rpc(SendTo.Everyone)]
+//     void UpdateTakenHex_EveryoneRpc(sbyte val) 
+//     {
+//         spriteRenderer.enabled = false;
+//
+//         Utils.ActivateOneArrayElement(_spritesTeal);
+//         Utils.ActivateOneArrayElement(_spritesOrange);
+//         Utils.ActivateOneArrayElement(_displayValues);
+//         finalHexScore.text = Mathf.Abs(val).ToString();
+//         finalHexScore.color = gm.playerDatas[val > 0 ? 0 : 1].colMain;
+//         finalHexScore.enabled = true;
+//         finalHexFrameMesh.material = gm.playerDatas[val > 0 ? 0 : 1].matMain;
+//         finalHexFrameMesh.enabled = true;
+//
+//         finalHexagonTransform.DOLocalRotate(new Vector3(60f, 90f, -90f), CONST_Time);
+//     }
+//     #endregion
+//
+//
+//     #region NEIGHBOUR BEHAVIOUR 
+//     /// <summary>
+//     /// This method is called if one of its neighbour is hit directly.
+//     /// </summary>
+//     /// <param name="hitValue">Hit value of hit neighbour.</param>
+//     /// <param name="callbackFinishedAnimation">Reports to 'ParentHex' that started it, that animation is done and 'CurrentValue' is updated.</param>
+//     void ActivateFromDirectHit(sbyte hitValue, System.Action callbackFinishedAnimation)
+//     {
+//         _hitValue = (sbyte)(hitValue + CurrentValue);
+//         _allAnimationsDone = callbackFinishedAnimation;
+//         CheckCurrentValue();
+//     }
+//     
+//
+//     /// <summary>
+//     /// This method and 'AnimateHexagon' call each other until 'CurrentValue' is updated.
+//     /// This should be done in one frame (and one method) but is separated because of animations
+//     /// </summary>
+//     void CheckCurrentValue()
+//     {
+//         if (Tstate == TileState.Taken) return;
+//
+//         if (_hitValue > CurrentValue) //blue
+//         {
+//             if (_hitValue != CurrentValue) AnimateHexagon(CurrentValue >= 0, 1);
+//         }
+//         else if (_hitValue < CurrentValue) //red
+//         {
+//             if (_hitValue != CurrentValue) AnimateHexagon(CurrentValue <= 0, -1);
+//         }
+//         else
+//         {
+//             _allAnimationsDone?.Invoke();
+//             _allAnimationsDone = null;
+//             gm.hexValNet[transform.GetSiblingIndex()] = CurrentValue;
+//         }
+//
+//     }
+//     void AnimateHexagon(bool increase, sbyte currValueChange)
+//     {
+//         if (Tstate == TileState.Taken) return;
+//
+//         RingsPooled hr = gm.poolManager.GetHexRing();
+//         hr.SpawnMe(center.position, CurrentValue, () =>
+//         {
+//             CurrentValue += currValueChange;
+//             CheckCurrentValue();
+//         });
+//         HexAnimationFromPool_EveryoneRpc(center.position, CurrentValue);
+//         if (CurrentValue == 0) return;
+//         if (increase) UpdateColors_EveryoneRpc((sbyte)(CurrentValue + currValueChange));
+//         else UpdateColors_EveryoneRpc((sbyte)(CurrentValue - currValueChange));
+//     }
+//
+//     #endregion
+// }

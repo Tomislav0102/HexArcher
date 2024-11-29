@@ -273,7 +273,7 @@ MonoBehaviour:
   notch: {fileID: 3999930513923672223}
   power: 0
   controllerPullingString: 0
-  vRSimulation: 0
+  vRSimulation: 1
 --- !u!65 &8607031984092272521
 BoxCollider:
   m_ObjectHideFlags: 0

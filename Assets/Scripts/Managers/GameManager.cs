@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
 using TMPro;
+using Unity.Collections;
 using Unity.Netcode;
 using Unity.Properties;
 using UnityEngine.Serialization;
@@ -58,8 +59,8 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<PlayerColor> playerTurnNet = new NetworkVariable<PlayerColor>();
     public NetworkVariable<PlayerColor> playerVictoriousNet = new NetworkVariable<PlayerColor>();
     public NetworkList<int> scoreNet; //can't initialize here (unity bug)
-    public NetworkList<byte> hexStateNet;
-    public NetworkList<sbyte> hexValNet;
+    public NetworkList<byte> gridTileStatesNet;
+    public NetworkList<sbyte> gridValuesNet;
     public NetworkVariable<float> windAmountNet = new NetworkVariable<float>();
     public NetworkVariable<bool> trajectoryVisible = new NetworkVariable<bool>();
 
@@ -72,8 +73,8 @@ public class GameManager : NetworkBehaviour
         _matsSkyboxSp = Resources.LoadAll<Material>("Skybox materials SP");
 
         scoreNet = new NetworkList<int>(new List<int>()); //must be initialized in Awake
-        hexStateNet = new NetworkList<byte>(new List<byte>());
-        hexValNet = new NetworkList<sbyte>(new List<sbyte>());
+        gridTileStatesNet = new NetworkList<byte>(new List<byte>());
+        gridValuesNet = new NetworkList<sbyte>(new List<sbyte>());
         indexInSo = NetworkManager.Singleton.IsHost ? 0 : 1;
     }
 
@@ -105,7 +106,6 @@ public class GameManager : NetworkBehaviour
             ChangeVisualMarkers_EveryoneRpc(playerTurnNet.Value);
             Utils.DeActivateGo(botManager.gameObject);
         }
-        NetworkManager.NetworkTickSystem.Tick += NetworkTick;
         Utils.FadeOut?.Invoke(true);
         audioManager.PlaySFX(audioManager.gameStarted);
 
@@ -130,7 +130,6 @@ public class GameManager : NetworkBehaviour
         {
             NetworkManager.Singleton.OnClientDisconnectCallback -= CallEv_ClientDisconnected;
         }
-        NetworkManager.NetworkTickSystem.Tick -= NetworkTick;
     }
 
     IEnumerator Countdown()
@@ -198,11 +197,6 @@ public class GameManager : NetworkBehaviour
 
 
     #region CALL EVENTS
-    void NetworkTick()
-    {
-        // print($"Tick: {NetworkManager.LocalTime.Tick}");
-    }
-
     private void CallEv_ClientDisconnected(ulong obj)
     {
         //  print($"client {obj} disconnected, num of clients is {NetworkManager.Singleton.ConnectedClients.Count}");
@@ -338,21 +332,27 @@ public class GameManager : NetworkBehaviour
     #endregion
 
     #region GAME FLOW
+    [Rpc(SendTo.NotMe)]
+    public void SetGridTileStateNet_NotMeRpc(byte ord, byte value)
+    {
+        gridManager.AssignTileState(ord, value);
+        SetGridTileStateNet_ServerRpc(ord, value);
+    }
     [Rpc(SendTo.Server)]
-    public void SetHexStateNet_ServerRpc(int ord, byte value) => hexStateNet[ord] = value;
+    void SetGridTileStateNet_ServerRpc(byte ord, byte value) => gridTileStatesNet[ord] = value;
 
     [Rpc(SendTo.Server)]
-    public void SetHexValNet_ServerRpc(int ord, sbyte value) => hexValNet[ord] = value;
+    public void SetGridValuesNet_ServerRpc(byte ord, sbyte value) => gridValuesNet[ord] = value;
 
     [Rpc(SendTo.Everyone)]
     void ChangeVisualMarkers_EveryoneRpc(PlayerColor newValue)
     {
         for (int i = 0; i < 2; i++)
         {
-            scoreVisualMarker[i].SetActive(false);
+            Utils.DeActivateGo(scoreVisualMarker[i]);
             playerMeshMarker[i].material = playerDatas[(int)newValue].matMain;
         }
-        scoreVisualMarker[(int)newValue].SetActive(true);
+        Utils.ActivateGo(scoreVisualMarker[(int)newValue]);
     }
 
     [Rpc(SendTo.Server)]
@@ -380,26 +380,29 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.Server)]
     public void Scoring_ServerRpc()
     {
-       // if (playerVictoriousNet.Value != PlayerColor.Undefined) return;
        if ((int)(playerVictoriousNet.Value) < 2) return; //is gameover
-
+        bool useConsole = false;
         List<int> scoresTemp = new List<int>() { 0, 0 };
-        List<ParentHex> freeHex = gridManager.AllTilesByType(TileState.Taken);
-        foreach (ParentHex item in freeHex)
+        List<ParentHex> takenHex = gridManager.AllTilesByType(TileState.Taken);
+        if(useConsole) print($"taken hex {takenHex.Count}");
+        foreach (ParentHex item in takenHex)
         {
             switch (item.CurrentValue)
             {
                 case > 0:
                     scoresTemp[0] += item.CurrentValue;
+                    if(useConsole) print("plus");
                     break;
                 case < 0:
                     scoresTemp[1] -= item.CurrentValue;
+                    if(useConsole) print("minus");
                     break;
             }
         }
 
         for (int i = 0; i < scoreNet.Count; i++)
-        {
+        { 
+            if(useConsole) print(scoresTemp[i]);
             scoreNet[i] = scoresTemp[i];
         }
 
@@ -430,16 +433,6 @@ public class GameManager : NetworkBehaviour
         }
         else playerVictoriousNet.Value = PlayerColor.None;
     }
-
-    [Rpc(SendTo.Server)]
-    public void Destroy_ServerRpc(NetworkObjectReference networkObjectReference)
-    {
-        if (networkObjectReference.TryGet(out NetworkObject no))
-        {
-            no.Despawn();
-        }
-    }
-
     #endregion
 
     #region DEBUGS
@@ -478,19 +471,26 @@ public class GameManager : NetworkBehaviour
     [ContextMenu("Red wins")]
     void Metoda8() => playerVictoriousNet.Value = PlayerColor.Red;
 
-    [ContextMenu("hexStateNet count")]
-    void Metoda9() => print(hexStateNet.Count);
-
-    [ContextMenu("hexValNet count")]
-    void Metoda10() => print(hexValNet.Count);
-
-    [ContextMenu("_tilesInGame count")]
+    [ContextMenu("hex data")]
     void Metoda11()
     {
-        print(gridManager._tilesInGame.Length);
-        print(gridManager._tilesInGame.LongLength);
-        
+        string st = "all states and values:\n";
+        for (int i = 0; i < 100; i++)
+        {
+            if (gridTileStatesNet[i] == 0 && gridValuesNet[i] == 0) continue;
+            st += $"state is {(TileState)gridTileStatesNet[i]}, value is {gridValuesNet[i]}, ordinal is {i}\n";
+        }
+        print(st);
     }
+    [ContextMenu("Scores")]
+    void Metoda12()
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            print(scoreNet[i]);
+        }
+    }
+
     #endregion
 }
 

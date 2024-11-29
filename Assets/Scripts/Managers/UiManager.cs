@@ -75,18 +75,18 @@ public class UiManager : NetworkBehaviour
         {
             displayJoinCode.enabled = true;
             displayJoinCode.text = $"Join code: {Launch.Instance.myLobbyManager.relayCode}";
-            NetworkManager.Singleton.OnClientConnectedCallback += CallEv_ClinetConnected;
-            NetworkManager.Singleton.OnClientDisconnectCallback += CallEv_ClentDisconnected;
+            NetworkManager.Singleton.OnClientConnectedCallback += CallEv_ClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback += CallEv_ClientDisconnected;
         }
         
     }
 
 
-    void CallEv_ClinetConnected(ulong obj)
+    void CallEv_ClientConnected(ulong obj)
     {
         displayJoinCode.text = "";
     }
-    void CallEv_ClentDisconnected(ulong obj)
+    void CallEv_ClientDisconnected(ulong obj)
     {
         displayJoinCode.text = $"Join code: {Launch.Instance.myLobbyManager.relayCode}";
     }
@@ -110,8 +110,8 @@ public class UiManager : NetworkBehaviour
         gm.scoreNet.OnListChanged -= NetVarEv_ScoreChange;
         if (IsHost && Utils.GameType == MainGameType.Multiplayer)
         {
-            NetworkManager.Singleton.OnClientConnectedCallback -= CallEv_ClinetConnected;
-            NetworkManager.Singleton.OnClientDisconnectCallback -= CallEv_ClentDisconnected;
+            NetworkManager.Singleton.OnClientConnectedCallback -= CallEv_ClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= CallEv_ClientDisconnected;
         }
 
         base.OnNetworkDespawn();

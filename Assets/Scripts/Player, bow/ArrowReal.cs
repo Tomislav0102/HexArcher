@@ -96,9 +96,6 @@ public class ArrowReal : ArrowMain
         _hitCollider = _hit2D.collider;
         if (_hitCollider != null && _hitCollider.TryGetComponent(out ITargetForArrow tar))
         {
-          //  print(gm.playerDatas[gm.indexInSo].playerColor);
-          //  tar.HitMe(gm.playerDatas[gm.indexInSo].playerColor);
-          print(gm.playerTurnNet.Value);
             tar.HitMe(gm.playerTurnNet.Value);
             _oneHitNextPlayer = true;
             EndMe(($"arrow hit {_hitCollider.name}"));
