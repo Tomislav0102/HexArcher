@@ -1,0 +1,193 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7480413632692557483
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8330756705634300498}
+  - component: {fileID: 8969905156355441757}
+  - component: {fileID: 347728365507364977}
+  m_Layer: 0
+  m_Name: Game Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8330756705634300498
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7480413632692557483}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8969905156355441757
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7480413632692557483}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 3254234952
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+--- !u!114 &347728365507364977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7480413632692557483}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e663f4f808943140a970c065e501da2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  indexInSo: 0
+  playerDatas:
+  - {fileID: 11400000, guid: 61dd7ead418ec0641a0824dec3afad15, type: 2}
+  - {fileID: 11400000, guid: 574fc70eed2788d43bbffe5349b73be6, type: 2}
+  - {fileID: 11400000, guid: 06b80dd6640138a48abbe9a1bda5b599, type: 2}
+  uImanager: {fileID: 0}
+  audioManager: {fileID: 0}
+  bowRacks:
+  - meshTr: {fileID: 0}
+    spawnPoint: {fileID: 0}
+  - meshTr: {fileID: 0}
+    spawnPoint: {fileID: 0}
+  botManager: {fileID: 0}
+  gridManager:
+    levelToCreate: {fileID: 0}
+    containerFinal: {fileID: 0}
+    scale: 0.2
+  poolManager:
+    parHexRings: {fileID: 0}
+  windManager:
+    gravityVector: {x: 0, y: -9.81, z: 0}
+    windVector: {x: 0, y: 0, z: 0}
+    displayWindValue: {fileID: 0}
+    windIcon: {fileID: 0}
+    flagCloth: {fileID: 0}
+  drawTrajectory:
+    trajectoryLr: {fileID: 0}
+    colorsTrajectory:
+    - serializedVersion: 2
+      key0: {r: 0.33333334, g: 0.9607843, b: 1, a: 1}
+      key1: {r: 0.33333334, g: 0.9607843, b: 1, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: 0
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    - serializedVersion: 2
+      key0: {r: 1, g: 0.49411765, b: 0.2509804, a: 1}
+      key1: {r: 1, g: 0.49411765, b: 0.2509804, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: 0
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    showTrajectory: 0
+  layTargets:
+    serializedVersion: 2
+    m_Bits: 65536
+  layForTrajectory:
+    serializedVersion: 2
+    m_Bits: 589825
+  layBow:
+    serializedVersion: 2
+    m_Bits: 8192
+  layHands:
+    serializedVersion: 2
+    m_Bits: 16384
+  prefabPlayer: {fileID: 1856004313744711676, guid: e9cdb009a1f64dc4e8216c509a81a39b, type: 3}
+  prefabArrowReal: {fileID: 5423421532028743676, guid: a9b8b9e9791e5ee41857c7abb13fdbaf, type: 3}
+  prefabArrowShadow: {fileID: 8057447922751399955, guid: 763f74b72017f704f9867eb56de4f6d2, type: 3}
+  arrowReal: {fileID: 0}
+  arrowShadow: {fileID: 0}
+  forceArrow: 0
+  prefabBow: {fileID: 7771739351024192724, guid: 4cedc315e31267642abf0fd40b926b0f, type: 3}
+  bowTablesNet:
+  - {fileID: 0}
+  - {fileID: 0}
+  playerMeshMarker:
+  - {fileID: 0}
+  - {fileID: 0}
+  scoreVisualMarker:
+  - {fileID: 0}
+  - {fileID: 0}
+  difficultyNet:
+    m_InternalValue: 0
+  playerTurnNet:
+    m_InternalValue: 0
+  playerVictoriousNet:
+    m_InternalValue: 0
+  windAmountNet:
+    m_InternalValue: 0
+  trajectoryVisible:
+    m_InternalValue: 0

@@ -15,10 +15,10 @@ public class BowControl : MonoBehaviour
     [SerializeField] Transform attachPoint;
     [SerializeField] BoxCollider myCollider;
     Transform _rackParent;
-
+    bool _oneHitStartRackMoving;
     Vector3 _diffPos, _lastPosition;
-    const float CONST_MINY = -2f;
-    const int CONST_THROWVELOCITY = 80;
+    const float CONST_MinY = -2f;
+    const int CONST_ThrowVelocity = 80;
 
     public BowState Bstate
     {
@@ -49,7 +49,7 @@ public class BowControl : MonoBehaviour
                     playerControl.shooting.ReleaseString();
                     interactor = null;
                     myRigid.isKinematic = false;
-                    myRigid.velocity = CONST_THROWVELOCITY * _diffPos;
+                    myRigid.velocity = CONST_ThrowVelocity * _diffPos;
                     break;
             }
         }
@@ -67,11 +67,11 @@ public class BowControl : MonoBehaviour
     }
     private void OnEnable()
     {
-        Utils.GameStarted += ReturnBowToRack;
+        Utils.GameStarted += ReturnBowToRack_Initial;
     }
     private void OnDisable()
     {
-        Utils.GameStarted -= ReturnBowToRack;
+        Utils.GameStarted -= ReturnBowToRack_Initial;
     }
 
     private void Update()
@@ -88,7 +88,7 @@ public class BowControl : MonoBehaviour
                 _lastPosition = myTransform.position;
                 break;
             case BowState.Free:
-                if (myTransform.position.y < CONST_MINY) ReturnBowToRack();
+                if (myTransform.position.y < CONST_MinY) ReturnBowToRack();
                 break;
         }
 
@@ -101,6 +101,12 @@ public class BowControl : MonoBehaviour
         {
             Bstate = BowState.RackDone;
         });
+    }
 
+    void ReturnBowToRack_Initial()
+    {
+        if(_oneHitStartRackMoving) return;
+        _oneHitStartRackMoving = true;
+        ReturnBowToRack();
     }
 }

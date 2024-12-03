@@ -75,7 +75,7 @@ public class MySceneManager : NetworkBehaviour
         {
             Launch.Instance.myLobbyManager.ClientDisconnectingRpc(AuthenticationService.Instance.PlayerId);
         }
-        StartCoroutine(NewSceneAfterFadeIn(MainGameType.MainMenu));
+        StartCoroutine(NewSceneAfterFadeIn(MainGameType.MainMenu, true));
         base.OnNetworkDespawn();
         UnSubscribeAll();
     }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -10,11 +11,12 @@ public class UiManager : NetworkBehaviour
 {
     GameManager gm;
     [SerializeField] GameObject canvasMain;
-    [SerializeField] TextMeshProUGUI[] displayScores;
+    [SerializeField] TextMeshProUGUI[] displayScores, displayEndScores;
     [SerializeField] Button[] btnsExit, btnsRestart;
     [SerializeField] GameObject[] canvasElements;
     public TextMeshProUGUI displayStartInfo;
-    [SerializeField] TextMeshProUGUI displayJoinCode;
+    [SerializeField] TextMeshProUGUI displayJoinCode, displayEarnedXp;
+    [SerializeField] GameObject endInfos;
     [Title("Tutorial")]
     [SerializeField] Button[] btnsTutorailDone;
     bool _oneHitExitScene;
@@ -25,6 +27,7 @@ public class UiManager : NetworkBehaviour
         Utils.ActivateOneArrayElement(canvasElements);
     }
 
+    
     public override void OnNetworkSpawn()
     {
         if (Utils.PracticeSp)
@@ -55,7 +58,8 @@ public class UiManager : NetworkBehaviour
         }
 
         gm.playerVictoriousNet.OnValueChanged += NetVarEv_PlayerVictorious;
-        gm.scoreNet.OnListChanged += NetVarEv_ScoreChange;
+       gm.scoreBlueNet.OnValueChanged += NetVarEv_ScoreChange;
+       gm.scoreRedNet.OnValueChanged += NetVarEv_ScoreChange;
 
         displayJoinCode.enabled = false;
         if (!IsHost)
@@ -65,10 +69,7 @@ public class UiManager : NetworkBehaviour
                 btnsRestart[i].gameObject.SetActive(false);
             }
 
-            for (int i = 0; i < 2; i++) //update scores
-            {
-                displayScores[i].text = gm.scoreNet[i].ToString();
-            }
+            Invoke(nameof(ScoreDisplaying), 0.3f); //unity bug
             displayStartInfo.enabled = false;
         }
         else if (Utils.GameType == MainGameType.Multiplayer)
@@ -80,6 +81,7 @@ public class UiManager : NetworkBehaviour
         }
         
     }
+
 
 
     void CallEv_ClientConnected(ulong obj)
@@ -107,7 +109,9 @@ public class UiManager : NetworkBehaviour
         }
 
         gm.playerVictoriousNet.OnValueChanged -= NetVarEv_PlayerVictorious;
-        gm.scoreNet.OnListChanged -= NetVarEv_ScoreChange;
+        gm.scoreBlueNet.OnValueChanged -= NetVarEv_ScoreChange;
+        gm.scoreRedNet.OnValueChanged -= NetVarEv_ScoreChange;
+
         if (IsHost && Utils.GameType == MainGameType.Multiplayer)
         {
             NetworkManager.Singleton.OnClientConnectedCallback -= CallEv_ClientConnected;
@@ -126,14 +130,6 @@ public class UiManager : NetworkBehaviour
         _oneHitExitScene = true;
 
         gm.audioManager.PlaySFX(gm.audioManager.uiButton);
-
-        switch (Utils.GameType)
-        {
-            case MainGameType.Singleplayer:
-                break;
-            case MainGameType.Multiplayer:
-                break;
-        }
         NetworkManager.Singleton.Shutdown();
     }
 
@@ -144,6 +140,7 @@ public class UiManager : NetworkBehaviour
         if (_oneHitExitScene) return;
         _oneHitExitScene = true;
         gm.audioManager.PlaySFX(gm.audioManager.uiButton);
+        
         MainGameType mainGameType = NetworkManager.Singleton.ConnectedClients.Count > 1 ? MainGameType.Multiplayer : MainGameType.Singleplayer;
         StartCoroutine(Launch.Instance.mySceneManager.NewSceneAfterFadeIn(mainGameType, true));
     }
@@ -156,22 +153,31 @@ public class UiManager : NetworkBehaviour
         Utils.GameStarted?.Invoke();
     }
 
-    private void NetVarEv_ScoreChange(NetworkListEvent<int> changeEvent)
+    private void NetVarEv_ScoreChange(int previousvalue, int newvalue) => ScoreDisplaying();
+
+    void ScoreDisplaying()
     {
-        displayScores[changeEvent.Index].text = changeEvent.Value.ToString();
+        displayScores[0].text = gm.scoreBlueNet.Value.ToString();
+        displayScores[1].text = gm.scoreRedNet.Value.ToString();
+        displayEndScores[0].text = gm.scoreBlueNet.Value.ToString();
+        displayEndScores[1].text = gm.scoreRedNet.Value.ToString();
     }
+
 
     private void NetVarEv_PlayerVictorious(PlayerColor previousValue, PlayerColor newValue)
     {
         if (newValue == PlayerColor.Undefined) return;
-        canvasElements[0].SetActive(false);
-        canvasElements[1].SetActive(true);
-        canvasElements[2].SetActive(false);
+        
+        Utils.DeActivateGo(canvasElements[0]);
+        Utils.ActivateGo(canvasElements[1]);
+        Utils.DeActivateGo(canvasElements[2]);
         Transform tr = canvasElements[1].transform;
         for (int i = 0; i < tr.childCount; i++)
         {
-            tr.GetChild(i).gameObject.SetActive(false);
+            Utils.DeActivateGo(tr.GetChild(i).gameObject);
         }
+        
+        int currentXp = PlayerPrefs.GetInt(Utils.Xp_Int);
         switch (newValue)
         {
             case PlayerColor.Blue:
@@ -203,6 +209,9 @@ public class UiManager : NetworkBehaviour
                 PlayerLeveling.AddToXp(GenFinish.Draw);
                 break;
         }
+        Utils.ActivateGo(endInfos);
+        int xpEarned = PlayerPrefs.GetInt(Utils.Xp_Int) - currentXp;
+        displayEarnedXp.text = $"You've earned {xpEarned} XP!";
     }
 
 

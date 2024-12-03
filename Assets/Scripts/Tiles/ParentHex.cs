@@ -15,6 +15,7 @@ public class ParentHex : TileParent
 
     [SerializeField] AudioSource aSource;
     [SerializeField] Transform parColliders, parDisplays, parSpritesOrange, parSpritesTeal;
+    [SerializeField] GameObject trajectoryCollider;
     Collider2D[] _colliders;
     GameObject[] _displayValues;
     GameObject[] _spritesOrange, _spritesTeal;
@@ -28,13 +29,14 @@ public class ParentHex : TileParent
     [SerializeField] TextMeshPro finalHexScore;
     [SerializeField] MeshRenderer finalHexFrameMesh;
 
+    
     public TileState Tstate
     {
         get => _tState;
-        set
+        private set
         {
             _tState = value;
-            gm.SetGridTileStateNet_NotMeRpc(_mySiblingsIndex, (byte)_tState);
+            gm.SetGridTileStateNet_ServerRpc(_mySiblingsIndex, (byte)_tState);
             HexDefinition_EveryoneRpc((byte)_tState, CurrentValue);
             gm.Scoring_ServerRpc();
             switch (_tState)
@@ -42,7 +44,7 @@ public class ParentHex : TileParent
                 case TileState.Free:
                     break;
                 case TileState.InActive:
-                    Utils.DeActivateGo(gameObject);
+                    InactiveHex();
                     return;
                 case TileState.Taken:
                     _allAnimationsDone?.Invoke();
@@ -110,7 +112,7 @@ public class ParentHex : TileParent
     public sbyte hitValueTest = 8;
 
     [Button]
-    void TestHit() => HexHit(hitValueTest, gm.playerTurnNet.Value);
+    void TestHit() => HexHit(hitValueTest);
 
 
     private void Awake()
@@ -124,23 +126,32 @@ public class ParentHex : TileParent
         _mySiblingsIndex = (byte)transform.GetSiblingIndex();
     }
 
-
-    public void HexHit(sbyte ordinal, PlayerColor arrowColor)
+    void InactiveHex()
+    {
+        spriteRenderer.enabled = false;
+        Utils.DeActivateGo(parColliders.gameObject);
+        Utils.DeActivateGo(parDisplays.gameObject);
+        Utils.DeActivateGo(parSpritesOrange.gameObject);
+        Utils.DeActivateGo(parSpritesTeal.gameObject);
+        Utils.DeActivateGo(finalHexagonTransform.gameObject);
+        Utils.DeActivateGo(trajectoryCollider);
+    }
+    public void HexHit(sbyte ordinal)
     {
         if (Tstate == TileState.InActive || Tstate == TileState.Taken) return;
         gm.audioManager.PlayOnMyAudioSource(aSource, gm.audioManager.hexHit);
 
-        int mod = arrowColor == PlayerColor.Blue ? 1 : -1;
+        int mod = gm.playerTurnNet.Value == PlayerColor.Blue ? 1 : -1;
         CurrentValue = _hitValue = (sbyte)(ordinal * mod);
         Tstate = TileState.Taken;
 
         _myNeighbours = gm.gridManager.AllNeighbours(pos);
-        NeighboursCheckIn = _myNeighbours.Count;
         if (_myNeighbours.Count == 0)
         {
             gm.NextPlayer_ServerRpc(false, "HexHit");
             return;
         }
+        NeighboursCheckIn = _myNeighbours.Count;
         foreach (ParentHex item in _myNeighbours)
         {
             item.ActivateFromDirectHit(CurrentValue, () => NeighboursCheckIn--);
@@ -149,6 +160,9 @@ public class ParentHex : TileParent
 
     public void HexDefinition(byte tileStateByte, sbyte valueByte)
     {
+        _tState = (TileState)tileStateByte;
+        _currentValue = valueByte;
+
         sbyte positiveValue = (sbyte)Mathf.Abs(valueByte);
         finalHexScore.enabled = false;
         spriteRenderer.enabled = false;
@@ -186,7 +200,7 @@ public class ParentHex : TileParent
                 break;
 
             case TileState.InActive:
-                Utils.DeActivateGo(gameObject);
+                InactiveHex();
                 return;
 
             case TileState.Taken:
@@ -207,8 +221,6 @@ public class ParentHex : TileParent
                 break;
         }
         
-        _tState = (TileState)tileStateByte;
-        _currentValue = valueByte;
     }
 
     [Rpc(SendTo.Everyone)]

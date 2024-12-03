@@ -58,7 +58,8 @@ public class GameManager : NetworkBehaviour
 
     public NetworkVariable<PlayerColor> playerTurnNet = new NetworkVariable<PlayerColor>();
     public NetworkVariable<PlayerColor> playerVictoriousNet = new NetworkVariable<PlayerColor>();
-    public NetworkList<int> scoreNet; //can't initialize here (unity bug)
+    public NetworkVariable<int> scoreBlueNet = new NetworkVariable<int>();
+    public NetworkVariable<int> scoreRedNet = new NetworkVariable<int>();
     public NetworkList<byte> gridTileStatesNet;
     public NetworkList<sbyte> gridValuesNet;
     public NetworkVariable<float> windAmountNet = new NetworkVariable<float>();
@@ -72,7 +73,6 @@ public class GameManager : NetworkBehaviour
 
         _matsSkyboxSp = Resources.LoadAll<Material>("Skybox materials SP");
 
-        scoreNet = new NetworkList<int>(new List<int>()); //must be initialized in Awake
         gridTileStatesNet = new NetworkList<byte>(new List<byte>());
         gridValuesNet = new NetworkList<sbyte>(new List<sbyte>());
         indexInSo = NetworkManager.Singleton.IsHost ? 0 : 1;
@@ -86,10 +86,6 @@ public class GameManager : NetworkBehaviour
         {
             gridManager.ChooseGrid();
             difficultyNet.Value = (GenLevel)PlayerPrefs.GetInt(Utils.Difficulty_Int);
-            for (int i = 0; i < 2; i++)
-            {
-                scoreNet.Add(0);
-            }
             _skyboxIndexNet.Value = (byte)Random.Range(0, _matsSkyboxSp.Length);
             playerVictoriousNet.Value = PlayerColor.Undefined;
             playerTurnNet.OnValueChanged += NetVarEv_PlayerTurnChange;
@@ -116,11 +112,6 @@ public class GameManager : NetworkBehaviour
         windManager.WindChange(float.MinValue, windAmountNet.Value);
         windAmountNet.OnValueChanged += windManager.WindChange;
         drawTrajectory.showTrajectory = trajectoryVisible.Value;
-
-        if (Utils.GameType == MainGameType.Singleplayer && !Utils.PracticeSp)
-        {
-            Utils.GameStarted?.Invoke();
-        }
     }
 
     public override void OnNetworkDespawn()
@@ -162,8 +153,8 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.Everyone)]
     void ClearAllArrows_EveryoneRpc()
     {
-         if (arrowReal != null) Destroy(arrowReal.gameObject);
-         if (arrowShadow != null) Destroy(arrowShadow.gameObject);
+        if (arrowReal != null) Destroy(arrowReal.gameObject);
+        if (arrowShadow != null) Destroy(arrowShadow.gameObject);
     }
 
     public void SpawnRealArrow(Vector3 pos, Quaternion rot)
@@ -171,10 +162,11 @@ public class GameManager : NetworkBehaviour
         arrowReal = Instantiate(prefabArrowReal, pos, rot).GetComponent<ArrowMain>();
         SpawnShadowArrow_NotMeRpc(pos, rot);
     }
+
     [Rpc(SendTo.NotMe)]
     void SpawnShadowArrow_NotMeRpc(Vector3 pos, Quaternion rot)
     {
-       // print("ShadowArrow_NotMeRpc spawned");
+        // print("ShadowArrow_NotMeRpc spawned");
         //  ClearAllArrows_EveryoneRpc();
         GameObject go = Instantiate(prefabArrowShadow, pos, rot);
         arrowShadow = go.GetComponent<ArrowMain>();
@@ -186,15 +178,13 @@ public class GameManager : NetworkBehaviour
     {
         if (arrowShadow == null)
         {
-           // print("ShadowArrow_NotMeRpc is null");
+            // print("ShadowArrow_NotMeRpc is null");
             return;
         }
         arrowShadow.myTransform.SetPositionAndRotation(pos, rot);
         arrowShadow.SetTrail();
     }
     #endregion
-
-
 
     #region CALL EVENTS
     private void CallEv_ClientDisconnected(ulong obj)
@@ -213,6 +203,8 @@ public class GameManager : NetworkBehaviour
             Utils.DeActivateGo(playerDatas[i].playerControl.bowControl.gameObject);
         }
         if (Utils.GameType == MainGameType.Multiplayer && NetworkManager.Singleton.ConnectedClients.Count > 1) PlayerVictorious_EveryoneRpc(newValue);
+        
+        botManager.EndBot();
     }
 
     [Rpc(SendTo.Everyone)]
@@ -332,14 +324,8 @@ public class GameManager : NetworkBehaviour
     #endregion
 
     #region GAME FLOW
-    [Rpc(SendTo.NotMe)]
-    public void SetGridTileStateNet_NotMeRpc(byte ord, byte value)
-    {
-        gridManager.AssignTileState(ord, value);
-        SetGridTileStateNet_ServerRpc(ord, value);
-    }
     [Rpc(SendTo.Server)]
-    void SetGridTileStateNet_ServerRpc(byte ord, byte value) => gridTileStatesNet[ord] = value;
+    public void SetGridTileStateNet_ServerRpc(byte ord, byte value) => gridTileStatesNet[ord] = value;
 
     [Rpc(SendTo.Server)]
     public void SetGridValuesNet_ServerRpc(byte ord, sbyte value) => gridValuesNet[ord] = value;
@@ -374,37 +360,33 @@ public class GameManager : NetworkBehaviour
         int val = (int)playerTurnNet.Value;
         val = (1 + val) % 2;
         playerTurnNet.Value = (PlayerColor)val;
-        // print($"next player is { playerTurnNet.Value }, called by {caller}");
+        //  print($"next player is { playerTurnNet.Value }, called by {caller}");
     }
 
     [Rpc(SendTo.Server)]
     public void Scoring_ServerRpc()
     {
-       if ((int)(playerVictoriousNet.Value) < 2) return; //is gameover
+        if ((int)(playerVictoriousNet.Value) < 2) return; //is gameover
         bool useConsole = false;
         List<int> scoresTemp = new List<int>() { 0, 0 };
         List<ParentHex> takenHex = gridManager.AllTilesByType(TileState.Taken);
-        if(useConsole) print($"taken hex {takenHex.Count}");
+        if (useConsole) print($"taken hex {takenHex.Count}");
         foreach (ParentHex item in takenHex)
         {
             switch (item.CurrentValue)
             {
                 case > 0:
                     scoresTemp[0] += item.CurrentValue;
-                    if(useConsole) print("plus");
+                    if (useConsole) print("plus");
                     break;
                 case < 0:
                     scoresTemp[1] -= item.CurrentValue;
-                    if(useConsole) print("minus");
+                    if (useConsole) print("minus");
                     break;
             }
         }
-
-        for (int i = 0; i < scoreNet.Count; i++)
-        { 
-            if(useConsole) print(scoresTemp[i]);
-            scoreNet[i] = scoresTemp[i];
-        }
+        scoreBlueNet.Value = scoresTemp[0];
+        scoreRedNet.Value = scoresTemp[1];
 
         //check game over
         int freePoints = gridManager.NumOfTilesByType(TileState.Free) * 10;
@@ -413,7 +395,7 @@ public class GameManager : NetworkBehaviour
             print("all tiles are taken");
             DecideVictor();
         }
-        else if (scoreNet[0] > scoreNet[1] + freePoints || scoreNet[1] > scoreNet[0] + freePoints)
+        else if (scoreBlueNet.Value > scoreRedNet.Value + freePoints || scoreRedNet.Value > scoreBlueNet.Value + freePoints)
         {
             print("impossible to win");
             DecideVictor();
@@ -423,11 +405,11 @@ public class GameManager : NetworkBehaviour
 
     void DecideVictor()
     {
-        if (scoreNet[0] > scoreNet[1])
+        if (scoreBlueNet.Value > scoreRedNet.Value)
         {
             playerVictoriousNet.Value = PlayerColor.Blue;
         }
-        else if (scoreNet[0] < scoreNet[1])
+        else if (scoreBlueNet.Value < scoreRedNet.Value)
         {
             playerVictoriousNet.Value = PlayerColor.Red;
         }
@@ -436,8 +418,6 @@ public class GameManager : NetworkBehaviour
     #endregion
 
     #region DEBUGS
-
-    public void NextPlayerDebug() => NextPlayer_ServerRpc(false, "from UI debug");
 
     [ContextMenu("Utils.GameType")]
     void Metoda1() => print(Utils.GameType);
@@ -452,14 +432,14 @@ public class GameManager : NetworkBehaviour
     void Metoda4()
     {
         windAmountNet.Value = Random.Range(-0.5f, 0.5f);
-        // print($"wind is {windAmmountNet.Value * CONST_WINDSCALE}");
+        // print($"wind is {windAmountNet.Value * CONST_WINDSCALE}");
         print($"wind is {windAmountNet.Value * 20}");
     }
 
     [ContextMenu("Next player")]
     void Metoda5()
     {
-        NextPlayer_ServerRpc(false);
+        NextPlayer_ServerRpc(false, "context menu");
     }
 
     [ContextMenu("SpawnPlayerAndRegisterRpc")]
@@ -482,13 +462,16 @@ public class GameManager : NetworkBehaviour
         }
         print(st);
     }
+
     [ContextMenu("Scores")]
     void Metoda12()
     {
-        for (int i = 0; i < 2; i++)
-        {
-            print(scoreNet[i]);
-        }
+        // for (int i = 0; i < 2; i++)
+        // {
+        //     print(scoreNet[i]);
+        // }
+        print(scoreBlueNet.Value);
+        print(scoreRedNet.Value);
     }
 
     #endregion

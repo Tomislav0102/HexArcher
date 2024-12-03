@@ -47,7 +47,7 @@ public class MyLobbyManager : MonoBehaviour
     }
 
     float _timerHeartbeat, _timerUpdateLobbyData;
-    const string CONST_KEY_JOIN_CODE = "RelayJoinCode";
+    const string CONST_KeyJoinCode = "RelayJoinCode";
 
     [Header("UI")]
     [SerializeField] Button btnCreate;
@@ -63,8 +63,13 @@ public class MyLobbyManager : MonoBehaviour
     {
         _relayManager = new RelayManager(maxPlayers);
         DontDestroyOnLoad(this);
+
+// #if (UNITY_EDITOR)
+//         Invoke(nameof(EditorStartQuick), 0.3f);
+// #endif
     }
 
+    void EditorStartQuick() => Btn_Ready();
     public void Init()
     {
         btnCreate = MainMenuManager.Instance.btnCreate;
@@ -226,7 +231,7 @@ public class MyLobbyManager : MonoBehaviour
             {
                 Data = new Dictionary<string, DataObject>
                 {
-                    { CONST_KEY_JOIN_CODE, new DataObject(DataObject.VisibilityOptions.Public, relayCode) }
+                    { CONST_KeyJoinCode, new DataObject(DataObject.VisibilityOptions.Public, relayCode) }
                 }
             });
 
@@ -263,7 +268,7 @@ public class MyLobbyManager : MonoBehaviour
             };
             _currentLobby = await LobbyService.Instance.QuickJoinLobbyAsync(options);
 
-            relayCode = _currentLobby.Data[CONST_KEY_JOIN_CODE].Value;
+            relayCode = _currentLobby.Data[CONST_KeyJoinCode].Value;
             JoinAllocation allocation = await Relay.Instance.JoinAllocationAsync(relayCode);
             RelayJoinData joinData = new RelayJoinData
             {
@@ -301,7 +306,7 @@ public class MyLobbyManager : MonoBehaviour
             QueryResponse qr = await LobbyService.Instance.QueryLobbiesAsync();
             foreach (Lobby item in qr.Results)
             {
-                if (item.Data[CONST_KEY_JOIN_CODE].Value == relayCode)
+                if (item.Data[CONST_KeyJoinCode].Value == relayCode)
                 {
                     _currentLobby = await LobbyService.Instance.JoinLobbyByIdAsync(item.Id, options);
                     break;
@@ -422,7 +427,7 @@ public class MyLobbyManager : MonoBehaviour
                 print(item.EnvironmentId);
                 print(item.Created);
                 print(item.Data);
-                print(item.Data[CONST_KEY_JOIN_CODE].Value);
+                print(item.Data[CONST_KeyJoinCode].Value);
             }
         }
         catch (LobbyServiceException e)

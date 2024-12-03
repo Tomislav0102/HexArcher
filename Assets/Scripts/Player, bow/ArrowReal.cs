@@ -96,7 +96,7 @@ public class ArrowReal : ArrowMain
         _hitCollider = _hit2D.collider;
         if (_hitCollider != null && _hitCollider.TryGetComponent(out ITargetForArrow tar))
         {
-            tar.HitMe(gm.playerTurnNet.Value);
+            tar.HitMe();
             _oneHitNextPlayer = true;
             EndMe(($"arrow hit {_hitCollider.name}"));
         }
@@ -105,8 +105,8 @@ public class ArrowReal : ArrowMain
 
     void EndMe(string message = null)
     {
-       // if (!string.IsNullOrEmpty(message)) print(message);
-        if (!_oneHitNextPlayer) gm.NextPlayer_ServerRpc();
+      //  if (!string.IsNullOrEmpty(message)) print(message);
+        if (!_oneHitNextPlayer) gm.NextPlayer_ServerRpc(true, "arrow end");
         Destroy(gameObject);
     }
 

@@ -2131,11 +2131,12 @@ MonoBehaviour:
   parDisplays: {fileID: 2078995945686349888}
   parSpritesOrange: {fileID: 6334167113583229088}
   parSpritesTeal: {fileID: 8813340205501321421}
+  trajectoryCollider: {fileID: 2373546192769906220}
   finalHexagonTransform: {fileID: 3556795080153310592}
   finalHexScore: {fileID: 6173577945932610514}
   finalHexFrameMesh: {fileID: 3779914900350695139}
   valueForBot: 0
-  hitValueTest: 1
+  hitValueTest: 10
 --- !u!1 &3791866170399489461
 GameObject:
   m_ObjectHideFlags: 0
