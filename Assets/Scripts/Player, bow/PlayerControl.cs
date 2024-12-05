@@ -52,10 +52,17 @@ public class PlayerControl : NetworkBehaviour
 
             VrRigRef.instance.root.SetPositionAndRotation(gm.bowTablesNet[gm.indexInSo].transform.position, 
                 gm.bowTablesNet[gm.indexInSo].transform.rotation);
-
+            
+            CallEv_FadeMethod(true);
             Utils.FadeOut += CallEv_FadeMethod;
 
             Utils.DeActivateGo(displayNameTr.gameObject);
+            
+            int index = NetworkObject.IsOwnedByServer ? 0 : 1;
+            gm.RegisterLevel_ServerRpc(uint.Parse(Launch.Instance.myLobbyManager.GetPlayerLevel(index)), index == 0);
+            gm.RegisterLeaderboardRank_ServerRpc(PlayerPrefs.GetInt(Utils.LbRank_Int), index == 0);
+            gm.RegisterName_ServerRpc(Launch.Instance.myLobbyManager.GetPlayerName(index), index == 0);
+            gm.RegisterAuthenticationId_ServerRpc(Launch.Instance.myLobbyManager.GetPlayerId(index), index == 0);
         }
         else
         {
@@ -66,7 +73,9 @@ public class PlayerControl : NetworkBehaviour
                 handInteractors[i].enabled = false;
             }
         }
-
+        
+        gm.playerControls.Add(this);
+        
         if (!IsServer)
         {
             Utils.GameStarted?.Invoke();
@@ -116,9 +125,9 @@ public class PlayerControl : NetworkBehaviour
     {
         for (int i = 0; i < 2; i++)
         {
-            string levelDisplay = string.IsNullOrEmpty(gm.playerDatas[i].myLevel) ? "" : "Level - " + gm.playerDatas[i].myLevel.ToString();
-            string rankDisplay = gm.playerDatas[i].myLeaderboardRank > 0 ? "Leaderboard - " + gm.playerDatas[i].myLeaderboardRank.ToString() : "";
-            gm.playerDatas[i].playerControl.displayNameTr.GetComponent<TextMeshPro>().text = gm.playerDatas[i].myName + "\n" + levelDisplay + "\n" + rankDisplay;
+            // string levelDisplay = string.IsNullOrEmpty(gm.playerDatas[i].myLevel) ? "" : "Level - " + gm.playerDatas[i].myLevel.ToString();
+            // string rankDisplay = gm.playerDatas[i].myLeaderboardRank > 0 ? "Leaderboard - " + gm.playerDatas[i].myLeaderboardRank.ToString() : "";
+            // gm.playerDatas[i].playerControl.displayNameTr.GetComponent<TextMeshPro>().text = gm.playerDatas[i].myName + "\n" + levelDisplay + "\n" + rankDisplay;
         }
     }
     [Rpc(SendTo.Everyone)]
@@ -135,19 +144,12 @@ public class PlayerControl : NetworkBehaviour
         head.SetPositionAndRotation(VrRigRef.instance.head.position, VrRigRef.instance.head.rotation);
         leftHand.SetPositionAndRotation(VrRigRef.instance.leftHand.position, VrRigRef.instance.leftHand.rotation);
         rightHand.SetPositionAndRotation(VrRigRef.instance.rightHand.position, VrRigRef.instance.rightHand.rotation);
-
-
-        //if (Input.GetKeyDown(KeyCode.Return))
-        //{
-        //    gm.NextPlayerRpc(false);
-        //}
     }
 
     void NameDisplaying()
     {
         if (gm.playerDatas[1].playerControl == null) return;
-        Vector3 pos = gm.playerDatas[gm.indexInSo].playerControl.transform.position;
-        displayNameTr.LookAt(new Vector3(pos.x, displayNameTr.position.y, pos.z));
+        displayNameTr.LookAt(gm.camMainTransform.position);
     }
 
 

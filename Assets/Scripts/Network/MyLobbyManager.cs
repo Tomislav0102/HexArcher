@@ -64,12 +64,11 @@ public class MyLobbyManager : MonoBehaviour
         _relayManager = new RelayManager(maxPlayers);
         DontDestroyOnLoad(this);
 
-// #if (UNITY_EDITOR)
-//         Invoke(nameof(EditorStartQuick), 0.3f);
-// #endif
+#if (UNITY_EDITOR)
+        Invoke(nameof(Btn_Ready), 0.3f);
+#endif
     }
 
-    void EditorStartQuick() => Btn_Ready();
     public void Init()
     {
         btnCreate = MainMenuManager.Instance.btnCreate;

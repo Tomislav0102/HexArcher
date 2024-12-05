@@ -153,7 +153,7 @@ public class UiManager : NetworkBehaviour
         Utils.GameStarted?.Invoke();
     }
 
-    private void NetVarEv_ScoreChange(int previousvalue, int newvalue) => ScoreDisplaying();
+    private void NetVarEv_ScoreChange(uint previousvalue, uint newvalue) => ScoreDisplaying();
 
     void ScoreDisplaying()
     {

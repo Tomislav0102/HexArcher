@@ -995,6 +995,22 @@ PrefabInstance:
       propertyPath: audioManager
       value: 
       objectReference: {fileID: 977727199}
+    - target: {fileID: 4450036542160125639, guid: 1f2402c4c2643024bb08cc782aa3c493, type: 3}
+      propertyPath: m_Size.x
+      value: 2.56
+      objectReference: {fileID: 0}
+    - target: {fileID: 4450036542160125639, guid: 1f2402c4c2643024bb08cc782aa3c493, type: 3}
+      propertyPath: m_Size.y
+      value: 2.56
+      objectReference: {fileID: 0}
+    - target: {fileID: 4450036542160125639, guid: 1f2402c4c2643024bb08cc782aa3c493, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 7482667652216324306, guid: 1b4e75008984c9944bb42236f2608595, type: 3}
+    - target: {fileID: 4450036542160125639, guid: 1f2402c4c2643024bb08cc782aa3c493, type: 3}
+      propertyPath: m_WasSpriteAssigned
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5525353830071523843, guid: 1f2402c4c2643024bb08cc782aa3c493, type: 3}
       propertyPath: m_Antialiasing
       value: 0

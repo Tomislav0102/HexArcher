@@ -23,11 +23,12 @@ public class MySceneManager : NetworkBehaviour
     {
         if (!canReloadSameScene && Utils.GameType == gameType) yield break;
         Utils.GameType = gameType;
-        
+
+        int fadeDuration = 2;
         if (/*false &&*/ useFade)
         {
             Utils.FadeOut?.Invoke(false);
-            yield return new WaitForSeconds(2);
+            yield return new WaitForSeconds(fadeDuration);
         }
 
         switch (Utils.GameType)
@@ -83,12 +84,12 @@ public class MySceneManager : NetworkBehaviour
 
     private void CallEv_SynchronizeComplete(ulong clientId)
     {
-      //  print($"OnSynchronizeComplete {clientId}");
+       // print($"OnSynchronizeComplete {clientId}");
         /*if(!IsServer)*/ GameManager.Instance.SpawnPlayers_ServerRpc(clientId);
     }
     private void CallEv_LoadEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
-      //  print($"OnLoadEventCompleted, scene name is {sceneName}");
+       // print($"OnLoadEventCompleted, scene name is {sceneName}");
         GameManager.Instance.SpawnPlayers_ServerRpc(NetworkManager.Singleton.LocalClientId);
     }
 
