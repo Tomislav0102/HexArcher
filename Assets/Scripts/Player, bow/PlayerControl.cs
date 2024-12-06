@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -41,15 +42,14 @@ public class PlayerControl : NetworkBehaviour
             {
                 handInteractors[i].playerControl = this;
             }
-            VrRigRef.instance.leftController.selectAction.action.performed += InputSelectLeftON;
-            VrRigRef.instance.leftController.selectAction.action.canceled += InputSelectLeftOFF;
-            VrRigRef.instance.rightController.selectAction.action.performed += InputSelectRightON;
-            VrRigRef.instance.rightController.selectAction.action.canceled += InputSelectRightOFF;
-            VrRigRef.instance.leftController.activateAction.action.performed += InputActivateLeftON;
-            VrRigRef.instance.leftController.activateAction.action.canceled += InputActivateLeftOFF;
-            VrRigRef.instance.rightController.activateAction.action.performed += InputActivateRightON;
-            VrRigRef.instance.rightController.activateAction.action.canceled += InputActivateRightOFF;
-
+            VrRigRef.instance.leftController.selectAction.action.performed += InputSelectLeftOn;
+            VrRigRef.instance.leftController.selectAction.action.canceled += InputSelectLeftOff;
+            VrRigRef.instance.rightController.selectAction.action.performed += InputSelectRightOn;
+            VrRigRef.instance.rightController.selectAction.action.canceled += InputSelectRightOff;
+            VrRigRef.instance.leftController.activateAction.action.performed += InputActivateLeftOn;
+            VrRigRef.instance.leftController.activateAction.action.canceled += InputActivateLeftOff;
+            VrRigRef.instance.rightController.activateAction.action.performed += InputActivateRightOn;
+            VrRigRef.instance.rightController.activateAction.action.canceled += InputActivateRightOff;
             VrRigRef.instance.root.SetPositionAndRotation(gm.bowTablesNet[gm.indexInSo].transform.position, 
                 gm.bowTablesNet[gm.indexInSo].transform.rotation);
             
@@ -57,12 +57,16 @@ public class PlayerControl : NetworkBehaviour
             Utils.FadeOut += CallEv_FadeMethod;
 
             Utils.DeActivateGo(displayNameTr.gameObject);
-            
-            int index = NetworkObject.IsOwnedByServer ? 0 : 1;
-            gm.RegisterLevel_ServerRpc(uint.Parse(Launch.Instance.myLobbyManager.GetPlayerLevel(index)), index == 0);
-            gm.RegisterLeaderboardRank_ServerRpc(PlayerPrefs.GetInt(Utils.LbRank_Int), index == 0);
-            gm.RegisterName_ServerRpc(Launch.Instance.myLobbyManager.GetPlayerName(index), index == 0);
-            gm.RegisterAuthenticationId_ServerRpc(Launch.Instance.myLobbyManager.GetPlayerId(index), index == 0);
+
+            if (Utils.GameType == MainGameType.Multiplayer)
+            {
+                int index = NetworkObject.IsOwnedByServer ? 0 : 1;
+                gm.RegisterLevel_ServerRpc(uint.Parse(Launch.Instance.myLobbyManager.GetPlayerLevel(index)), index == 0);
+                gm.RegisterLeaderboardRank_ServerRpc(PlayerPrefs.GetInt(Utils.LbRank_Int), index == 0);
+                gm.RegisterName_ServerRpc(Launch.Instance.myLobbyManager.GetPlayerName(index), index == 0);
+                gm.RegisterAuthenticationId_ServerRpc(Launch.Instance.myLobbyManager.GetPlayerId(index), index == 0);
+                if (index == 1) gm.ChangeOwnershipOfBowTable_ServerRpc(NetworkManager.Singleton.LocalClientId);
+            }
         }
         else
         {
@@ -74,15 +78,11 @@ public class PlayerControl : NetworkBehaviour
             }
         }
         
-        gm.playerControls.Add(this);
-        
         if (!IsServer)
         {
             Utils.GameStarted?.Invoke();
             gm.botManager.EndBot();
         }
-        gm.RegisterPlayer_EveryoneRpc(NetworkObject);
-
     }
 
     public override void OnNetworkDespawn()
@@ -90,26 +90,26 @@ public class PlayerControl : NetworkBehaviour
         if (IsOwner)
         {
             gm.playerVictoriousNet.OnValueChanged -= NetVarEv_End;
-            VrRigRef.instance.leftController.selectAction.action.performed -= InputSelectLeftON;
-            VrRigRef.instance.leftController.selectAction.action.canceled -= InputSelectLeftOFF;
-            VrRigRef.instance.rightController.selectAction.action.performed -= InputSelectRightON;
-            VrRigRef.instance.rightController.selectAction.action.canceled -= InputSelectRightOFF;
-            VrRigRef.instance.leftController.activateAction.action.performed -= InputActivateLeftON;
-            VrRigRef.instance.leftController.activateAction.action.canceled -= InputActivateLeftOFF;
-            VrRigRef.instance.rightController.activateAction.action.performed -= InputActivateRightON;
-            VrRigRef.instance.rightController.activateAction.action.canceled -= InputActivateRightOFF;
+            VrRigRef.instance.leftController.selectAction.action.performed -= InputSelectLeftOn;
+            VrRigRef.instance.leftController.selectAction.action.canceled -= InputSelectLeftOff;
+            VrRigRef.instance.rightController.selectAction.action.performed -= InputSelectRightOn;
+            VrRigRef.instance.rightController.selectAction.action.canceled -= InputSelectRightOff;
+            VrRigRef.instance.leftController.activateAction.action.performed -= InputActivateLeftOn;
+            VrRigRef.instance.leftController.activateAction.action.canceled -= InputActivateLeftOff;
+            VrRigRef.instance.rightController.activateAction.action.performed -= InputActivateRightOn;
+            VrRigRef.instance.rightController.activateAction.action.canceled -= InputActivateRightOff;
 
             Utils.FadeOut -= CallEv_FadeMethod;
         }
+        gm.playerRegistration.RemovePlayer(this);
         base.OnNetworkDespawn();
     }
 
     private void Start()
     {
-        if (gm.playerDatas[1].playerControl != null)
-        {
-            ChangeNameRpc();
-        }
+        gm.playerRegistration.AddPlayer(this, NetworkObject.IsOwnedByServer);
+        if (Utils.GameType == MainGameType.Multiplayer) ChangeName_EveryoneRpc();
+
         for (int i = 0; i < headMeshes.Length; i++)
         {
             headMeshes[i].material = gm.playerDatas[gm.indexInSo].matMain;
@@ -120,36 +120,31 @@ public class PlayerControl : NetworkBehaviour
             Utils.GameStarted?.Invoke();
         }
     }
+
     [Rpc(SendTo.Everyone)]
-    void ChangeNameRpc()
-    {
-        for (int i = 0; i < 2; i++)
-        {
-            // string levelDisplay = string.IsNullOrEmpty(gm.playerDatas[i].myLevel) ? "" : "Level - " + gm.playerDatas[i].myLevel.ToString();
-            // string rankDisplay = gm.playerDatas[i].myLeaderboardRank > 0 ? "Leaderboard - " + gm.playerDatas[i].myLeaderboardRank.ToString() : "";
-            // gm.playerDatas[i].playerControl.displayNameTr.GetComponent<TextMeshPro>().text = gm.playerDatas[i].myName + "\n" + levelDisplay + "\n" + rankDisplay;
-        }
-    }
+    void ChangeName_EveryoneRpc() => gm.playerRegistration.FillDisplay();
+    
     [Rpc(SendTo.Everyone)]
-    public void LineRendererLengthRpc(Vector3 pos) => _lrShooting.SetPosition(1, pos);
+    public void LineRendererLength_EveryoneRpc(Vector3 pos) => _lrShooting.SetPosition(1, pos);
 
     private void Update()
     {
         if (!IsOwner)
         {
-            NameDisplaying();
+            if (gm.playerRegistration.HasSecondPlayer()) displayNameTr.LookAt(gm.camMainTransform.position);
+        }
+    }
+
+    void LateUpdate()
+    {
+        if (!IsOwner)
+        {
             return;
         }
         transform.SetPositionAndRotation(VrRigRef.instance.root.position, VrRigRef.instance.root.rotation);
         head.SetPositionAndRotation(VrRigRef.instance.head.position, VrRigRef.instance.head.rotation);
         leftHand.SetPositionAndRotation(VrRigRef.instance.leftHand.position, VrRigRef.instance.leftHand.rotation);
         rightHand.SetPositionAndRotation(VrRigRef.instance.rightHand.position, VrRigRef.instance.rightHand.rotation);
-    }
-
-    void NameDisplaying()
-    {
-        if (gm.playerDatas[1].playerControl == null) return;
-        displayNameTr.LookAt(gm.camMainTransform.position);
     }
 
 
@@ -164,14 +159,14 @@ public class PlayerControl : NetworkBehaviour
         }
     }
 
-    private void InputSelectLeftON(InputAction.CallbackContext context) => handInteractors[0].Selected = true;
-    private void InputSelectLeftOFF(InputAction.CallbackContext context) => handInteractors[0].Selected = false;
-    private void InputSelectRightON(InputAction.CallbackContext context) => handInteractors[1].Selected = true;
-    private void InputSelectRightOFF(InputAction.CallbackContext context) => handInteractors[1].Selected = false;
-    private void InputActivateLeftON(InputAction.CallbackContext context) => handInteractors[0].Activated = true;
-    private void InputActivateLeftOFF(InputAction.CallbackContext context) => handInteractors[0].Activated = false;
-    private void InputActivateRightON(InputAction.CallbackContext context) => handInteractors[1].Activated = true;
-    private void InputActivateRightOFF(InputAction.CallbackContext context) => handInteractors[1].Activated = false;
+    private void InputSelectLeftOn(InputAction.CallbackContext context) => handInteractors[0].Selected = true;
+    private void InputSelectLeftOff(InputAction.CallbackContext context) => handInteractors[0].Selected = false;
+    private void InputSelectRightOn(InputAction.CallbackContext context) => handInteractors[1].Selected = true;
+    private void InputSelectRightOff(InputAction.CallbackContext context) => handInteractors[1].Selected = false;
+    private void InputActivateLeftOn(InputAction.CallbackContext context) => handInteractors[0].Activated = true;
+    private void InputActivateLeftOff(InputAction.CallbackContext context) => handInteractors[0].Activated = false;
+    private void InputActivateRightOn(InputAction.CallbackContext context) => handInteractors[1].Activated = true;
+    private void InputActivateRightOff(InputAction.CallbackContext context) => handInteractors[1].Activated = false;
 
 
     void CallEv_FadeMethod(bool fadeout)

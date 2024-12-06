@@ -19,7 +19,6 @@ public class GameManager : NetworkBehaviour
 
     [SerializeField] Camera camMain;
     [HideInInspector] public Transform camMainTransform;
-    public List<PlayerControl> playerControls= new List<PlayerControl>();
     public SoPlayerData[] playerDatas;
     public UiManager uImanager;
     public AudioManager audioManager;
@@ -43,7 +42,6 @@ public class GameManager : NetworkBehaviour
     [PropertySpace(SpaceAfter = 0, SpaceBefore = 10)]
     [Title("Players...", TitleAlignment = TitleAlignments.Centered)]
     [SerializeField] GameObject prefabPlayer;
-
     public GameObject prefabArrowReal;
     public GameObject prefabArrowShadow;
     public ArrowMain arrowReal;
@@ -53,6 +51,7 @@ public class GameManager : NetworkBehaviour
     public NetworkObject[] bowTablesNet;
     [SerializeField] MeshRenderer[] playerMeshMarker;
     [SerializeField] GameObject[] scoreVisualMarker;
+    public PlayerRegistration playerRegistration = new PlayerRegistration();
 
     [Title("Public network variables", TitleAlignment = TitleAlignments.Centered)]
     public NetworkVariable<GenLevel> difficultyNet = new NetworkVariable<GenLevel>();
@@ -124,6 +123,7 @@ public class GameManager : NetworkBehaviour
         drawTrajectory.showTrajectory = trajectoryVisible.Value;
     }
 
+
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
@@ -190,9 +190,9 @@ public class GameManager : NetworkBehaviour
     #endregion
 
     #region CALL EVENTS
-    private void CallEv_ClientDisconnected(ulong obj)
+    void CallEv_ClientDisconnected(ulong obj)
     {
-        //  print($"client {obj} disconnected, num of clients is {NetworkManager.Singleton.ConnectedClients.Count}");
+      //  print($"client {obj} disconnected, num of clients is {NetworkManager.Singleton.ConnectedClients.Count}");
         if (obj == NetworkManager.Singleton.LocalClientId) return;
         StartCoroutine(Countdown());
         bowTablesNet[1].ChangeOwnership(OwnerClientId);
@@ -201,10 +201,7 @@ public class GameManager : NetworkBehaviour
 
     private void NetVarEv_PlayerVictorious(PlayerColor previousValue, PlayerColor newValue)
     {
-        for (int i = 0; i < NetworkManager.Singleton.ConnectedClients.Count; i++)
-        {
-            Utils.DeActivateGo(playerDatas[i].playerControl.bowControl.gameObject);
-        }
+        playerRegistration.GameOver();
         if (Utils.GameType == MainGameType.Multiplayer && NetworkManager.Singleton.ConnectedClients.Count > 1) PlayerVictorious_EveryoneRpc(newValue);
         
         botManager.EndBot();
@@ -307,49 +304,8 @@ public class GameManager : NetworkBehaviour
         go.GetComponent<NetworkObject>().SpawnAsPlayerObject(obj, true);
     }
 
-    [Rpc(SendTo.Everyone)]
-    public void RegisterPlayer_EveryoneRpc(NetworkObjectReference networkObjectReference)
-    {
-        if (networkObjectReference.TryGet(out NetworkObject no))
-        {
-            int index = no.IsOwnedByServer ? 0 : 1;
-
-            string nam = string.Empty;
-            string level = string.Empty;
-            string id = string.Empty;
-            int leaderboard = -1;
-            switch (Utils.GameType)
-            {
-                case MainGameType.Singleplayer:
-                    nam = "my name";
-                    id = "my id";
-                    break;
-                case MainGameType.Multiplayer:
-                    int ind = no.IsOwnedByServer ? 0 : 1;
-                    nam = Launch.Instance.myLobbyManager.GetPlayerName(ind);
-                    level = Launch.Instance.myLobbyManager.GetPlayerLevel(ind);
-                    id = Launch.Instance.myLobbyManager.GetPlayerId(ind);
-                    leaderboard = PlayerPrefs.GetInt(Utils.LbRank_Int);
-                    if (leaderboard > 0) leaderboard++;
-                    break;
-            }
-            // playerDatas[index].myName = nam;
-            // playerDatas[index].myLevel = level;
-            // playerDatas[index].myAutheticationId = id;
-            // playerDatas[index].myLeaderboardRank = leaderboard;
-
-            no.name = $"Igrach {no.OwnerClientId}";
-            playerDatas[index].netObj = no;
-            playerDatas[index].playerId = no.OwnerClientId;
-            playerDatas[index].playerControl = no.GetComponent<PlayerControl>();
-
-            if (index == 1) ChangeOwnershipOfBowTable_ServerRpc(no.OwnerClientId);
-        }
-
-    }
-
     [Rpc(SendTo.Server)]
-    void ChangeOwnershipOfBowTable_ServerRpc(ulong obj) => bowTablesNet[1].ChangeOwnership(obj);
+    public void ChangeOwnershipOfBowTable_ServerRpc(ulong obj) => bowTablesNet[1].ChangeOwnership(obj);
     #endregion
 
     #region GAME FLOW
@@ -375,17 +331,17 @@ public class GameManager : NetworkBehaviour
     {
         if (playerVictoriousNet.Value != PlayerColor.Undefined) return;
         ClearAllArrows_EveryoneRpc();
-        // if (countGridMisses)
-        // {
-        //     _counterMisses++;
-        //     if (_counterMisses >= 4)
-        //     {
-        //         print("4 misses in a row, match is over");
-        //         DecideVictor();
-        //         return;
-        //     }
-        // }
-        // else _counterMisses = 0;
+        if (countGridMisses)
+        {
+            _counterMisses++;
+            if (_counterMisses >= 4)
+            {
+                print("4 misses in a row, match is over");
+                DecideVictor();
+                return;
+            }
+        }
+        else _counterMisses = 0;
         int val = (int)playerTurnNet.Value;
         val = (1 + val) % 2;
         playerTurnNet.Value = (PlayerColor)val;
@@ -498,6 +454,11 @@ public class GameManager : NetworkBehaviour
     {
         print(scoreBlueNet.Value);
         print(scoreRedNet.Value);
+    }
+    [ContextMenu("Name blue")]
+    void Metoda13()
+    {
+        print(nameBlueNet.Value);
     }
 
     #endregion

@@ -78,6 +78,11 @@ public class UiManager : NetworkBehaviour
             displayJoinCode.text = $"Join code: {Launch.Instance.myLobbyManager.relayCode}";
             NetworkManager.Singleton.OnClientConnectedCallback += CallEv_ClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback += CallEv_ClientDisconnected;
+
+            if (NetworkManager.Singleton.ConnectedClients.Count > 1)
+            {
+                CallEv_ClientConnected(0);
+            }
         }
         
     }

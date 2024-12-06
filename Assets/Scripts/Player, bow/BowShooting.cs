@@ -17,7 +17,7 @@ public class BowShooting : MonoBehaviour
     [SerializeField] Transform end;
     float _maxLength, _offsetStart;
     [SerializeField] Transform notch;
-    float _pullAmount;
+    public float _pullAmount;
     Transform _myTransform;
 
     [ReadOnly] public float power;
@@ -35,7 +35,8 @@ public class BowShooting : MonoBehaviour
     private void Start()
     {
         _offsetStart = Mathf.Abs(_myTransform.localPosition.z);
-        _maxLength = (end.localPosition - notch.localPosition).magnitude;
+        //_maxLength = (end.localPosition - notch.localPosition).magnitude;
+        _maxLength =  Mathf.Abs(end.localPosition.z - _myTransform.localPosition.z);
         Utils.DeActivateGo(end.gameObject);
     }
 
@@ -93,7 +94,6 @@ public class BowShooting : MonoBehaviour
         Vector3 handPos = playerControl.handInteractors[handThaPullsString].myTransform.position;
         Vector3 pullDir = notch.position - handPos;
 
-
         Vector3 endPoint;
         Quaternion rot;
         if (_myTransform.InverseTransformPoint(handPos).z > 0f)
@@ -113,10 +113,11 @@ public class BowShooting : MonoBehaviour
         }
 
         gm.arrowReal.transform.SetPositionAndRotation(endPoint, rot);
-        _pullAmount = (_myTransform.position - endPoint).magnitude / _maxLength;
+       // _pullAmount = (_myTransform.position - endPoint).magnitude / _maxLength;
+        _pullAmount = (Mathf.Abs(_myTransform.InverseTransformPoint(endPoint).z)) / _maxLength;
         gm.forceArrow = _pullAmount * power; 
 
-        playerControl.LineRendererLengthRpc(_myTransform.InverseTransformPoint(endPoint));
+        playerControl.LineRendererLength_EveryoneRpc(_myTransform.InverseTransformPoint(endPoint));
     }
 
     public void ReleaseString()
@@ -127,7 +128,7 @@ public class BowShooting : MonoBehaviour
         controllerPullingString = false;
         _oneHitArrowNotched = false;
         gm.arrowReal = null;
-        playerControl.LineRendererLengthRpc(Vector3.zero);
+        playerControl.LineRendererLength_EveryoneRpc(Vector3.zero);
 
         gm.audioManager.PlayOnMyAudioSource(audioSource, gm.audioManager.bowRelease);
         _oneHitAudioDraw = false;
@@ -143,4 +144,35 @@ public class BowShooting : MonoBehaviour
 
 
 }
+
+// void ProcessNotchedArrow()
+// {
+//     int handThaPullsString = ((int)playerControl.SideThatHoldsBow() + 1) % 2;
+//     Vector3 handPos = playerControl.handInteractors[handThaPullsString].myTransform.position;
+//     Vector3 pullDir = notch.position - handPos;
+//
+//     Vector3 endPoint;
+//     Quaternion rot;
+//     if (_myTransform.InverseTransformPoint(handPos).z > 0f)
+//     {
+//         endPoint = _myTransform.position;
+//         rot = _myTransform.rotation;
+//     }
+//     else if (pullDir.magnitude < _maxLength + _offsetStart)
+//     {
+//         endPoint = handPos;
+//         rot = Quaternion.LookRotation(pullDir.normalized);
+//     }
+//     else
+//     {
+//         endPoint = notch.position - (_maxLength + _offsetStart) * pullDir.normalized;
+//         rot = Quaternion.LookRotation(pullDir.normalized);
+//     }
+//
+//     gm.arrowReal.transform.SetPositionAndRotation(endPoint, rot);
+//     _pullAmount = (_myTransform.position - endPoint).magnitude / _maxLength;
+//     gm.forceArrow = _pullAmount * power; 
+//
+//     playerControl.LineRendererLength_EveryoneRpc(_myTransform.InverseTransformPoint(endPoint));
+// }
 
