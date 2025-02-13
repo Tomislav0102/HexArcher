@@ -11,7 +11,7 @@ public class MenuElementOpenWindows : MenuElementMain, IPointerClickHandler
     public void OnPointerClick(PointerEventData eventData)
     {
         audioManager.PlaySFX(audioManager.uiButton);
-        Utils.ActivateOneArrayElement(mm.mainUIelements);
+        Utils.ActivateOneArrayElement(mm.mainUiElements);
         
         if (requirePlayerLevel)
         {

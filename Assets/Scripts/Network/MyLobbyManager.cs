@@ -65,15 +65,15 @@ public class MyLobbyManager : MonoBehaviour
         DontDestroyOnLoad(this);
 
 #if (UNITY_EDITOR)
-        Invoke(nameof(Btn_Ready), 0.3f);
+       // Invoke(nameof(Btn_Ready), 0.3f);
 #endif
     }
 
     public void Init()
     {
-        btnCreate = MainMenuManager.Instance.btnCreate;
-        btnJoinByCode = MainMenuManager.Instance.btnJoin;
-        btnReady = MainMenuManager.Instance.btnReady;
+        btnCreate = MainMenuManager.Instance.buttonCreate;
+        btnJoinByCode = MainMenuManager.Instance.buttonJoin;
+        btnReady = MainMenuManager.Instance.buttonReady;
         inputPlName = MainMenuManager.Instance.inputPlName;
         inputJoinCode = MainMenuManager.Instance.inputJoinCode;
 

@@ -141,7 +141,7 @@ public class LayoutGenerator : MonoBehaviour, ISerializationCallbackReceiver
     [BoxGroup("Saving map", order: 0.2f)]
     void SaveMap()
     {
-        string localPath = $"Assets/Levels/{levelName}.prefab";
+        string localPath = $"Assets/Prefabs/Levels/{levelName}.prefab";
         localPath = AssetDatabase.GenerateUniqueAssetPath(localPath);
         GameObject go = Instantiate(positionCarrier.gameObject);
         for (int i = 0; i < go.transform.childCount; i++)

@@ -6,67 +6,80 @@ using UnityEngine;
 using UnityEngine.UI;
 using Sirenix.OdinInspector;
 using Unity.Netcode;
+using UnityEngine.Serialization;
 
 public class UiManager : NetworkBehaviour
 {
     GameManager gm;
-    [SerializeField] GameObject canvasMain;
     [SerializeField] TextMeshProUGUI[] displayScores, displayEndScores;
-    [SerializeField] Button[] btnsExit, btnsRestart;
+    [SerializeField] Button[] buttonsExit, buttonsRestart;
+    enum CanType { Main, End, Practice_Tut, Camp };
     [SerializeField] GameObject[] canvasElements;
+    Dictionary<CanType?, GameObject> _elements;
+    
     public TextMeshProUGUI displayStartInfo;
     [SerializeField] TextMeshProUGUI displayJoinCode, displayEarnedXp;
     [SerializeField] GameObject endInfos;
-    [Title("Tutorial")]
-    [SerializeField] Button[] btnsTutorailDone;
     bool _oneHitExitScene;
+    [Title("Tutorial")]
+    [SerializeField] Button[] buttonsTutorialDone;
+    [Title("Campaign")]
+    public TextMeshProUGUI displayCampaignInfo;
+    [SerializeField] Button buttonCampStart;
 
     private void Awake()
     {
         gm = GameManager.Instance;
-        Utils.ActivateOneArrayElement(canvasElements);
+        _elements = new Dictionary<CanType?, GameObject>()
+        {
+            { CanType.Main, canvasElements[0] },
+            { CanType.End, canvasElements[1] },
+            { CanType.Practice_Tut, canvasElements[2] },
+            { CanType.Camp, canvasElements[3] }
+        };
+        ActivateDictionary();
     }
 
-    
+
     public override void OnNetworkSpawn()
     {
-        if (Utils.PracticeSp)
+        ActivateDictionary(CanType.Main);
+        switch (Utils.SinglePlayerType)
         {
-            canvasElements[0].SetActive(false);
-            canvasElements[1].SetActive(false);
-            canvasElements[2].SetActive(true);
-        }
-        else
-        {
-            canvasElements[0].SetActive(true);
-            canvasElements[1].SetActive(false);
-            canvasElements[2].SetActive(false);
+            case SpType.Endless:
+                break;
+            case SpType.Campaign:
+                break;
+            case SpType.Practice:
+                ActivateDictionary(CanType.Practice_Tut);
+                break;
         }
 
         base.OnNetworkSpawn();
-        for (int i = 0; i < btnsExit.Length; i++)
+        for (int i = 0; i < buttonsExit.Length; i++)
         {
-            btnsExit[i].onClick.AddListener(BtnMethodExit);
+            buttonsExit[i].onClick.AddListener(BtnMethodExit);
         }
-        for (int i = 0; i < btnsRestart.Length; i++)
+        for (int i = 0; i < buttonsRestart.Length; i++)
         {
-            btnsRestart[i].onClick.AddListener(BtnMethodRestart);
+            buttonsRestart[i].onClick.AddListener(BtnMethodRestart);
         }
-        for (int i = 0; i < btnsTutorailDone.Length; i++)
+        for (int i = 0; i < buttonsTutorialDone.Length; i++)
         {
-            btnsTutorailDone[i].onClick.AddListener(BtnMethodTutDone);
+            buttonsTutorialDone[i].onClick.AddListener(BtnMethodSpCanStart);
         }
+        buttonCampStart.onClick.AddListener(BtnMethodSpCanStart);
 
         gm.playerVictoriousNet.OnValueChanged += NetVarEv_PlayerVictorious;
-       gm.scoreBlueNet.OnValueChanged += NetVarEv_ScoreChange;
-       gm.scoreRedNet.OnValueChanged += NetVarEv_ScoreChange;
+        gm.scoreBlueNet.OnValueChanged += NetVarEv_ScoreChange;
+        gm.scoreRedNet.OnValueChanged += NetVarEv_ScoreChange;
 
         displayJoinCode.enabled = false;
         if (!IsHost)
         {
-            for (int i = 0; i < btnsRestart.Length; i++)
+            for (int i = 0; i < buttonsRestart.Length; i++)
             {
-                btnsRestart[i].gameObject.SetActive(false);
+                buttonsRestart[i].gameObject.SetActive(false);
             }
 
             Invoke(nameof(ScoreDisplaying), 0.3f); //unity bug
@@ -84,7 +97,7 @@ public class UiManager : NetworkBehaviour
                 CallEv_ClientConnected(0);
             }
         }
-        
+
     }
 
 
@@ -100,18 +113,19 @@ public class UiManager : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
-        for (int i = 0; i < btnsExit.Length; i++)
+        for (int i = 0; i < buttonsExit.Length; i++)
         {
-            btnsExit[i].onClick.RemoveAllListeners();
+            buttonsExit[i].onClick.RemoveAllListeners();
         }
-        for (int i = 0; i < btnsRestart.Length; i++)
+        for (int i = 0; i < buttonsRestart.Length; i++)
         {
-            btnsRestart[i].onClick.RemoveAllListeners();
+            buttonsRestart[i].onClick.RemoveAllListeners();
         }
-        for (int i = 0; i < btnsTutorailDone.Length; i++)
+        for (int i = 0; i < buttonsTutorialDone.Length; i++)
         {
-            btnsTutorailDone[i].onClick.RemoveAllListeners();
+            buttonsTutorialDone[i].onClick.RemoveAllListeners();
         }
+        buttonCampStart.onClick.RemoveAllListeners();
 
         gm.playerVictoriousNet.OnValueChanged -= NetVarEv_PlayerVictorious;
         gm.scoreBlueNet.OnValueChanged -= NetVarEv_ScoreChange;
@@ -126,7 +140,16 @@ public class UiManager : NetworkBehaviour
         base.OnNetworkDespawn();
     }
 
-
+    void ActivateDictionary(CanType? canType = null)
+    {
+        foreach (KeyValuePair<CanType?, GameObject> item in _elements)
+        {
+            Utils.DeActivateGo(item.Value);
+        }
+        if (canType == null) return;
+        Utils.ActivateGo(_elements[canType]);
+    }
+    
     [ContextMenu("BtnMethodExit")]
     void BtnMethodExit()
     {
@@ -150,14 +173,13 @@ public class UiManager : NetworkBehaviour
         StartCoroutine(Launch.Instance.mySceneManager.NewSceneAfterFadeIn(mainGameType, true));
     }
 
-    void BtnMethodTutDone()
+    void BtnMethodSpCanStart()
     {
-        canvasElements[0].SetActive(true);
-        canvasElements[1].SetActive(false);
-        canvasElements[2].SetActive(false);
+        ActivateDictionary(CanType.Main);
         Utils.GameStarted?.Invoke();
     }
 
+    
     private void NetVarEv_ScoreChange(uint previousvalue, uint newvalue) => ScoreDisplaying();
 
     void ScoreDisplaying()
@@ -173,9 +195,7 @@ public class UiManager : NetworkBehaviour
     {
         if (newValue == PlayerColor.Undefined) return;
         
-        Utils.DeActivateGo(canvasElements[0]);
-        Utils.ActivateGo(canvasElements[1]);
-        Utils.DeActivateGo(canvasElements[2]);
+        ActivateDictionary(CanType.End);
         Transform tr = canvasElements[1].transform;
         for (int i = 0; i < tr.childCount; i++)
         {

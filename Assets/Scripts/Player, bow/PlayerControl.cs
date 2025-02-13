@@ -114,11 +114,6 @@ public class PlayerControl : NetworkBehaviour
         {
             headMeshes[i].material = gm.playerDatas[gm.indexInSo].matMain;
         }
-
-        if (Utils.GameType == MainGameType.Singleplayer && !Utils.PracticeSp)
-        {
-            Utils.GameStarted?.Invoke();
-        }
     }
 
     [Rpc(SendTo.Everyone)]

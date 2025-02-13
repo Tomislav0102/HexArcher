@@ -15,7 +15,7 @@ public class GameManager : NetworkBehaviour
     int _counterMisses;
 
     [Title("References", TitleAlignment = TitleAlignments.Centered)]
-    public int indexInSo;
+    public int indexInSo; //this is redundant. TODO - remove it
 
     [SerializeField] Camera camMain;
     [HideInInspector] public Transform camMainTransform;
@@ -25,6 +25,7 @@ public class GameManager : NetworkBehaviour
     public BowRack[] bowRacks;
     public BotManager botManager;
     public GridManager gridManager;
+    public CampaignManager campaignManager;
     public PoolManager poolManager;
     public WindManager windManager;
     public DrawTrajectory drawTrajectory;
@@ -93,7 +94,25 @@ public class GameManager : NetworkBehaviour
         gridManager.Init();
         if (IsServer)
         {
-            gridManager.ChooseGrid();
+            GameObject level = null;
+            if (Utils.GameType == MainGameType.Singleplayer)
+            {
+                switch (Utils.SinglePlayerType)
+                {
+                    case SpType.Endless:
+                        Utils.GameStarted?.Invoke();
+                        break;
+                    case SpType.Campaign:
+                        Utils.GameStarted?.Invoke();
+                        campaignManager.Init();
+                        level = campaignManager.NextLevel();
+                        break;
+                    case SpType.Practice:
+                        break;
+                }
+            }
+            gridManager.ChooseGrid(level);
+            
             difficultyNet.Value = (GenLevel)PlayerPrefs.GetInt(Utils.Difficulty_Int);
             _skyboxIndexNet.Value = (byte)Random.Range(0, _matsSkyboxSp.Length);
             playerVictoriousNet.Value = PlayerColor.Undefined;
@@ -133,7 +152,7 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    IEnumerator Countdown()
+    IEnumerator CountdownMultiplayer()
     {
         int seconds = 0;
         string st = "";
@@ -194,7 +213,7 @@ public class GameManager : NetworkBehaviour
     {
       //  print($"client {obj} disconnected, num of clients is {NetworkManager.Singleton.ConnectedClients.Count}");
         if (obj == NetworkManager.Singleton.LocalClientId) return;
-        StartCoroutine(Countdown());
+        StartCoroutine(CountdownMultiplayer());
         bowTablesNet[1].ChangeOwnership(OwnerClientId);
         bowRacks[1].HideRack();
     }
@@ -297,7 +316,7 @@ public class GameManager : NetworkBehaviour
         }
         else
         {
-            StartCoroutine(Countdown());
+            StartCoroutine(CountdownMultiplayer());
         }
 
         GameObject go = Instantiate(prefabPlayer);

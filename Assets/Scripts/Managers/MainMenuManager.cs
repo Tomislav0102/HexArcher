@@ -8,6 +8,7 @@ using Sirenix.OdinInspector;
 using UnityEngine.SceneManagement;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
+using UnityEngine.Serialization;
 #if(UNITY_EDITOR)
 using ParrelSync;
 #endif
@@ -20,28 +21,30 @@ public class MainMenuManager : MonoBehaviour
     bool _canUseButtonSounds, _oneHitExitScene, _internetCheckSwitch;
     public bool hasInternet;
     [Title("General")]
-    public GameObject[] mainUIelements;
+    public GameObject[] mainUiElements;
     public GameObject noInternetWindow, requiredLevelWindow;
-    [SerializeField] Button[] btnsReturn;
+    [SerializeField] Button[] buttonsReturn;
     public AudioManager audioManager;
     [Title("Singleplayer - practice")]
-    [SerializeField] Button btnPractice;
-    [Title("Singleplayer")]
-    [SerializeField] Button[] btnsSize;
-    [SerializeField] Button[] btnsDiff;
-    [SerializeField] Button[] btnsStart;
+    [SerializeField] Button buttonPractice;
+    [Title("Singleplayer - campaign")]
+    [SerializeField] Button buttonCampaign;
+    [Title("Singleplayer - endless")]
+    [SerializeField] Button[] buttonsSize;
+    [SerializeField] Button[] buttonsDiff;
+    [SerializeField] Button[] buttonsStart;
     [Title("Multiplayer")]
-    [SerializeField] Button[] btnSizeMp;
+    [SerializeField] Button[] buttonSizeMp;
     [SerializeField] Slider windSlider;
     [Title("MP for lobby manager")]
     public TMP_InputField inputPlName;
     public TMP_InputField inputJoinCode;
     public TextMeshProUGUI joinCodeInfo;
-    public Button btnCreate;
-    public Button btnJoin;
-    public Button btnReady;
+    public Button buttonCreate;
+    public Button buttonJoin;
+    public Button buttonReady;
     [Title("Player level")]
-    [SerializeField] TextMeshProUGUI displayLev;
+    [SerializeField] TextMeshProUGUI displayLevel;
     [SerializeField] TextMeshProUGUI displayCurrent;
     [SerializeField] TextMeshProUGUI displayToNext;
     
@@ -53,9 +56,11 @@ public class MainMenuManager : MonoBehaviour
     private void Start()
     {
         Utils.GameType = MainGameType.MainMenu;
-        if (Utils.PracticeSp) PlayerPrefs.SetInt(Utils.TrajectoryVisible_Int, 0);
-        Utils.PracticeSp = false;
-        Utils.ActivateOneArrayElement(mainUIelements, 0);
+        if (Utils.SinglePlayerType == SpType.Practice) PlayerPrefs.SetInt(Utils.TrajectoryVisible_Int, 0);
+        Utils.SinglePlayerType = SpType.Endless;
+        Utils.CampLevel = 0;
+        
+        Utils.ActivateOneArrayElement(mainUiElements, 0);
         BtnMethodMapSize(PlayerPrefs.GetInt(Utils.Size_Int));
         BtnMethodDiff(PlayerPrefs.GetInt(Utils.Difficulty_Int));
         Utils.FadeOut?.Invoke(true);
@@ -90,27 +95,27 @@ public class MainMenuManager : MonoBehaviour
 
     private void OnEnable()
     {
-        btnPractice.onClick.AddListener(BtnMethodSinglePractice);
+        buttonPractice.onClick.AddListener(BtnMethodSinglePractice);
 
-        btnsSize[0].onClick.AddListener(() => BtnMethodMapSize(0));
-        btnsSize[1].onClick.AddListener(() => BtnMethodMapSize(1));
-        btnsSize[2].onClick.AddListener(() => BtnMethodMapSize(2));
-        btnSizeMp[0].onClick.AddListener(() => BtnMethodMapSize(0));
-        btnSizeMp[1].onClick.AddListener(() => BtnMethodMapSize(1));
-        btnSizeMp[2].onClick.AddListener(() => BtnMethodMapSize(2));
+        buttonsSize[0].onClick.AddListener(() => BtnMethodMapSize(0));
+        buttonsSize[1].onClick.AddListener(() => BtnMethodMapSize(1));
+        buttonsSize[2].onClick.AddListener(() => BtnMethodMapSize(2));
+        buttonSizeMp[0].onClick.AddListener(() => BtnMethodMapSize(0));
+        buttonSizeMp[1].onClick.AddListener(() => BtnMethodMapSize(1));
+        buttonSizeMp[2].onClick.AddListener(() => BtnMethodMapSize(2));
 
-        btnsDiff[0].onClick.AddListener(() => BtnMethodDiff(0));
-        btnsDiff[1].onClick.AddListener(() => BtnMethodDiff(1));
-        btnsDiff[2].onClick.AddListener(() => BtnMethodDiff(2));
+        buttonsDiff[0].onClick.AddListener(() => BtnMethodDiff(0));
+        buttonsDiff[1].onClick.AddListener(() => BtnMethodDiff(1));
+        buttonsDiff[2].onClick.AddListener(() => BtnMethodDiff(2));
 
-        for (int i = 0; i < btnsReturn.Length; i++)
+        for (int i = 0; i < buttonsReturn.Length; i++)
         {
-            btnsReturn[i].onClick.AddListener(BtnMethodReturn);
+            buttonsReturn[i].onClick.AddListener(BtnMethodReturn);
         }
 
-        for (int i = 0; i < btnsStart.Length; i++)
+        for (int i = 0; i < buttonsStart.Length; i++)
         {
-            btnsStart[i].onClick.AddListener(BtnMethodSinglePlay);
+            buttonsStart[i].onClick.AddListener(BtnMethodSinglePlay);
         }
 
         Utils.PlayerXpUpdated += InitPlayerLeveling;
@@ -119,21 +124,21 @@ public class MainMenuManager : MonoBehaviour
 
     private void OnDisable()
     {
-        btnPractice.onClick.RemoveAllListeners();
+        buttonPractice.onClick.RemoveAllListeners();
 
         for (int i = 0; i < 3; i++)
         {
-            btnsSize[i].onClick.RemoveAllListeners();
-            btnSizeMp[i].onClick.RemoveAllListeners();
-            btnsDiff[i].onClick.RemoveAllListeners();
+            buttonsSize[i].onClick.RemoveAllListeners();
+            buttonSizeMp[i].onClick.RemoveAllListeners();
+            buttonsDiff[i].onClick.RemoveAllListeners();
         }
-        for (int i = 0; i < btnsReturn.Length; i++)
+        for (int i = 0; i < buttonsReturn.Length; i++)
         {
-            btnsReturn[i].onClick.RemoveAllListeners();
+            buttonsReturn[i].onClick.RemoveAllListeners();
         }
-        for (int i = 0; i < btnsStart.Length; i++)
+        for (int i = 0; i < buttonsStart.Length; i++)
         {
-            btnsStart[i].onClick.RemoveAllListeners();
+            buttonsStart[i].onClick.RemoveAllListeners();
         }
         windSlider.onValueChanged.RemoveAllListeners();
         Utils.PlayerXpUpdated -= InitPlayerLeveling;
@@ -157,23 +162,23 @@ public class MainMenuManager : MonoBehaviour
         StartCoroutine(Launch.Instance.mySceneManager.NewSceneAfterFadeIn(MainGameType.Singleplayer));
         Launch.Instance.mySceneManager.SubscribeAll();
         
-        if (!Utils.PracticeSp)
-        {
-            PlayerPrefs.SetFloat(Utils.WindAmount_Fl, 0f);
-            PlayerPrefs.SetInt(Utils.TrajectoryVisible_Int, 0);
-        }
+        PlayerPrefs.SetFloat(Utils.WindAmount_Fl, 0f);
+        PlayerPrefs.SetInt(Utils.TrajectoryVisible_Int, Utils.SinglePlayerType == SpType.Practice ? 1 : 0);
     }
     void BtnMethodSinglePractice()
     {
-        Utils.PracticeSp = true;
-        PlayerPrefs.SetInt(Utils.TrajectoryVisible_Int, 1);
-        PlayerPrefs.SetFloat(Utils.WindAmount_Fl, 0f);
+        Utils.SinglePlayerType = SpType.Practice;
+        BtnMethodSinglePlay();
+    }
 
+    void BtnMethodSingleCampaign()
+    {
+        Utils.SinglePlayerType = SpType.Campaign;
         BtnMethodSinglePlay();
     }
     void BtnMethodReturn()
     {
-        Utils.ActivateOneArrayElement(mainUIelements, 0);
+        Utils.ActivateOneArrayElement(mainUiElements, 0);
         audioManager.PlaySFX(audioManager.uiButton);
     }
     void BtnMethodMapSize(int ord)
@@ -182,11 +187,11 @@ public class MainMenuManager : MonoBehaviour
         PlayerPrefs.SetInt(Utils.Size_Int, ord);
         for (int i = 0; i < 3; i++)
         {
-            btnsSize[i].transform.GetChild(1).gameObject.SetActive(false);
-            btnSizeMp[i].transform.GetChild(1).gameObject.SetActive(false);
+            buttonsSize[i].transform.GetChild(1).gameObject.SetActive(false);
+            buttonSizeMp[i].transform.GetChild(1).gameObject.SetActive(false);
         }
-        btnsSize[ord].transform.GetChild(1).gameObject.SetActive(true);
-        btnSizeMp[ord].transform.GetChild(1).gameObject.SetActive(true);
+        buttonsSize[ord].transform.GetChild(1).gameObject.SetActive(true);
+        buttonSizeMp[ord].transform.GetChild(1).gameObject.SetActive(true);
     }
     void BtnMethodDiff(int ord)
     {
@@ -194,9 +199,9 @@ public class MainMenuManager : MonoBehaviour
         PlayerPrefs.SetInt(Utils.Difficulty_Int, ord);
         for (int i = 0; i < 3; i++)
         {
-            btnsDiff[i].transform.GetChild(1).gameObject.SetActive(false);
+            buttonsDiff[i].transform.GetChild(1).gameObject.SetActive(false);
         }
-        btnsDiff[ord].transform.GetChild(1).gameObject.SetActive(true);
+        buttonsDiff[ord].transform.GetChild(1).gameObject.SetActive(true);
 
     }
 
@@ -206,7 +211,7 @@ public class MainMenuManager : MonoBehaviour
     void InitPlayerLeveling()
     {
         PlayerLeveling.CalculateLevelFromXp(out int level, out int xpToNext);
-        displayLev.text = $"Level: {level}";
+        displayLevel.text = $"Level: {level}";
         displayCurrent.text = $"Current XP: {PlayerPrefs.GetInt(Utils.Xp_Int)}";
         displayToNext.text = xpToNext == 0 ? "Max level reached" : $"XP to next level: {xpToNext}";
     }

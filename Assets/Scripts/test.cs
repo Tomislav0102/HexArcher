@@ -1,18 +1,31 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Sirenix.OdinInspector;
 using Sirenix.Utilities;
 using Unity.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class test : MonoBehaviour
 {
-    public int prvi;
-    public uint rezultat;
+    public string sceneName = "TestScene";
+    public static int NumPublic;
+    static int numPrivate;
 
 
-    void Update()
+    [Button("Restart scene")]
+    void M1() => SceneManager.LoadScene(sceneName);
+
+    [Button("Increase public var")]
+    void M2() => NumPublic++;
+    [Button("Increase private var")]
+    void M3() => numPrivate++;
+
+    [Button("Display")]
+    void M4()
     {
-        rezultat = (uint)Mathf.Abs(prvi) + 1;
+        Debug.Log(NumPublic);
+        Debug.Log(numPrivate);
     }
 }
