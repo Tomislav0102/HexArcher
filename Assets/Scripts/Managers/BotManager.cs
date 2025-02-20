@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
-
+using System.Linq;
 
 public class BotManager : MonoBehaviour
 {
@@ -129,28 +129,30 @@ public class BotManager : MonoBehaviour
             }
         }
 
-        //list of 'ParentHex' monobehaviours is sorted by its variable 'valueForBot'
-        List<ParentHex> final = new List<ParentHex>();
-        final.Add(allFree[0]);
-        for (int i = 1; i < allFree.Count; i++)
-        {
-            ParentHex item = allFree[i];
-            if (item.valueForBot > final[final.Count - 1].valueForBot) final.Add(item);
-            else FindSpotForItem(item);
-        }
-        return final;
+        return allFree.OrderByDescending(n => n.valueForBot).ToList();
 
-        void FindSpotForItem(ParentHex hex)
-        {
-            for (int i = 0; i < final.Count; i++)
-            {
-                if (final[i].valueForBot >= hex.valueForBot)
-                {
-                    final.Insert(i, hex);
-                    return;
-                }
-            }
-        }
+        // //list of 'ParentHex' monobehaviours is sorted by its variable 'valueForBot'
+        // List<ParentHex> final = new List<ParentHex>();
+        // final.Add(allFree[0]);
+        // for (int i = 1; i < allFree.Count; i++)
+        // {
+        //     ParentHex item = allFree[i];
+        //     if (item.valueForBot > final[final.Count - 1].valueForBot) final.Add(item);
+        //     else FindSpotForItem(item);
+        // }
+        // return final;
+        //
+        // void FindSpotForItem(ParentHex hex)
+        // {
+        //     for (int i = 0; i < final.Count; i++)
+        //     {
+        //         if (final[i].valueForBot >= hex.valueForBot)
+        //         {
+        //             final.Insert(i, hex);
+        //             return;
+        //         }
+        //     }
+        // }
 
     }
 }

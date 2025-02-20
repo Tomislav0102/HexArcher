@@ -24,7 +24,8 @@ public class UiManager : NetworkBehaviour
     [Title("Tutorial")]
     [SerializeField] Button[] buttonsTutorialDone;
     [Title("Campaign")]
-    public TextMeshProUGUI displayCampaignInfo;
+    public TextMeshProUGUI displayCampaignInfoStart;
+    public TextMeshProUGUI displayCampaignInfoEnd;
     [SerializeField] Button buttonCampStart;
 
     private void Awake()
@@ -49,6 +50,7 @@ public class UiManager : NetworkBehaviour
             case SpType.Endless:
                 break;
             case SpType.Campaign:
+                ActivateDictionary(CanType.Camp);
                 break;
             case SpType.Practice:
                 ActivateDictionary(CanType.Practice_Tut);
@@ -196,12 +198,11 @@ public class UiManager : NetworkBehaviour
         if (newValue == PlayerColor.Undefined) return;
         
         ActivateDictionary(CanType.End);
-        Transform tr = canvasElements[1].transform;
+        Transform tr = _elements[CanType.End].transform;
         for (int i = 0; i < tr.childCount; i++)
         {
             Utils.DeActivateGo(tr.GetChild(i).gameObject);
         }
-        
         int currentXp = PlayerPrefs.GetInt(Utils.Xp_Int);
         switch (newValue)
         {

@@ -424,8 +424,16 @@ public class GameManager : NetworkBehaviour
 
     #region DEBUGS
 
-    [ContextMenu("Utils.GameType")]
-    void Metoda1() => print(Utils.GameType);
+    [ContextMenu("GameType")]
+    void Metoda1()
+    {
+        print(Utils.GameType);
+        if (Utils.GameType == MainGameType.Singleplayer)
+        {
+            print(Utils.SinglePlayerType);
+            print($"Campaign level is {Utils.CampLevel}");
+        }
+    }
 
     [ContextMenu("ConnectedClients.Count")]
     void Metoda2() => print(NetworkManager.Singleton.ConnectedClients.Count);

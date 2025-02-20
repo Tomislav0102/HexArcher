@@ -96,7 +96,8 @@ public class MainMenuManager : MonoBehaviour
     private void OnEnable()
     {
         buttonPractice.onClick.AddListener(BtnMethodSinglePractice);
-
+        buttonCampaign.onClick.AddListener(BtnMethodSingleCampaign);
+        
         buttonsSize[0].onClick.AddListener(() => BtnMethodMapSize(0));
         buttonsSize[1].onClick.AddListener(() => BtnMethodMapSize(1));
         buttonsSize[2].onClick.AddListener(() => BtnMethodMapSize(2));
@@ -125,6 +126,7 @@ public class MainMenuManager : MonoBehaviour
     private void OnDisable()
     {
         buttonPractice.onClick.RemoveAllListeners();
+        buttonCampaign.onClick.RemoveAllListeners();
 
         for (int i = 0; i < 3; i++)
         {
