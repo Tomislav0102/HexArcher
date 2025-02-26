@@ -18,14 +18,15 @@ public class Utils
     //suffix is Type
     public static string Difficulty_Int = "difficulty AI";
     public static string Size_Int = "size of grid";
-    public static string Xp_Int = "experience player";
-    public static string Bow_Int = "chosen bow player";
-    public static string PlName_Str = "name player";
     public static string WindAmount_Fl = "wind amount";
     public static string TrajectoryVisible_Int = "trajectory is visible"; 
-    static string lBidStr = "leaderboard id";
-    public static string LbRank_Int = "leaderboard rank";
-    public static string LbLocalScore_Int = "local score";
+    public static string Bow_Int = "chosen bow player";
+    public static string PlName_Str = "name player";
+    public static string PlXp_Int = "experience player";
+    public static string PlRank_Int = "rank player";
+    static string plLeaderBoardIdStr = "leaderboard id";
+    public static string PlLeaderBoardRank_Int = "leaderboard rank";
+    public static string PlLeaderBoardLocalScore_Int = "local score";
     #endregion
 
     public static MainGameType GameType;
@@ -40,14 +41,15 @@ public class Utils
     {
         Debug.Log($"Difficulty: {(GenLevel)PlayerPrefs.GetInt(Difficulty_Int)}\n" +
             $"Size: {(GenSize)PlayerPrefs.GetInt(Size_Int)}\n" +
-            $"XP: {PlayerPrefs.GetInt(Xp_Int)}\n" +
+            $"XP: {PlayerPrefs.GetInt(PlXp_Int)}\n" +
             $"Bow: {PlayerPrefs.GetInt(Bow_Int)} \n" +
             $"Player name: {PlayerPrefs.GetString(PlName_Str)} \n" +
+            $"Player rank: {(Ranking)PlayerPrefs.GetInt(PlRank_Int)} \n" +
             $"Wind amount: {PlayerPrefs.GetFloat(WindAmount_Fl)} \n" +
             $"Trajectory visible: {PlayerPrefs.GetInt(TrajectoryVisible_Int)} \n" +
-            $"LB id: {PlayerPrefs.GetString(lBidStr)} \n" +
-            $"LB rank: {PlayerPrefs.GetInt(LbRank_Int)} \n" +
-            $"LB local score: {PlayerPrefs.GetInt(LbLocalScore_Int)}");
+            $"LB id: {PlayerPrefs.GetString(plLeaderBoardIdStr)} \n" +
+            $"LB rank: {PlayerPrefs.GetInt(PlLeaderBoardRank_Int)} \n" +
+            $"LB local score: {PlayerPrefs.GetInt(PlLeaderBoardLocalScore_Int)}");
     }
 
 
@@ -140,8 +142,8 @@ public class Utils
 
     public static string MyIdLeaderboard()
     {
-        if (!PlayerPrefs.HasKey(lBidStr)) PlayerPrefs.SetString(lBidStr, System.Guid.NewGuid().ToString());
-        return PlayerPrefs.GetString(lBidStr);
+        if (!PlayerPrefs.HasKey(plLeaderBoardIdStr)) PlayerPrefs.SetString(plLeaderBoardIdStr, System.Guid.NewGuid().ToString());
+        return PlayerPrefs.GetString(plLeaderBoardIdStr);
     }
 
     public static string[] PurgedString(string stInput)
@@ -171,6 +173,7 @@ public enum MainGameType
     Singleplayer,
     Multiplayer
 }
+public enum Ranking { Bronze, Silver, Gold, Platinum, Diamond, Champion, GrandChampion, SuperSonicLegend }
 public enum SpType { Endless, Campaign, Practice }
 public enum EncryptionType
 {

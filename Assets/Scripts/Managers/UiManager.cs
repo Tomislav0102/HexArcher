@@ -203,7 +203,7 @@ public class UiManager : NetworkBehaviour
         {
             Utils.DeActivateGo(tr.GetChild(i).gameObject);
         }
-        int currentXp = PlayerPrefs.GetInt(Utils.Xp_Int);
+        int currentXp = PlayerPrefs.GetInt(Utils.PlXp_Int);
         switch (newValue)
         {
             case PlayerColor.Blue:
@@ -236,7 +236,7 @@ public class UiManager : NetworkBehaviour
                 break;
         }
         Utils.ActivateGo(endInfos);
-        int xpEarned = PlayerPrefs.GetInt(Utils.Xp_Int) - currentXp;
+        int xpEarned = PlayerPrefs.GetInt(Utils.PlXp_Int) - currentXp;
         displayEarnedXp.text = $"You've earned {xpEarned} XP!";
     }
 

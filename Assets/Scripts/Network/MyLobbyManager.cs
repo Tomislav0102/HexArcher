@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Sirenix.OdinInspector;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using Unity.Networking.Transport.Relay;
@@ -20,6 +21,7 @@ using Random = UnityEngine.Random;
 
 public class MyLobbyManager : MonoBehaviour
 {
+    Ranking _myRank; 
     [SerializeField] string env = "dev";
     [SerializeField] string lobbyName = "Lobby";
     [SerializeField] int maxPlayers = 4;
@@ -48,6 +50,7 @@ public class MyLobbyManager : MonoBehaviour
 
     float _timerHeartbeat, _timerUpdateLobbyData;
     const string CONST_KeyJoinCode = "RelayJoinCode";
+    const string CONST_Ranking = "Ranking";
 
     [Header("UI")]
     [SerializeField] Button btnCreate;
@@ -58,14 +61,15 @@ public class MyLobbyManager : MonoBehaviour
     bool _activeUpdates = true;
     bool _oneHitBtnCreate, _oneHitBtnJoin, _oneHitBtnReady;
 
-
+    #region INITIALIZATION
+    
     void Start()
     {
         _relayManager = new RelayManager(maxPlayers);
         DontDestroyOnLoad(this);
 
 #if (UNITY_EDITOR)
-       // Invoke(nameof(Btn_Ready), 0.3f);
+        Invoke(nameof(Btn_Ready), 0.3f);
 #endif
     }
 
@@ -116,6 +120,7 @@ public class MyLobbyManager : MonoBehaviour
         }
 
     }
+    #endregion
 
     #region UI CONTROLS
     private void InField_PlayerName()
@@ -226,11 +231,13 @@ public class MyLobbyManager : MonoBehaviour
                 Player = GetPlayer()
             };
             _currentLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, options);
+            _myRank = (Ranking)PlayerPrefs.GetInt(Utils.PlRank_Int);
             await LobbyService.Instance.UpdateLobbyAsync(_currentLobby.Id, new UpdateLobbyOptions
             {
                 Data = new Dictionary<string, DataObject>
                 {
-                    { CONST_KeyJoinCode, new DataObject(DataObject.VisibilityOptions.Public, relayCode) }
+                    { CONST_KeyJoinCode, new DataObject(DataObject.VisibilityOptions.Public, relayCode) },
+                    { CONST_Ranking, new DataObject(DataObject.VisibilityOptions.Public, ((int)_myRank).ToString(), DataObject.IndexOptions.N1) },
                 }
             });
 
@@ -261,9 +268,16 @@ public class MyLobbyManager : MonoBehaviour
     {
         try
         {
+            _myRank = (Ranking)PlayerPrefs.GetInt(Utils.PlRank_Int);
             QuickJoinLobbyOptions options = new QuickJoinLobbyOptions()
             {
-                Player = GetPlayer()
+                Player = GetPlayer(),
+                Filter = new List<QueryFilter>()
+                {
+                    new QueryFilter(QueryFilter.FieldOptions.N1, 
+                        ((int)_myRank).ToString(), 
+                        QueryFilter.OpOptions.GE) //compare filed (from lobby, host) with value (me, client)
+                }
             };
             _currentLobby = await LobbyService.Instance.QuickJoinLobbyAsync(options);
 
@@ -280,11 +294,12 @@ public class MyLobbyManager : MonoBehaviour
                 HostConnectionData = allocation.HostConnectionData,
                 JoinCode = relayCode
             };
+
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(joinData.IPv4Address, joinData.Port, joinData.AllocationIDBytes, joinData.Key, joinData.ConnectionData, joinData.HostConnectionData);
             NetworkManager.Singleton.StartClient();
             Launch.Instance.mySceneManager.SubscribeAll();
-            _activeUpdates = false;
             print($"starting client with {relayCode}");
+            _activeUpdates = false;
         }
         catch (LobbyServiceException e)
         {
@@ -292,6 +307,7 @@ public class MyLobbyManager : MonoBehaviour
             _oneHitBtnJoin = false;
         }
     }
+
 
     async Task JoinWithRelayCode(string codeFromRelay)
     {
@@ -439,60 +455,3 @@ public class MyLobbyManager : MonoBehaviour
 
 }
 
-    // async Task CreateLobby()
-    // {
-    //     try
-    //     {
-    //         Allocation allocation = await AllocateRelay();
-    //         joinCode = await GetRelayJoinCode(allocation);
-    //         CreateLobbyOptions options = new CreateLobbyOptions
-    //         {
-    //             IsPrivate = false,
-    //             Player = GetPlayer()
-    //         };
-    //
-    //         currentLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, options);
-    //         print($"Created lobby: {currentLobby.Name}, with code {joinCode}");
-    //
-    //         await LobbyService.Instance.UpdateLobbyAsync(currentLobby.Id, new UpdateLobbyOptions
-    //         {
-    //             Data = new Dictionary<string, DataObject> 
-    //                 {
-    //                     {CONST_KEY_JOIN_CODE, new DataObject(DataObject.VisibilityOptions.Member, joinCode)}
-    //                 }
-    //         });
-    //         NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(allocation, ConnectionType()));
-    //         NetworkManager.Singleton.StartHost();
-    //         MySceneManager.Instance.SubscribeAll();
-    //         _activeUpdates = true;
-    //     }
-    //     catch (LobbyServiceException e)
-    //     {
-    //         Debug.LogError("Failed to create lobby: " + e.Message);
-    //         _oneHitBtnJoin = false;
-    //     }
-    // }
-    //
-    // async Task QuickJoinLobby()
-    // {
-    //     try
-    //     {
-    //         QuickJoinLobbyOptions options = new QuickJoinLobbyOptions()
-    //         {
-    //             Player = GetPlayer()
-    //         };
-    //         currentLobby = await LobbyService.Instance.QuickJoinLobbyAsync(options);
-    //         joinCode = currentLobby.Data[CONST_KEY_JOIN_CODE].Value;
-    //         JoinAllocation joinAllocation = await JoinRelay(joinCode);
-    //         NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(joinAllocation, ConnectionType()));
-    //         NetworkManager.Singleton.StartClient();
-    //         MySceneManager.Instance.SubscribeAll();
-    //         print($"starting quickjoin client with {joinCode}");
-    //         _activeUpdates = false;
-    //     }
-    //     catch (LobbyServiceException e)
-    //     {
-    //         Debug.LogError("Failed to quick join lobby: " + e.Message);
-    //         _oneHitBtnJoin = false;
-    //     }
-    // }

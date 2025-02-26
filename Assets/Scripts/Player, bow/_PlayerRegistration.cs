@@ -58,31 +58,34 @@ public class PlayerRegistration
             if (_players[i] == null) continue;
             string myName = "";
             string levelDisplay = "Level - ";
-            string rankDisplay = "Leaderboard - ";
+            string rankDisplay = "Rank - ";
+            string lbDisplay = "Leaderboard - ";
             if (i == 0)
             {
                 myName = GameManager.Instance.nameBlueNet.Value.ToString();
                 levelDisplay += GameManager.Instance.leveBlueNet.Value.ToString();
-                if (GameManager.Instance.leaderboardBlueNet.Value < 0) rankDisplay = string.Empty;
+                rankDisplay += GameManager.Instance.rankingBlueNet.Value;
+                if (GameManager.Instance.leaderboardBlueNet.Value < 0) lbDisplay = string.Empty;
                 else
                 {
                     int rank = GameManager.Instance.leaderboardBlueNet.Value;
-                    rankDisplay += (rank + 1).ToString();
+                    lbDisplay += (rank + 1).ToString();
                 }
             }
             else
             {
                 myName = GameManager.Instance.nameRedNet.Value.ToString();
                 levelDisplay += GameManager.Instance.leveRedNet.Value.ToString();
-                if (GameManager.Instance.leaderboardRedNet.Value < 0) rankDisplay = string.Empty;
+                rankDisplay += GameManager.Instance.rankingRedNet.Value;
+                if (GameManager.Instance.leaderboardRedNet.Value < 0) lbDisplay = string.Empty;
                 else
                 {
                     int rank = GameManager.Instance.leaderboardRedNet.Value;
-                    rankDisplay += (rank + 1).ToString();
+                    lbDisplay += (rank + 1).ToString();
                 }
 
             }
-            _displays[i].text = myName + "\n" + levelDisplay+ "\n" + rankDisplay;
+            _displays[i].text = myName + "\n" + levelDisplay + "\n" + rankDisplay + "\n" + lbDisplay;
             _players[i].name = $"Igrach {_players[i].GetComponent<NetworkObject>().OwnerClientId}";
         }
     }

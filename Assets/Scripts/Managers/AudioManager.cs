@@ -154,13 +154,13 @@ public class AudioManager : MonoBehaviour
                 return;
             case PlayControls.Previous:
                 audioMusic.UnPause();
-                _playImage.sprite = playPauseSprites[0];
+                _playImage.sprite = playPauseSprites[1];
                 _autoPlayControls = AutoPlayControls.Prev;
                 _timer = 0;
                 break;
             case PlayControls.Next:
                 audioMusic.UnPause();
-                _playImage.sprite = playPauseSprites[0];
+                _playImage.sprite = playPauseSprites[1];
                 _autoPlayControls = AutoPlayControls.Next;
                 _timer = 0;
                 break;

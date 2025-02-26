@@ -198,9 +198,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3188ec2a9c61dc64cbd305e1621e4626, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  myRank: 0
   env: dev
   lobbyName: Lobby
-  maxPlayers: 4
+  maxPlayers: 2
   encryption: 0
   relayCode: 
   btnCreate: {fileID: 0}

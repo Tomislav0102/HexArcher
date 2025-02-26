@@ -62,7 +62,8 @@ public class PlayerControl : NetworkBehaviour
             {
                 int index = NetworkObject.IsOwnedByServer ? 0 : 1;
                 gm.RegisterLevel_ServerRpc(uint.Parse(Launch.Instance.myLobbyManager.GetPlayerLevel(index)), index == 0);
-                gm.RegisterLeaderboardRank_ServerRpc(PlayerPrefs.GetInt(Utils.LbRank_Int), index == 0);
+                gm.RegisterLeaderboardRank_ServerRpc(PlayerPrefs.GetInt(Utils.PlLeaderBoardRank_Int), index == 0);
+                gm.RegisterRank_ServerRpc(PlayerPrefs.GetInt(Utils.PlRank_Int), index == 0);
                 gm.RegisterName_ServerRpc(Launch.Instance.myLobbyManager.GetPlayerName(index), index == 0);
                 gm.RegisterAuthenticationId_ServerRpc(Launch.Instance.myLobbyManager.GetPlayerId(index), index == 0);
                 if (index == 1) gm.ChangeOwnershipOfBowTable_ServerRpc(NetworkManager.Singleton.LocalClientId);

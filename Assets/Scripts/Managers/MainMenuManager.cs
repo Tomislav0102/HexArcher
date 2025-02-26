@@ -214,7 +214,7 @@ public class MainMenuManager : MonoBehaviour
     {
         PlayerLeveling.CalculateLevelFromXp(out int level, out int xpToNext);
         displayLevel.text = $"Level: {level}";
-        displayCurrent.text = $"Current XP: {PlayerPrefs.GetInt(Utils.Xp_Int)}";
+        displayCurrent.text = $"Current XP: {PlayerPrefs.GetInt(Utils.PlXp_Int)}";
         displayToNext.text = xpToNext == 0 ? "Max level reached" : $"XP to next level: {xpToNext}";
     }
 

@@ -67,10 +67,12 @@ public class GameManager : NetworkBehaviour
     [Title("Public network variables - player data", TitleAlignment = TitleAlignments.Centered)]
     public NetworkVariable<uint> leveBlueNet = new NetworkVariable<uint>();
     public NetworkVariable<int> leaderboardBlueNet = new NetworkVariable<int>();
+    public NetworkVariable<Ranking> rankingBlueNet = new NetworkVariable<Ranking>();
     public NetworkVariable<FixedString128Bytes> nameBlueNet = new NetworkVariable<FixedString128Bytes>();
     public NetworkVariable<FixedString128Bytes> authIdBlueNet = new NetworkVariable<FixedString128Bytes>();
     public NetworkVariable<uint> leveRedNet = new NetworkVariable<uint>();
     public NetworkVariable<int> leaderboardRedNet = new NetworkVariable<int>();
+    public NetworkVariable<Ranking> rankingRedNet = new NetworkVariable<Ranking>();
     public NetworkVariable<FixedString128Bytes> nameRedNet = new NetworkVariable<FixedString128Bytes>();
     public NetworkVariable<FixedString128Bytes> authIdRedNet = new NetworkVariable<FixedString128Bytes>();
     
@@ -281,6 +283,12 @@ public class GameManager : NetworkBehaviour
     {
         if (playerIsHost) leaderboardBlueNet.Value = rank;
         else leaderboardRedNet.Value = rank;
+    }
+    [Rpc(SendTo.Server)]
+    public void RegisterRank_ServerRpc(int rank, bool playerIsHost)
+    {
+        if (playerIsHost) rankingBlueNet.Value = (Ranking)rank;
+        else rankingRedNet.Value = (Ranking)rank;
     }
     [Rpc(SendTo.Server)]
     public void RegisterName_ServerRpc(FixedString128Bytes playerName, bool playerIsHost)
