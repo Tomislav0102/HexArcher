@@ -20,7 +20,7 @@ public class PlayerControlMenu : MonoBehaviour
     }
     void CallEv_FadeMethod(bool fadeout)
     {
-        Utils.ActivateGo(fadeSprite.gameObject);
+        Utils.Activation(fadeSprite.gameObject, true);
         Color from = fadeout ? Color.black : Color.clear;
         Color to = fadeout ? Color.clear : Color.black;
         fadeSprite.DOColor(to, 2f)
@@ -29,7 +29,7 @@ public class PlayerControlMenu : MonoBehaviour
             {
                 if (fadeout)
                 {
-                    Utils.DeActivateGo(fadeSprite.gameObject);
+                    Utils.Activation(fadeSprite.gameObject, false);
                 }
             });
     }

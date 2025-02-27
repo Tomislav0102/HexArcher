@@ -41,7 +41,7 @@ public class BowControl : MonoBehaviour
                     break;
 
                 case BowState.InHand:
-                    gm.bowRacks[gm.indexInSo].HideRack();
+                    gm.bowRacks[NetworkManager.Singleton.IsHost ? 0 : 1].HideRack();
                     playerControl.shooting.myCollider.enabled = true;
                     break;
 
@@ -63,7 +63,7 @@ public class BowControl : MonoBehaviour
         gm = GameManager.Instance;
         playerControl.shooting.power = bowData.power;
 
-        _rackParent = gm.bowRacks[gm.indexInSo].spawnPoint;
+        _rackParent = gm.bowRacks[NetworkManager.Singleton.IsHost ? 0 : 1].spawnPoint;
     }
     private void OnEnable()
     {
@@ -97,7 +97,7 @@ public class BowControl : MonoBehaviour
     {
         myRigid.velocity = Vector3.zero;
         Bstate = BowState.RackMoving;
-        gm.bowRacks[gm.indexInSo].EnterRack(() =>
+        gm.bowRacks[NetworkManager.Singleton.IsHost ? 0 : 1].EnterRack(() =>
         {
             Bstate = BowState.RackDone;
         });

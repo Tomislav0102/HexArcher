@@ -40,11 +40,11 @@ public class LeaderboardUi : MonoBehaviour
 
         btnPrev.interactable = false;
         btnNext.interactable = false;
-        Utils.DeActivateGo(parDisplays.gameObject);
+        Utils.Activation(parDisplays.gameObject, false);
         Utils.ActivateOneArrayElement(_displaysGo);
         if (_db.dataLoaded)
         {
-            Utils.ActivateGo(parDisplays.gameObject);
+            Utils.Activation(parDisplays.gameObject, true);
             int maxCounter = _totalOnSingleScreen;
             if (_db.names.Count <= _totalOnSingleScreen) maxCounter = _db.names.Count;
             else
@@ -58,7 +58,7 @@ public class LeaderboardUi : MonoBehaviour
                 _displaysOrd[i].text = (i + 1).ToString();
                 _displaysNames[i].text = _db.names[i];
                 _displaysScores[i].text = _db.scores[i].ToString();
-                Utils.ActivateGo(_displaysGo[i]);
+                Utils.Activation(_displaysGo[i], true);
             }
             _screenCounter = _totalOnSingleScreen;
             
@@ -79,14 +79,14 @@ public class LeaderboardUi : MonoBehaviour
         int myPos = _db.GetMyPositionOnLeaderboard(Utils.MyIdLeaderboard());
         if (myPos > 0)
         {
-            Utils.ActivateGo(parMyEntry.gameObject);
+            Utils.Activation(parMyEntry.gameObject, true);
             parMyEntry.GetChild(0).GetComponent<TextMeshProUGUI>().text = (myPos + 1).ToString();
             parMyEntry.GetChild(1).GetComponent<TextMeshProUGUI>().text = _db.names[myPos];
             parMyEntry.GetChild(2).GetComponent<TextMeshProUGUI>().text = _db.scores[myPos].ToString();
         }
         else
         {
-            Utils.DeActivateGo(parMyEntry.gameObject);
+            Utils.Activation(parMyEntry.gameObject, false);
         }
     }
 
@@ -119,7 +119,7 @@ public class LeaderboardUi : MonoBehaviour
             _displaysOrd[i - prevVal].text = (i + 1).ToString();
             _displaysNames[i - prevVal].text = _db.names[i].ToString();
             _displaysScores[i - prevVal].text = _db.scores[i].ToString();
-            Utils.ActivateGo(_displaysGo[i - prevVal]);
+            Utils.Activation(_displaysGo[i - prevVal], true);
         }
 
 

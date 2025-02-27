@@ -20,11 +20,11 @@ public class BotManager : MonoBehaviour
             gm.uImanager.displayStartInfo.text = "";
             if (value)
             {
-                Utils.ActivateGo(bow);
+                Utils.Activation(bow, true);
             }
             else
             {
-                Utils.DeActivateGo(bow);
+                Utils.Activation(bow, false);
                 arrowSpawnPoint.eulerAngles = Vector3.zero;
             }
         }

@@ -129,12 +129,12 @@ public class ParentHex : TileParent
     void InactiveHex()
     {
         spriteRenderer.enabled = false;
-        Utils.DeActivateGo(parColliders.gameObject);
-        Utils.DeActivateGo(parDisplays.gameObject);
-        Utils.DeActivateGo(parSpritesOrange.gameObject);
-        Utils.DeActivateGo(parSpritesTeal.gameObject);
-        Utils.DeActivateGo(finalHexagonTransform.gameObject);
-        Utils.DeActivateGo(trajectoryCollider);
+        Utils.Activation(parColliders.gameObject, false);
+        Utils.Activation(parDisplays.gameObject, false);
+        Utils.Activation(parSpritesOrange.gameObject, false);
+        Utils.Activation(parSpritesTeal.gameObject, false);
+        Utils.Activation(finalHexagonTransform.gameObject, false);
+        Utils.Activation(trajectoryCollider, false);
     }
     public void HexHit(sbyte ordinal)
     {

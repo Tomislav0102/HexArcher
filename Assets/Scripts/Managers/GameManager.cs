@@ -6,17 +6,16 @@ using Sirenix.OdinInspector;
 using TMPro;
 using Unity.Collections;
 using Unity.Netcode;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 public class GameManager : NetworkBehaviour
 {
     public static GameManager Instance;
-    public bool MyTurn() => playerTurnNet.Value == playerDatas[indexInSo].playerColor;
+    public bool MyTurn() => playerTurnNet.Value == playerDatas[NetworkManager.Singleton.IsHost ? 0 : 1].playerColor;
     int _counterMisses;
 
     [Title("References", TitleAlignment = TitleAlignments.Centered)]
-    public int indexInSo; //this is redundant. TODO - remove it
-
     [SerializeField] Camera camMain;
     [HideInInspector] public Transform camMainTransform;
     public SoPlayerData[] playerDatas;
@@ -45,10 +44,9 @@ public class GameManager : NetworkBehaviour
     [SerializeField] GameObject prefabPlayer;
     public GameObject prefabArrowReal;
     public GameObject prefabArrowShadow;
-    public ArrowMain arrowReal;
-    public ArrowMain arrowShadow;
-    public float forceArrow;
-    [SerializeField] GameObject prefabBow;
+    [Sirenix.OdinInspector.ReadOnly] public ArrowMain arrowReal;
+    [Sirenix.OdinInspector.ReadOnly] public ArrowMain arrowShadow;
+    [Sirenix.OdinInspector.ReadOnly] public float forceArrow;
     public NetworkObject[] bowTablesNet;
     [SerializeField] MeshRenderer[] playerMeshMarker;
     [SerializeField] GameObject[] scoreVisualMarker;
@@ -58,24 +56,32 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<GenLevel> difficultyNet = new NetworkVariable<GenLevel>();
     public NetworkVariable<PlayerColor> playerTurnNet = new NetworkVariable<PlayerColor>();
     public NetworkVariable<PlayerColor> playerVictoriousNet = new NetworkVariable<PlayerColor>();
-    public NetworkVariable<uint> scoreBlueNet = new NetworkVariable<uint>();
-    public NetworkVariable<uint> scoreRedNet = new NetworkVariable<uint>();
     public NetworkList<byte> gridTileStatesNet;
     public NetworkList<sbyte> gridValuesNet;
     public NetworkVariable<float> windAmountNet = new NetworkVariable<float>();
     public NetworkVariable<bool> trajectoryVisible = new NetworkVariable<bool>();
-    [Title("Public network variables - player data", TitleAlignment = TitleAlignments.Centered)]
-    public NetworkVariable<uint> leveBlueNet = new NetworkVariable<uint>();
+    [Title("Public network variables - players", TitleAlignment = TitleAlignments.Centered)]
+    public NetworkList<uint> scoresNet;
+    public NetworkList<uint> levelsNet;
+    public NetworkList<int> leaderboardNet;
+    public NetworkList<RankingWrapper> rankingNet;
+    public NetworkList<FixedString128Bytes> nameNet;
+    public NetworkList<FixedString128Bytes> authIdNet;
+    [Title("Public network variables - player blue", TitleAlignment = TitleAlignments.Centered)]
+    public NetworkVariable<uint> scoreBlueNet = new NetworkVariable<uint>();
+    public NetworkVariable<uint> levelBlueNet = new NetworkVariable<uint>();
     public NetworkVariable<int> leaderboardBlueNet = new NetworkVariable<int>();
     public NetworkVariable<Ranking> rankingBlueNet = new NetworkVariable<Ranking>();
     public NetworkVariable<FixedString128Bytes> nameBlueNet = new NetworkVariable<FixedString128Bytes>();
     public NetworkVariable<FixedString128Bytes> authIdBlueNet = new NetworkVariable<FixedString128Bytes>();
-    public NetworkVariable<uint> leveRedNet = new NetworkVariable<uint>();
+    [Title("Public network variables - player red", TitleAlignment = TitleAlignments.Centered)]
+    public NetworkVariable<uint> scoreRedNet = new NetworkVariable<uint>();
+    public NetworkVariable<uint> levelRedNet = new NetworkVariable<uint>();
     public NetworkVariable<int> leaderboardRedNet = new NetworkVariable<int>();
     public NetworkVariable<Ranking> rankingRedNet = new NetworkVariable<Ranking>();
     public NetworkVariable<FixedString128Bytes> nameRedNet = new NetworkVariable<FixedString128Bytes>();
     public NetworkVariable<FixedString128Bytes> authIdRedNet = new NetworkVariable<FixedString128Bytes>();
-    
+
     private void Awake()
     {
         Instance = this;
@@ -86,8 +92,15 @@ public class GameManager : NetworkBehaviour
 
         gridTileStatesNet = new NetworkList<byte>(new List<byte>());
         gridValuesNet = new NetworkList<sbyte>(new List<sbyte>());
-        indexInSo = NetworkManager.Singleton.IsHost ? 0 : 1;
         camMainTransform = camMain.transform;
+        
+        scoresNet = new NetworkList<uint>(new List<uint>());
+        levelsNet = new NetworkList<uint>(new List<uint>());
+        leaderboardNet = new NetworkList<int>(new List<int>());
+        rankingNet = new NetworkList<RankingWrapper>(new List<RankingWrapper>());
+        nameNet = new NetworkList<FixedString128Bytes>(new List<FixedString128Bytes>());
+        authIdNet = new NetworkList<FixedString128Bytes>(new List<FixedString128Bytes>());
+
     }
 
     public override void OnNetworkSpawn()
@@ -124,13 +137,16 @@ public class GameManager : NetworkBehaviour
             trajectoryVisible.Value = PlayerPrefs.GetInt(Utils.TrajectoryVisible_Int) == 1;
 
             NetworkManager.Singleton.OnClientDisconnectCallback += CallEv_ClientDisconnected;
-
+            
+            rankingNet.Add(Ranking.Silver);
+            rankingNet.Add(Ranking.Champion);
+            rankingNet[0] = Ranking.SuperSonicLegend;
         }
         else
         {
             gridManager.GridUseNetworkVariables();
             ChangeVisualMarkers_EveryoneRpc(playerTurnNet.Value);
-            Utils.DeActivateGo(botManager.gameObject);
+            Utils.Activation(botManager.gameObject, false);
         }
         Utils.FadeOut?.Invoke(true);
         audioManager.PlaySFX(audioManager.gameStarted);
@@ -275,8 +291,8 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.Server)]
     public void RegisterLevel_ServerRpc(uint level, bool playerIsHost)
     {
-        if (playerIsHost) leveBlueNet.Value = level;
-        else leveRedNet.Value = level;
+        if (playerIsHost) levelBlueNet.Value = level;
+        else levelRedNet.Value = level;
     }
     [Rpc(SendTo.Server)]
     public void RegisterLeaderboardRank_ServerRpc(int rank, bool playerIsHost)
@@ -347,10 +363,10 @@ public class GameManager : NetworkBehaviour
     {
         for (int i = 0; i < 2; i++)
         {
-            Utils.DeActivateGo(scoreVisualMarker[i]);
+            Utils.Activation(scoreVisualMarker[i], false);
             playerMeshMarker[i].material = playerDatas[(int)newValue].matMain;
         }
-        Utils.ActivateGo(scoreVisualMarker[(int)newValue]);
+        Utils.Activation(scoreVisualMarker[(int)newValue], true);
     }
 
     [Rpc(SendTo.Server)]
@@ -494,6 +510,12 @@ public class GameManager : NetworkBehaviour
     void Metoda13()
     {
         print(nameBlueNet.Value);
+    }
+    [ContextMenu("test net collections")]
+    void Metoda14()
+    {
+        print(rankingNet[0].value);
+        print(rankingNet[1].value);
     }
 
     #endregion

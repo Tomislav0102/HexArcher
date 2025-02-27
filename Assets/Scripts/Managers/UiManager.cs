@@ -146,10 +146,10 @@ public class UiManager : NetworkBehaviour
     {
         foreach (KeyValuePair<CanType?, GameObject> item in _elements)
         {
-            Utils.DeActivateGo(item.Value);
+            Utils.Activation(item.Value, false);
         }
         if (canType == null) return;
-        Utils.ActivateGo(_elements[canType]);
+        Utils.Activation(_elements[canType], true);
     }
     
     [ContextMenu("BtnMethodExit")]
@@ -201,7 +201,7 @@ public class UiManager : NetworkBehaviour
         Transform tr = _elements[CanType.End].transform;
         for (int i = 0; i < tr.childCount; i++)
         {
-            Utils.DeActivateGo(tr.GetChild(i).gameObject);
+            Utils.Activation(tr.GetChild(i).gameObject, false);
         }
         int currentXp = PlayerPrefs.GetInt(Utils.PlXp_Int);
         switch (newValue)
@@ -235,7 +235,7 @@ public class UiManager : NetworkBehaviour
                 PlayerLeveling.AddToXp(GenFinish.Draw);
                 break;
         }
-        Utils.ActivateGo(endInfos);
+        Utils.Activation(endInfos, true);
         int xpEarned = PlayerPrefs.GetInt(Utils.PlXp_Int) - currentXp;
         displayEarnedXp.text = $"You've earned {xpEarned} XP!";
     }

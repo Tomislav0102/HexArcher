@@ -18,17 +18,17 @@ public class MenuElementOpenWindows : MenuElementMain, IPointerClickHandler
             PlayerLeveling.CalculateLevelFromXp(out int lv, out int xp);
             if (lv < 5)
             {
-                Utils.ActivateGo(mm.requiredLevelWindow);
+                Utils.Activation(mm.requiredLevelWindow, true);
                 return;
             }
         }
         
         if (requireInternet && !mm.hasInternet)
         {
-            Utils.ActivateGo(mm.noInternetWindow);
+            Utils.Activation(mm.noInternetWindow, true);
             return;
         }
-        Utils.ActivateGo(windowToOpen);
+        Utils.Activation(windowToOpen, true);
     }
 
 }

@@ -1,4 +1,4 @@
-using System.Collections;
+using System;using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -68,15 +68,11 @@ public class Utils
             isConnected?.Invoke(false);
         }
     }
-    public static void ActivateGo(GameObject go)
-    {   
-        if (go != null && !go.activeInHierarchy) go.SetActive(true);
-    }
-    public static void DeActivateGo(GameObject go)
+    public static void Activation(GameObject go, bool activateGo)
     {
-        if (go != null && go.activeInHierarchy) go.SetActive(false);
+        if (go == null) return;
+        if (go.activeInHierarchy != activateGo) go.SetActive(activateGo);
     }
-
     public static void DestroyGo(GameObject go)
     {
         if (go != null) GameObject.Destroy(go);
@@ -104,9 +100,9 @@ public class Utils
     {
         for (int i = 0; i < arr.Length; i++)
         {
-           DeActivateGo(arr[i]);
+           Activation(arr[i], false);
         }
-        if (ordinal < arr.Length) ActivateGo(arr[ordinal]);
+        if (ordinal < arr.Length) Activation(arr[ordinal], true);
 
     }
     static readonly Dictionary<float, WaitForSeconds> WaitDictionary = new Dictionary<float, WaitForSeconds>();
@@ -173,7 +169,8 @@ public enum MainGameType
     Singleplayer,
     Multiplayer
 }
-public enum Ranking { Bronze, Silver, Gold, Platinum, Diamond, Champion, GrandChampion, SuperSonicLegend }
+public enum Ranking : byte
+{ Bronze, Silver, Gold, Platinum, Diamond, Champion, GrandChampion, SuperSonicLegend }
 public enum SpType { Endless, Campaign, Practice }
 public enum EncryptionType
 {
@@ -284,32 +281,67 @@ public struct NetHexState : INetworkSerializable
     }
 }
 
-//not being used
-public struct PlayerDataNet : System.IEquatable<PlayerDataNet>, INetworkSerializable
+
+public struct RankingWrapper : IEquatable<RankingWrapper>, INetworkSerializable
 {
-    public ulong clientId;
-    public int colorId;
-    public FixedString64Bytes playerName;
-    public FixedString64Bytes playerId;
+    public Ranking value;
 
-
-    public bool Equals(PlayerDataNet other)
+    RankingWrapper(Ranking val)
     {
-        return
-            clientId == other.clientId &&
-            colorId == other.colorId &&
-            playerName == other.playerName &&
-            playerId == other.playerId;
+        this.value = val;
     }
 
+    public bool Equals(RankingWrapper other)
+    {
+        return value == other.value;
+    }
+    
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        serializer.SerializeValue(ref clientId);
-        serializer.SerializeValue(ref colorId);
-        serializer.SerializeValue(ref playerName);
-        serializer.SerializeValue(ref playerId);
+        serializer.SerializeValue(ref value);
     }
 
+    public static implicit operator Ranking(RankingWrapper wrapper) => wrapper.value;
+    public static implicit operator RankingWrapper(Ranking value) => new RankingWrapper(value);
+}
+public struct FixedArrayInt : INetworkSerializable
+{
+    public int[] values;
+    public FixedString128Bytes[] names;
+    
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        if (serializer.IsWriter)
+        {
+            serializer.GetFastBufferWriter().WriteValueSafe(values.Length);
+            foreach (int item in values)
+            {
+                serializer.GetFastBufferWriter().WriteValueSafe(item);
+            }
+            
+            serializer.GetFastBufferWriter().WriteValueSafe(names.Length);
+            foreach (FixedString128Bytes item in names)
+            {
+                serializer.GetFastBufferWriter().WriteValueSafe(item);
+            }
+        }
+        else
+        {
+            serializer.GetFastBufferReader().ReadValueSafe(out int lenInt);
+            values = new int[lenInt];
+            for (int i = 0; i < values.Length; i++)
+            {
+                serializer.GetFastBufferReader().ReadValueSafe(out values[i]);
+            }
+            
+            serializer.GetFastBufferReader().ReadValueSafe(out int lenString128);
+            names = new FixedString128Bytes[lenString128];
+            for (int i = 0; i < names.Length; i++)
+            {
+                serializer.GetFastBufferReader().ReadValueSafe(out names[i]);
+            }
+        }
+    }
 }
 #endregion
 

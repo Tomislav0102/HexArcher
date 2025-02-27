@@ -37,7 +37,7 @@ public class BowShooting : MonoBehaviour
         _offsetStart = Mathf.Abs(_myTransform.localPosition.z);
         //_maxLength = (end.localPosition - notch.localPosition).magnitude;
         _maxLength =  Mathf.Abs(end.localPosition.z - _myTransform.localPosition.z);
-        Utils.DeActivateGo(end.gameObject);
+        Utils.Activation(end.gameObject, false);
     }
 
     void OnEnable()

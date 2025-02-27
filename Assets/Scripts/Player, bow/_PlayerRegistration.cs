@@ -63,7 +63,7 @@ public class PlayerRegistration
             if (i == 0)
             {
                 myName = GameManager.Instance.nameBlueNet.Value.ToString();
-                levelDisplay += GameManager.Instance.leveBlueNet.Value.ToString();
+                levelDisplay += GameManager.Instance.levelBlueNet.Value.ToString();
                 rankDisplay += GameManager.Instance.rankingBlueNet.Value;
                 if (GameManager.Instance.leaderboardBlueNet.Value < 0) lbDisplay = string.Empty;
                 else
@@ -75,7 +75,7 @@ public class PlayerRegistration
             else
             {
                 myName = GameManager.Instance.nameRedNet.Value.ToString();
-                levelDisplay += GameManager.Instance.leveRedNet.Value.ToString();
+                levelDisplay += GameManager.Instance.levelRedNet.Value.ToString();
                 rankDisplay += GameManager.Instance.rankingRedNet.Value;
                 if (GameManager.Instance.leaderboardRedNet.Value < 0) lbDisplay = string.Empty;
                 else
@@ -97,7 +97,7 @@ public class PlayerRegistration
         {
             if (_players[i] != null)
             {
-                Utils.DeActivateGo(_players[i].bowControl.gameObject);
+                Utils.Activation(_players[i].bowControl.gameObject, false);
             }
         }
     }

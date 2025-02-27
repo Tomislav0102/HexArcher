@@ -64,7 +64,7 @@ public class MainMenuManager : MonoBehaviour
         BtnMethodMapSize(PlayerPrefs.GetInt(Utils.Size_Int));
         BtnMethodDiff(PlayerPrefs.GetInt(Utils.Difficulty_Int));
         Utils.FadeOut?.Invoke(true);
-        Utils.ActivateGo(Launch.Instance.myLobbyManager.gameObject);
+        Utils.Activation(Launch.Instance.myLobbyManager.gameObject, true);
         if(!Launch.Instance.myDatabaseManager.AimIclone()) Launch.Instance.myDatabaseManager.DownloadLeaderboard();
         Launch.Instance.myLobbyManager.Init();
         if (NetworkManager.Singleton.IsListening)
@@ -158,7 +158,7 @@ public class MainMenuManager : MonoBehaviour
         _oneHitExitScene = true;
 
         audioManager.PlaySFX(audioManager.uiButton);
-        Utils.DeActivateGo(Launch.Instance.myLobbyManager.gameObject);
+        Utils.Activation(Launch.Instance.myLobbyManager.gameObject, false);
         NetworkManager.Singleton.GetComponent<UnityTransport>().SetConnectionData(Unity.Networking.Transport.NetworkEndPoint.AnyIpv4);
         NetworkManager.Singleton.StartHost();
         StartCoroutine(Launch.Instance.mySceneManager.NewSceneAfterFadeIn(MainGameType.Singleplayer));

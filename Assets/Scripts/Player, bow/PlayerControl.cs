@@ -50,13 +50,13 @@ public class PlayerControl : NetworkBehaviour
             VrRigRef.instance.leftController.activateAction.action.canceled += InputActivateLeftOff;
             VrRigRef.instance.rightController.activateAction.action.performed += InputActivateRightOn;
             VrRigRef.instance.rightController.activateAction.action.canceled += InputActivateRightOff;
-            VrRigRef.instance.root.SetPositionAndRotation(gm.bowTablesNet[gm.indexInSo].transform.position, 
-                gm.bowTablesNet[gm.indexInSo].transform.rotation);
+            VrRigRef.instance.root.SetPositionAndRotation(gm.bowTablesNet[NetworkManager.Singleton.IsHost ? 0 : 1].transform.position, 
+                gm.bowTablesNet[NetworkManager.Singleton.IsHost ? 0 : 1].transform.rotation);
             
             CallEv_FadeMethod(true);
             Utils.FadeOut += CallEv_FadeMethod;
 
-            Utils.DeActivateGo(displayNameTr.gameObject);
+            Utils.Activation(displayNameTr.gameObject, false);
 
             if (Utils.GameType == MainGameType.Multiplayer)
             {
@@ -113,7 +113,7 @@ public class PlayerControl : NetworkBehaviour
 
         for (int i = 0; i < headMeshes.Length; i++)
         {
-            headMeshes[i].material = gm.playerDatas[gm.indexInSo].matMain;
+            headMeshes[i].material = gm.playerDatas[NetworkManager.Singleton.IsHost ? 0 : 1].matMain;
         }
     }
 
@@ -167,7 +167,7 @@ public class PlayerControl : NetworkBehaviour
 
     void CallEv_FadeMethod(bool fadeout)
     {
-        Utils.ActivateGo(VrRigRef.instance.fadeSprite.gameObject);
+        Utils.Activation(VrRigRef.instance.fadeSprite.gameObject, true);
         Color from = fadeout ? Color.black : Color.clear;
         Color to = fadeout ? Color.clear : Color.black;
         VrRigRef.instance.fadeSprite.DOColor(to, 2f)
@@ -176,7 +176,7 @@ public class PlayerControl : NetworkBehaviour
             {
                 if (fadeout)
                 {
-                    Utils.DeActivateGo(VrRigRef.instance.fadeSprite.gameObject);
+                    Utils.Activation(VrRigRef.instance.fadeSprite.gameObject, false);
                 }
             });
     }
