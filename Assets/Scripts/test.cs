@@ -9,23 +9,13 @@ using UnityEngine.SceneManagement;
 
 public class test : MonoBehaviour
 {
-    public string sceneName = "TestScene";
-    public static int NumPublic;
-    static int numPrivate;
+    public string first, second;
 
 
-    [Button("Restart scene")]
-    void M1() => SceneManager.LoadScene(sceneName);
-
-    [Button("Increase public var")]
-    void M2() => NumPublic++;
-    [Button("Increase private var")]
-    void M3() => numPrivate++;
-
-    [Button("Display")]
-    void M4()
+    [Button]
+    void M()
     {
-        Debug.Log(NumPublic);
-        Debug.Log(numPrivate);
+        second = first.Remove(first.Length - 1, 1);
+        print("done");
     }
 }

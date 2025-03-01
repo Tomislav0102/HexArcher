@@ -44,11 +44,11 @@ public class BotManager : MonoBehaviour
     {
         switch (gm.difficultyNet.Value)
         {
-            case GenLevel.Easy:
+            case GenDifficulty.Easy:
                 return Random.value + (Random.value > 0.5 ? 0.3f : 0f);
-            case GenLevel.Normal:
+            case GenDifficulty.Normal:
                 return Mathf.Pow(Random.value, 2);
-            case GenLevel.Hard:
+            case GenDifficulty.Hard:
                 return Mathf.Pow(Random.value, 3);
             default:
                 return 0;

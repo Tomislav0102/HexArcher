@@ -21,7 +21,7 @@ using Random = UnityEngine.Random;
 
 public class MyLobbyManager : MonoBehaviour
 {
-    Ranking _myRank; 
+    League _myRank; 
     [SerializeField] string env = "dev";
     [SerializeField] string lobbyName = "Lobby";
     [SerializeField] int maxPlayers = 4;
@@ -50,7 +50,8 @@ public class MyLobbyManager : MonoBehaviour
 
     float _timerHeartbeat, _timerUpdateLobbyData;
     const string CONST_KeyJoinCode = "RelayJoinCode";
-    const string CONST_Ranking = "Ranking";
+    const string CONST_HostRank = "HostRank";
+    const string CONST_RankingOperation = "RankingOperation";
 
     [Header("UI")]
     [SerializeField] Button btnCreate;
@@ -69,7 +70,7 @@ public class MyLobbyManager : MonoBehaviour
         DontDestroyOnLoad(this);
 
 #if (UNITY_EDITOR)
-        Invoke(nameof(Btn_Ready), 0.3f);
+       // Invoke(nameof(Btn_Ready), 0.3f);
 #endif
     }
 
@@ -231,13 +232,13 @@ public class MyLobbyManager : MonoBehaviour
                 Player = GetPlayer()
             };
             _currentLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, options);
-            _myRank = (Ranking)PlayerPrefs.GetInt(Utils.PlRank_Int);
+            _myRank = (League)PlayerPrefs.GetInt(Utils.PlLeague_Int);
             await LobbyService.Instance.UpdateLobbyAsync(_currentLobby.Id, new UpdateLobbyOptions
             {
                 Data = new Dictionary<string, DataObject>
                 {
                     { CONST_KeyJoinCode, new DataObject(DataObject.VisibilityOptions.Public, relayCode) },
-                    { CONST_Ranking, new DataObject(DataObject.VisibilityOptions.Public, ((int)_myRank).ToString(), DataObject.IndexOptions.N1) },
+                    { CONST_RankingOperation, new DataObject(DataObject.VisibilityOptions.Public, ((int)_myRank).ToString()) },
                 }
             });
 
@@ -268,37 +269,55 @@ public class MyLobbyManager : MonoBehaviour
     {
         try
         {
-            _myRank = (Ranking)PlayerPrefs.GetInt(Utils.PlRank_Int);
             QuickJoinLobbyOptions options = new QuickJoinLobbyOptions()
             {
                 Player = GetPlayer(),
-                Filter = new List<QueryFilter>()
-                {
-                    new QueryFilter(QueryFilter.FieldOptions.N1, 
-                        ((int)_myRank).ToString(), 
-                        QueryFilter.OpOptions.GE) //compare filed (from lobby, host) with value (me, client)
-                }
             };
-            _currentLobby = await LobbyService.Instance.QuickJoinLobbyAsync(options);
+            Lobby bufferLobby = await LobbyService.Instance.QuickJoinLobbyAsync(options);
 
-            relayCode = _currentLobby.Data[CONST_KeyJoinCode].Value;
-            JoinAllocation allocation = await Relay.Instance.JoinAllocationAsync(relayCode);
-            RelayJoinData joinData = new RelayJoinData
+            bool CanJoinThisLobby()
             {
-                Key = allocation.Key,
-                Port = (ushort)allocation.RelayServer.Port,
-                AllocationID = allocation.AllocationId,
-                AllocationIDBytes = allocation.AllocationIdBytes,
-                IPv4Address = allocation.RelayServer.IpV4,
-                ConnectionData = allocation.ConnectionData,
-                HostConnectionData = allocation.HostConnectionData,
-                JoinCode = relayCode
-            };
+                int myRank = PlayerPrefs.GetInt(Utils.PlLeague_Int);
+                int hostRank = int.Parse(bufferLobby.Data[CONST_RankingOperation].Value);
+                
+                if (hostRank == System.Enum.GetNames(typeof(League)).Length - 1 && hostRank != myRank) return false;
+                if (Mathf.Abs(hostRank - myRank) > 2)
+                {
+                    if ((League)hostRank == League.Silver1 && (League)myRank == League.Bronze1) return true;
+                    if ((League)myRank == League.Silver1 && (League)hostRank == League.Bronze1) return true;
+                    
+                    if ((League)hostRank == League.Platinum3 && (League)myRank == League.Diamond3) return true;
+                    if ((League)myRank == League.Platinum3 && (League)hostRank == League.Diamond3) return true;
+                    
+                    return false;
+                }
 
-            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(joinData.IPv4Address, joinData.Port, joinData.AllocationIDBytes, joinData.Key, joinData.ConnectionData, joinData.HostConnectionData);
-            NetworkManager.Singleton.StartClient();
-            Launch.Instance.mySceneManager.SubscribeAll();
-            print($"starting client with {relayCode}");
+                return true;
+            }
+
+            if (CanJoinThisLobby())
+            {
+                _currentLobby = bufferLobby;
+                relayCode = _currentLobby.Data[CONST_KeyJoinCode].Value;
+                JoinAllocation allocation = await Relay.Instance.JoinAllocationAsync(relayCode);
+                RelayJoinData joinData = new RelayJoinData
+                {
+                    Key = allocation.Key,
+                    Port = (ushort)allocation.RelayServer.Port,
+                    AllocationID = allocation.AllocationId,
+                    AllocationIDBytes = allocation.AllocationIdBytes,
+                    IPv4Address = allocation.RelayServer.IpV4,
+                    ConnectionData = allocation.ConnectionData,
+                    HostConnectionData = allocation.HostConnectionData,
+                    JoinCode = relayCode
+                };
+
+                NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(joinData.IPv4Address, joinData.Port, joinData.AllocationIDBytes, joinData.Key, joinData.ConnectionData, joinData.HostConnectionData);
+                NetworkManager.Singleton.StartClient();
+                Launch.Instance.mySceneManager.SubscribeAll();
+                print($"starting client with {relayCode}");
+            }
+            
             _activeUpdates = false;
         }
         catch (LobbyServiceException e)
@@ -454,4 +473,94 @@ public class MyLobbyManager : MonoBehaviour
     #endregion
 
 }
+
+    // async Task CreateLobby()
+    // {
+    //     try
+    //     {
+    //         Allocation allocation = await _relayManager.AllocateRelay();
+    //         relayCode = await _relayManager.GetRelayJoinCode(allocation);
+    //
+    //         CreateLobbyOptions options = new CreateLobbyOptions
+    //         {
+    //             IsPrivate = false,
+    //             Player = GetPlayer()
+    //         };
+    //         _currentLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, options);
+    //         _myRank = (Ranking)PlayerPrefs.GetInt(Utils.PlRank_Int);
+    //         await LobbyService.Instance.UpdateLobbyAsync(_currentLobby.Id, new UpdateLobbyOptions
+    //         {
+    //             Data = new Dictionary<string, DataObject>
+    //             {
+    //                 { CONST_KeyJoinCode, new DataObject(DataObject.VisibilityOptions.Public, relayCode) },
+    //                 { CONST_RankingOperation, new DataObject(DataObject.VisibilityOptions.Public, ((int)_myRank).ToString(), DataObject.IndexOptions.N1) },
+    //             }
+    //         });
+    //
+    //         RelayHostData hostData = new RelayHostData
+    //         {
+    //             JoinCode = relayCode,
+    //             Key = allocation.Key,
+    //             Port = (ushort)allocation.RelayServer.Port,
+    //             AllocationID = allocation.AllocationId,
+    //             AllocationIDBytes = allocation.AllocationIdBytes,
+    //             IPv4Address = allocation.RelayServer.IpV4,
+    //             ConnectionData = allocation.ConnectionData,
+    //         };
+    //         NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(hostData.IPv4Address, hostData.Port, hostData.AllocationIDBytes, hostData.Key, hostData.ConnectionData);
+    //         NetworkManager.Singleton.StartHost();
+    //         Launch.Instance.mySceneManager.SubscribeAll();
+    //         _activeUpdates = true;
+    //         print($"Created lobby: {_currentLobby.Name}  with  relay code: {relayCode}");
+    //     }
+    //     catch (LobbyServiceException e)
+    //     {
+    //         Debug.LogError("Failed to create lobby: " + e.Message);
+    //         _oneHitBtnJoin = false;
+    //     }
+    // }
+    //
+    // async Task QuickJoinLobby()
+    // {
+    //     try
+    //     {
+    //         _myRank = (Ranking)PlayerPrefs.GetInt(Utils.PlRank_Int);
+    //         QuickJoinLobbyOptions options = new QuickJoinLobbyOptions()
+    //         {
+    //             Player = GetPlayer(),
+    //             Filter = new List<QueryFilter>()
+    //             {
+    //                 new QueryFilter(QueryFilter.FieldOptions.N1, 
+    //                     ((int)_myRank).ToString(), 
+    //                     QueryFilter.OpOptions.GE) //compare filed (from lobby, host) with value (me, client)
+    //             }
+    //         };
+    //         _currentLobby = await LobbyService.Instance.QuickJoinLobbyAsync(options);
+    //
+    //         relayCode = _currentLobby.Data[CONST_KeyJoinCode].Value;
+    //         JoinAllocation allocation = await Relay.Instance.JoinAllocationAsync(relayCode);
+    //         RelayJoinData joinData = new RelayJoinData
+    //         {
+    //             Key = allocation.Key,
+    //             Port = (ushort)allocation.RelayServer.Port,
+    //             AllocationID = allocation.AllocationId,
+    //             AllocationIDBytes = allocation.AllocationIdBytes,
+    //             IPv4Address = allocation.RelayServer.IpV4,
+    //             ConnectionData = allocation.ConnectionData,
+    //             HostConnectionData = allocation.HostConnectionData,
+    //             JoinCode = relayCode
+    //         };
+    //
+    //         NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(joinData.IPv4Address, joinData.Port, joinData.AllocationIDBytes, joinData.Key, joinData.ConnectionData, joinData.HostConnectionData);
+    //         NetworkManager.Singleton.StartClient();
+    //         Launch.Instance.mySceneManager.SubscribeAll();
+    //         print($"starting client with {relayCode}");
+    //         _activeUpdates = false;
+    //     }
+    //     catch (LobbyServiceException e)
+    //     {
+    //         Debug.LogError("Failed to quick join lobby: " + e.Message);
+    //         _oneHitBtnJoin = false;
+    //     }
+    // }
 

@@ -56,35 +56,23 @@ public class PlayerRegistration
         for (int i = 0; i < 2; i++)
         {
             if (_players[i] == null) continue;
+            
             string myName = "";
             string levelDisplay = "Level - ";
             string rankDisplay = "Rank - ";
             string lbDisplay = "Leaderboard - ";
-            if (i == 0)
-            {
-                myName = GameManager.Instance.nameBlueNet.Value.ToString();
-                levelDisplay += GameManager.Instance.levelBlueNet.Value.ToString();
-                rankDisplay += GameManager.Instance.rankingBlueNet.Value;
-                if (GameManager.Instance.leaderboardBlueNet.Value < 0) lbDisplay = string.Empty;
-                else
-                {
-                    int rank = GameManager.Instance.leaderboardBlueNet.Value;
-                    lbDisplay += (rank + 1).ToString();
-                }
-            }
+            
+            myName = GameManager.Instance.nameNet[i].Value;
+            levelDisplay += GameManager.Instance.levelsNet[i].ToString();
+            rankDisplay += ((League)GameManager.Instance.leagueNet[i]).ToString();
+            if ((League)GameManager.Instance.leagueNet[i] != League.Challenger) rankDisplay = rankDisplay.Remove(rankDisplay.Length - 1, 1);
+            if (GameManager.Instance.leaderboardNet[i] < 0) lbDisplay = string.Empty;
             else
             {
-                myName = GameManager.Instance.nameRedNet.Value.ToString();
-                levelDisplay += GameManager.Instance.levelRedNet.Value.ToString();
-                rankDisplay += GameManager.Instance.rankingRedNet.Value;
-                if (GameManager.Instance.leaderboardRedNet.Value < 0) lbDisplay = string.Empty;
-                else
-                {
-                    int rank = GameManager.Instance.leaderboardRedNet.Value;
-                    lbDisplay += (rank + 1).ToString();
-                }
-
+                int rank = GameManager.Instance.leaderboardNet[i];
+                lbDisplay += (rank + 1).ToString();
             }
+            
             _displays[i].text = myName + "\n" + levelDisplay + "\n" + rankDisplay + "\n" + lbDisplay;
             _players[i].name = $"Igrach {_players[i].GetComponent<NetworkObject>().OwnerClientId}";
         }

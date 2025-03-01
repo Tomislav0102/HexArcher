@@ -1,4 +1,4 @@
-using System;using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -23,7 +23,10 @@ public class Utils
     public static string Bow_Int = "chosen bow player";
     public static string PlName_Str = "name player";
     public static string PlXp_Int = "experience player";
-    public static string PlRank_Int = "rank player";
+    public static string PlLeague_Int = "league player";
+    public static string PlMatches_Int = "total matches player";
+    public static string PlDefeats_Int = "defeats player";
+    public static string PlWins_Int = "wins player";
     static string plLeaderBoardIdStr = "leaderboard id";
     public static string PlLeaderBoardRank_Int = "leaderboard rank";
     public static string PlLeaderBoardLocalScore_Int = "local score";
@@ -33,25 +36,50 @@ public class Utils
     public static SpType SinglePlayerType;
     public static int CampLevel;
     public static int WaitTimeStartGame = 2;
-    public static Vector2Int ScoreGlobalValues = new Vector2Int(10, -3);
+    public static Vector2Int ScoreLeaderboardGlobalValues = new Vector2Int(10, -3);
 
 
     #region HELPER METHODS
     public static void DisplayAllPlayerPrefs()
     {
-        Debug.Log($"Difficulty: {(GenLevel)PlayerPrefs.GetInt(Difficulty_Int)}\n" +
+        Debug.Log($"Difficulty: {(GenDifficulty)PlayerPrefs.GetInt(Difficulty_Int)}\n" +
             $"Size: {(GenSize)PlayerPrefs.GetInt(Size_Int)}\n" +
             $"XP: {PlayerPrefs.GetInt(PlXp_Int)}\n" +
             $"Bow: {PlayerPrefs.GetInt(Bow_Int)} \n" +
             $"Player name: {PlayerPrefs.GetString(PlName_Str)} \n" +
-            $"Player rank: {(Ranking)PlayerPrefs.GetInt(PlRank_Int)} \n" +
+            "----------------\n" +
+            $"Player league: {(League)PlayerPrefs.GetInt(PlLeague_Int)} \n" +
+            $"Player total matches: {PlayerPrefs.GetInt(PlMatches_Int)} \n" +
+            $"Player defeats: {PlayerPrefs.GetInt(PlDefeats_Int)} \n" +
+            $"Player wins: {PlayerPrefs.GetInt(PlWins_Int)} \n" +
+            "----------------\n" +
             $"Wind amount: {PlayerPrefs.GetFloat(WindAmount_Fl)} \n" +
             $"Trajectory visible: {PlayerPrefs.GetInt(TrajectoryVisible_Int)} \n" +
+            "----------------\n" +
             $"LB id: {PlayerPrefs.GetString(plLeaderBoardIdStr)} \n" +
             $"LB rank: {PlayerPrefs.GetInt(PlLeaderBoardRank_Int)} \n" +
             $"LB local score: {PlayerPrefs.GetInt(PlLeaderBoardLocalScore_Int)}");
     }
 
+    public static Dictionary<League, Vector3Int> LeaguesTotalDefeatWinsTable = new Dictionary<League, Vector3Int>()
+    {
+        { League.Bronze1, new Vector3Int(0, 0, 2) },
+        { League.Bronze2, new Vector3Int(10, 2, 5) },
+        { League.Bronze3, new Vector3Int(10, 3, 6) },
+        { League.Silver1, new Vector3Int(15, 5, 9) },
+        { League.Silver2, new Vector3Int(15, 6, 10) },
+        { League.Silver3, new Vector3Int(15, 7, 10) },
+        { League.Gold1, new Vector3Int(20, 9, 13) },
+        { League.Gold2, new Vector3Int(20, 9, 14) },
+        { League.Gold3, new Vector3Int(20, 10, 14) },
+        { League.Platinum1, new Vector3Int(25, 13, 17) },
+        { League.Platinum2, new Vector3Int(25, 14, 17) },
+        { League.Platinum3, new Vector3Int(25, 14, 18) },
+        { League.Diamond1, new Vector3Int(30, 18, 24) },
+        { League.Diamond2, new Vector3Int(30, 20, 26) },
+        { League.Diamond3, new Vector3Int(30, 25, 30) },
+        { League.Challenger, new Vector3Int(int.MaxValue, int.MaxValue, int.MaxValue) },
+    };
 
     public static IEnumerator CheckInternetConnection(System.Action<bool> isConnected)
     {
@@ -163,52 +191,25 @@ public class Utils
 
 
 #region ENUMS
-public enum MainGameType
-{
-    MainMenu,
-    Singleplayer,
-    Multiplayer
-}
-public enum Ranking : byte
-{ Bronze, Silver, Gold, Platinum, Diamond, Champion, GrandChampion, SuperSonicLegend }
+public enum MainGameType { MainMenu, Singleplayer, Multiplayer }
 public enum SpType { Endless, Campaign, Practice }
-public enum EncryptionType
+public enum League : byte
+{
+    Bronze1, Bronze2, Bronze3, Silver1, Silver2, Silver3, Gold1, Gold2, Gold3, Platinum1, Platinum2, Platinum3, Diamond1, Diamond2, Diamond3, Challenger
+}
+public enum EncryptionType// Note: Also Udp and Ws are possible choices
 {
     DTLS, // Datagram Transport Layer Security
     UDP,
     WSS  // Web Socket Secure
 }
-// Note: Also Udp and Ws are possible choices
-public enum GenLevel
-{
-    Easy,
-    Normal,
-    Hard
-}
-public enum GenSize
-{
-    Small,
-    Medium,
-    Big
-}
-public enum GenSide
-{
-    Left,
-    Right,
-    Center
-}
-public enum GenFinish
-{
-    Win,
-    Lose,
-    Draw
-}
-public enum TileState
-{
-    Free,
-    InActive,
-    Taken
-}
+
+public enum GenDifficulty { Easy, Normal, Hard }
+public enum GenSize { Small, Medium, Big }
+public enum GenSide { Left, Right, Center }
+public enum GenResult { Win, Lose, Draw }
+public enum GenChange { Increase, Decrease }
+public enum TileState { Free, InActive, Taken }
 public enum PlayerColor
 {
     Blue,
@@ -216,18 +217,8 @@ public enum PlayerColor
     None,
     Undefined //needed for OnValueChange Callback
 }
-public enum BowState
-{
-    RackMoving,
-    RackDone,
-    InHand,
-    Free
-}
-public enum ArrowState
-{
-    Notched,
-    Flying
-}
+public enum BowState { RackMoving, RackDone, InHand, Free }
+public enum ArrowState { Notched, Flying }
 #endregion
 
 #region INTERFACES
@@ -282,16 +273,16 @@ public struct NetHexState : INetworkSerializable
 }
 
 
-public struct RankingWrapper : IEquatable<RankingWrapper>, INetworkSerializable
+public struct LeagueWrapper : System.IEquatable<LeagueWrapper>, INetworkSerializable
 {
-    public Ranking value;
+    public League value;
 
-    RankingWrapper(Ranking val)
+    LeagueWrapper(League val)
     {
         this.value = val;
     }
 
-    public bool Equals(RankingWrapper other)
+    public bool Equals(LeagueWrapper other)
     {
         return value == other.value;
     }
@@ -301,10 +292,10 @@ public struct RankingWrapper : IEquatable<RankingWrapper>, INetworkSerializable
         serializer.SerializeValue(ref value);
     }
 
-    public static implicit operator Ranking(RankingWrapper wrapper) => wrapper.value;
-    public static implicit operator RankingWrapper(Ranking value) => new RankingWrapper(value);
+    public static implicit operator League(LeagueWrapper wrapper) => wrapper.value;
+    public static implicit operator LeagueWrapper(League value) => new LeagueWrapper(value);
 }
-public struct FixedArrayInt : INetworkSerializable
+public struct FixedArrayWrapper : INetworkSerializable
 {
     public int[] values;
     public FixedString128Bytes[] names;

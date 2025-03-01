@@ -53,34 +53,21 @@ public class GameManager : NetworkBehaviour
     public PlayerRegistration playerRegistration = new PlayerRegistration();
 
     [Title("Public network variables", TitleAlignment = TitleAlignments.Centered)]
-    public NetworkVariable<GenLevel> difficultyNet = new NetworkVariable<GenLevel>();
+    public NetworkVariable<GenDifficulty> difficultyNet = new NetworkVariable<GenDifficulty>();
     public NetworkVariable<PlayerColor> playerTurnNet = new NetworkVariable<PlayerColor>();
     public NetworkVariable<PlayerColor> playerVictoriousNet = new NetworkVariable<PlayerColor>();
     public NetworkList<byte> gridTileStatesNet;
     public NetworkList<sbyte> gridValuesNet;
     public NetworkVariable<float> windAmountNet = new NetworkVariable<float>();
     public NetworkVariable<bool> trajectoryVisible = new NetworkVariable<bool>();
+    
     [Title("Public network variables - players", TitleAlignment = TitleAlignments.Centered)]
     public NetworkList<uint> scoresNet;
     public NetworkList<uint> levelsNet;
     public NetworkList<int> leaderboardNet;
-    public NetworkList<RankingWrapper> rankingNet;
+    public NetworkList<byte> leagueNet;
     public NetworkList<FixedString128Bytes> nameNet;
-    public NetworkList<FixedString128Bytes> authIdNet;
-    [Title("Public network variables - player blue", TitleAlignment = TitleAlignments.Centered)]
-    public NetworkVariable<uint> scoreBlueNet = new NetworkVariable<uint>();
-    public NetworkVariable<uint> levelBlueNet = new NetworkVariable<uint>();
-    public NetworkVariable<int> leaderboardBlueNet = new NetworkVariable<int>();
-    public NetworkVariable<Ranking> rankingBlueNet = new NetworkVariable<Ranking>();
-    public NetworkVariable<FixedString128Bytes> nameBlueNet = new NetworkVariable<FixedString128Bytes>();
-    public NetworkVariable<FixedString128Bytes> authIdBlueNet = new NetworkVariable<FixedString128Bytes>();
-    [Title("Public network variables - player red", TitleAlignment = TitleAlignments.Centered)]
-    public NetworkVariable<uint> scoreRedNet = new NetworkVariable<uint>();
-    public NetworkVariable<uint> levelRedNet = new NetworkVariable<uint>();
-    public NetworkVariable<int> leaderboardRedNet = new NetworkVariable<int>();
-    public NetworkVariable<Ranking> rankingRedNet = new NetworkVariable<Ranking>();
-    public NetworkVariable<FixedString128Bytes> nameRedNet = new NetworkVariable<FixedString128Bytes>();
-    public NetworkVariable<FixedString128Bytes> authIdRedNet = new NetworkVariable<FixedString128Bytes>();
+    NetworkList<FixedString128Bytes> _authIdNet;
 
     private void Awake()
     {
@@ -93,13 +80,13 @@ public class GameManager : NetworkBehaviour
         gridTileStatesNet = new NetworkList<byte>(new List<byte>());
         gridValuesNet = new NetworkList<sbyte>(new List<sbyte>());
         camMainTransform = camMain.transform;
-        
-        scoresNet = new NetworkList<uint>(new List<uint>());
-        levelsNet = new NetworkList<uint>(new List<uint>());
-        leaderboardNet = new NetworkList<int>(new List<int>());
-        rankingNet = new NetworkList<RankingWrapper>(new List<RankingWrapper>());
-        nameNet = new NetworkList<FixedString128Bytes>(new List<FixedString128Bytes>());
-        authIdNet = new NetworkList<FixedString128Bytes>(new List<FixedString128Bytes>());
+
+        scoresNet = new NetworkList<uint>(new List<uint>() { 0, 0 });
+        levelsNet = new NetworkList<uint>(new List<uint>() { 0, 0 });
+        leaderboardNet = new NetworkList<int>(new List<int>() { 0, 0 });
+        leagueNet = new NetworkList<byte>(new List<byte>() { 0, 0 });
+        nameNet = new NetworkList<FixedString128Bytes>(new List<FixedString128Bytes>() { new FixedString128Bytes(), new FixedString128Bytes() });
+        _authIdNet = new NetworkList<FixedString128Bytes>(new List<FixedString128Bytes>() { new FixedString128Bytes(), new FixedString128Bytes() });
 
     }
 
@@ -128,7 +115,7 @@ public class GameManager : NetworkBehaviour
             }
             gridManager.ChooseGrid(level);
             
-            difficultyNet.Value = (GenLevel)PlayerPrefs.GetInt(Utils.Difficulty_Int);
+            difficultyNet.Value = (GenDifficulty)PlayerPrefs.GetInt(Utils.Difficulty_Int);
             _skyboxIndexNet.Value = (byte)Random.Range(0, _matsSkyboxSp.Length);
             playerVictoriousNet.Value = PlayerColor.Undefined;
             playerTurnNet.OnValueChanged += NetVarEv_PlayerTurnChange;
@@ -137,10 +124,6 @@ public class GameManager : NetworkBehaviour
             trajectoryVisible.Value = PlayerPrefs.GetInt(Utils.TrajectoryVisible_Int) == 1;
 
             NetworkManager.Singleton.OnClientDisconnectCallback += CallEv_ClientDisconnected;
-            
-            rankingNet.Add(Ranking.Silver);
-            rankingNet.Add(Ranking.Champion);
-            rankingNet[0] = Ranking.SuperSonicLegend;
         }
         else
         {
@@ -250,34 +233,56 @@ public class GameManager : NetworkBehaviour
         switch (newValue)
         {
             case PlayerColor.Blue:
-                if (IsServer)
-                {
-                    audioManager.PlaySFX(audioManager.win);
-                    Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreGlobalValues.x;
-                }
-                else
-                {
-                    audioManager.PlaySFX(audioManager.loose);
-                    Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreGlobalValues.y;
-                }
+                PlayerVictoriousContinue(IsServer ? GenResult.Win : GenResult.Lose);
                 break;
             case PlayerColor.Red:
-                if (IsServer)
-                {
-                    audioManager.PlaySFX(audioManager.loose);
-                    Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreGlobalValues.y;
-                }
-                else
-                {
-                    audioManager.PlaySFX(audioManager.win);
-                    Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreGlobalValues.x;
-                }
+                PlayerVictoriousContinue(!IsServer ? GenResult.Win : GenResult.Lose);
                 break;
             case PlayerColor.None:
-                audioManager.PlaySFX(audioManager.draw);
+                PlayerVictoriousContinue(GenResult.Draw);
                 break;
         }
-        Launch.Instance.myDatabaseManager.UploadMyScore();
+        
+        void PlayerVictoriousContinue(GenResult gameResult)
+        {
+            PlayerPrefs.SetInt(Utils.PlMatches_Int, PlayerPrefs.GetInt(Utils.PlMatches_Int) + 1);
+            switch (gameResult)
+            {
+                case GenResult.Win:
+                    audioManager.PlaySFX(audioManager.win);
+                    Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreLeaderboardGlobalValues.x;
+                    PlayerPrefs.SetInt(Utils.PlWins_Int, PlayerPrefs.GetInt(Utils.PlWins_Int) + 1);
+                    break;
+                case GenResult.Lose:
+                    audioManager.PlaySFX(audioManager.loose);
+                    Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreLeaderboardGlobalValues.y;
+                    PlayerPrefs.SetInt(Utils.PlDefeats_Int, PlayerPrefs.GetInt(Utils.PlDefeats_Int) + 1);
+                    break;
+                case GenResult.Draw:
+                    audioManager.PlaySFX(audioManager.draw);
+                    break;
+            }
+            Launch.Instance.myDatabaseManager.UploadMyScore();
+
+            int myLeague = PlayerPrefs.GetInt(Utils.PlLeague_Int);
+            if (PlayerPrefs.GetInt(Utils.PlWins_Int) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].z
+                && PlayerPrefs.GetInt(Utils.PlMatches_Int) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].x) LeagueChange(GenChange.Increase);
+            else if (PlayerPrefs.GetInt(Utils.PlDefeats_Int) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].y) LeagueChange(GenChange.Decrease);
+
+            void LeagueChange(GenChange change)
+            {
+                int prevLeague = myLeague; //debug only
+                PlayerPrefs.SetInt(Utils.PlWins_Int, 0);
+                PlayerPrefs.SetInt(Utils.PlDefeats_Int, 0);
+                if (change != GenChange.Increase) myLeague++;
+                else myLeague--;
+                if (myLeague < 0) myLeague = 0;
+                
+                PlayerPrefs.SetInt(Utils.PlLeague_Int, myLeague);
+                print($"League changed from {(League)prevLeague} to {(League)myLeague}");
+            }
+        }
+
 
     }
 
@@ -289,35 +294,15 @@ public class GameManager : NetworkBehaviour
 
     #region REGISTRATIONS
     [Rpc(SendTo.Server)]
-    public void RegisterLevel_ServerRpc(uint level, bool playerIsHost)
-    {
-        if (playerIsHost) levelBlueNet.Value = level;
-        else levelRedNet.Value = level;
-    }
+    public void RegisterLevel_ServerRpc(uint level, int index) =>  levelsNet[index] = level;
     [Rpc(SendTo.Server)]
-    public void RegisterLeaderboardRank_ServerRpc(int rank, bool playerIsHost)
-    {
-        if (playerIsHost) leaderboardBlueNet.Value = rank;
-        else leaderboardRedNet.Value = rank;
-    }
+    public void RegisterLeaderboardRank_ServerRpc(int rank, int index) =>  leaderboardNet[index] = rank;
     [Rpc(SendTo.Server)]
-    public void RegisterRank_ServerRpc(int rank, bool playerIsHost)
-    {
-        if (playerIsHost) rankingBlueNet.Value = (Ranking)rank;
-        else rankingRedNet.Value = (Ranking)rank;
-    }
+    public void RegisterLeague_ServerRpc(int league, int index) =>  leagueNet[index] = (byte)league;
     [Rpc(SendTo.Server)]
-    public void RegisterName_ServerRpc(FixedString128Bytes playerName, bool playerIsHost)
-    {
-        if (playerIsHost) nameBlueNet.Value = playerName;
-        else nameRedNet.Value = playerName;
-    }
+    public void RegisterName_ServerRpc(FixedString128Bytes playerName,  int index) =>  nameNet[index] = playerName;
     [Rpc(SendTo.Server)]
-    public void RegisterAuthenticationId_ServerRpc(FixedString128Bytes authId, bool playerIsHost)
-    {
-        if (playerIsHost) authIdBlueNet.Value = authId;
-        else authIdRedNet.Value = authId;
-    }
+    public void RegisterAuthenticationId_ServerRpc(FixedString128Bytes authId,  int index) =>  _authIdNet[index] = authId;
 
 
     [Rpc(SendTo.Server)]
@@ -396,8 +381,7 @@ public class GameManager : NetworkBehaviour
     {
         if ((int)(playerVictoriousNet.Value) < 2) return; //is gameover
         bool useConsole = false;
-        int tempBlue = 0;
-        int tempRed = 0;
+        int[] tempScores = new int[2];
         List<ParentHex> takenHex = gridManager.AllTilesByType(TileState.Taken);
         if (useConsole) print($"taken hex {takenHex.Count}");
         foreach (ParentHex item in takenHex)
@@ -405,17 +389,19 @@ public class GameManager : NetworkBehaviour
             switch (item.CurrentValue)
             {
                 case > 0:
-                    tempBlue += item.CurrentValue;
+                    tempScores[0] += item.CurrentValue;
                     if (useConsole) print("plus");
                     break;
                 case < 0:
-                    tempRed -= item.CurrentValue;
+                    tempScores[1] -= item.CurrentValue;
                     if (useConsole) print("minus");
                     break;
             }
         }
-        scoreBlueNet.Value = (uint)Mathf.Abs(tempBlue);
-        scoreRedNet.Value = (uint)Mathf.Abs(tempRed);
+        for (int i = 0; i < 2; i++)
+        {
+            scoresNet[i] = (uint)Mathf.Abs(tempScores[i]);
+        }
 
         //check game over
         int freePoints = gridManager.NumOfTilesByType(TileState.Free) * 10;
@@ -424,26 +410,26 @@ public class GameManager : NetworkBehaviour
             print("all tiles are taken");
             DecideVictor();
         }
-        else if (scoreBlueNet.Value > scoreRedNet.Value + freePoints || scoreRedNet.Value > scoreBlueNet.Value + freePoints)
+        else if (scoresNet[0] > scoresNet[1] + freePoints || scoresNet[1] > scoresNet[0] + freePoints)
         {
             print("impossible to win");
             DecideVictor();
         }
-
     }
 
     void DecideVictor()
     {
-        if (scoreBlueNet.Value > scoreRedNet.Value)
+        if (scoresNet[0] > scoresNet[1])
         {
             playerVictoriousNet.Value = PlayerColor.Blue;
         }
-        else if (scoreBlueNet.Value < scoreRedNet.Value)
+        else if (scoresNet[0] < scoresNet[1])
         {
             playerVictoriousNet.Value = PlayerColor.Red;
         }
         else playerVictoriousNet.Value = PlayerColor.None;
     }
+
     #endregion
 
     #region DEBUGS
@@ -503,19 +489,21 @@ public class GameManager : NetworkBehaviour
     [ContextMenu("Scores")]
     void Metoda12()
     {
-        print(scoreBlueNet.Value);
-        print(scoreRedNet.Value);
+        for (int i = 0; i < 2; i++)
+        {
+            print(scoresNet[i]);
+        }
     }
     [ContextMenu("Name blue")]
     void Metoda13()
     {
-        print(nameBlueNet.Value);
+        print(nameNet[0].Value);
     }
     [ContextMenu("test net collections")]
     void Metoda14()
     {
-        print(rankingNet[0].value);
-        print(rankingNet[1].value);
+        print(leagueNet[0]);
+        print(leagueNet[1]);
     }
 
     #endregion

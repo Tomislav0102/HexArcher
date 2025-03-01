@@ -23,7 +23,7 @@ static class PlayerLeveling
         toNext = 0;
     }
 
-    public static void AddToXp(GenFinish finishType)
+    public static void AddToXp(GenResult resultType)
     {
         float diffMod = Mod(PlayerPrefs.GetInt(Utils.Difficulty_Int));
         float sizeMod = Mod(PlayerPrefs.GetInt(Utils.Size_Int));
@@ -33,15 +33,15 @@ static class PlayerLeveling
         Vector3Int spOrMp = Utils.GameType == MainGameType.Singleplayer ? xpWinDrawLoseSp : xpWinDrawLoseMp;
         
         int wld = 0;
-        switch (finishType)
+        switch (resultType)
         {
-            case GenFinish.Win:
+            case GenResult.Win:
                 wld = spOrMp.x;
                 break;
-            case GenFinish.Lose:
+            case GenResult.Lose:
                 wld = spOrMp.y;
                 break;
-            case GenFinish.Draw:
+            case GenResult.Draw:
                 wld = spOrMp.z;
                 break;
         }

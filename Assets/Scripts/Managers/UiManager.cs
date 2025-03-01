@@ -73,8 +73,7 @@ public class UiManager : NetworkBehaviour
         buttonCampStart.onClick.AddListener(BtnMethodSpCanStart);
 
         gm.playerVictoriousNet.OnValueChanged += NetVarEv_PlayerVictorious;
-        gm.scoreBlueNet.OnValueChanged += NetVarEv_ScoreChange;
-        gm.scoreRedNet.OnValueChanged += NetVarEv_ScoreChange;
+        gm.scoresNet.OnListChanged += NetVarEv_ScoreChange;
 
         displayJoinCode.enabled = false;
         if (!IsHost)
@@ -130,9 +129,8 @@ public class UiManager : NetworkBehaviour
         buttonCampStart.onClick.RemoveAllListeners();
 
         gm.playerVictoriousNet.OnValueChanged -= NetVarEv_PlayerVictorious;
-        gm.scoreBlueNet.OnValueChanged -= NetVarEv_ScoreChange;
-        gm.scoreRedNet.OnValueChanged -= NetVarEv_ScoreChange;
-
+        gm.scoresNet.OnListChanged -= NetVarEv_ScoreChange;
+        
         if (IsHost && Utils.GameType == MainGameType.Multiplayer)
         {
             NetworkManager.Singleton.OnClientConnectedCallback -= CallEv_ClientConnected;
@@ -182,14 +180,14 @@ public class UiManager : NetworkBehaviour
     }
 
     
-    private void NetVarEv_ScoreChange(uint previousvalue, uint newvalue) => ScoreDisplaying();
+    private void NetVarEv_ScoreChange(NetworkListEvent<uint> changeevent) => ScoreDisplaying();
 
     void ScoreDisplaying()
     {
-        displayScores[0].text = gm.scoreBlueNet.Value.ToString();
-        displayScores[1].text = gm.scoreRedNet.Value.ToString();
-        displayEndScores[0].text = gm.scoreBlueNet.Value.ToString();
-        displayEndScores[1].text = gm.scoreRedNet.Value.ToString();
+        for (int i = 0; i < 2; i++)
+        {
+            displayScores[i].text = gm.scoresNet[i].ToString();
+        }
     }
 
 
@@ -210,34 +208,39 @@ public class UiManager : NetworkBehaviour
                 if (IsServer)
                 {
                     tr.GetChild(0).gameObject.SetActive(true);
-                    PlayerLeveling.AddToXp(GenFinish.Win);
+                    PlayerLeveling.AddToXp(GenResult.Win);
                 }
                 else
                 {
                     tr.GetChild(3).gameObject.SetActive(true);
-                    PlayerLeveling.AddToXp(GenFinish.Lose);
+                    PlayerLeveling.AddToXp(GenResult.Lose);
                 }
                 break;
             case PlayerColor.Red:
                 if (IsServer)
                 {
                     tr.GetChild(1).gameObject.SetActive(true);
-                    PlayerLeveling.AddToXp(GenFinish.Lose);
+                    PlayerLeveling.AddToXp(GenResult.Lose);
                 }
                 else
                 {
                     tr.GetChild(2).gameObject.SetActive(true);
-                    PlayerLeveling.AddToXp(GenFinish.Win);
+                    PlayerLeveling.AddToXp(GenResult.Win);
                 }
                 break;
             case PlayerColor.None:
                 tr.GetChild(4).gameObject.SetActive(true);
-                PlayerLeveling.AddToXp(GenFinish.Draw);
+                PlayerLeveling.AddToXp(GenResult.Draw);
                 break;
         }
         Utils.Activation(endInfos, true);
         int xpEarned = PlayerPrefs.GetInt(Utils.PlXp_Int) - currentXp;
         displayEarnedXp.text = $"You've earned {xpEarned} XP!";
+        for (int i = 0; i < 2; i++)
+        {
+            displayEndScores[i].text = gm.scoresNet[i].ToString();
+        }
+
     }
 
 

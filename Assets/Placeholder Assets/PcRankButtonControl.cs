@@ -22,7 +22,7 @@ public class PcRankButtonControl : MonoBehaviour
         {
             _rankOutlines[i].enabled = false;
         }
-        ButtonMethodRank(0);
+        ButtonMethodRank(PlayerPrefs.GetInt(Utils.PlLeague_Int));
     }
 
     void OnEnable()
@@ -45,7 +45,7 @@ public class PcRankButtonControl : MonoBehaviour
 
     void ButtonMethodRank(int index)
     {
-        PlayerPrefs.SetInt(Utils.PlRank_Int, index);
+        PlayerPrefs.SetInt(Utils.PlLeague_Int, index);
         for (int i = 0; i < _rankOutlines.Length; i++)
         {
             _rankOutlines[i].enabled = false;
