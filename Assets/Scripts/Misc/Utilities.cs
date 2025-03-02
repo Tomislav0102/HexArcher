@@ -12,7 +12,7 @@ public class Utils
     public static System.Action GameStarted; //after bot finished first countdown or 2nd player connects
     public static System.Action<bool> FadeOut; //lasts 2 seconds, no need for callback action as a 2nd delegate
     public static System.Action MainUiUnselect;
-    public static System.Action PlayerXpUpdated;
+    public static System.Action PlayerXpUpdated; //probably debug only
 
     #region STRINGS FOR PLAYERPREFS 
     //suffix is Type
@@ -21,6 +21,8 @@ public class Utils
     public static string WindAmount_Fl = "wind amount";
     public static string TrajectoryVisible_Int = "trajectory is visible"; 
     public static string Bow_Int = "chosen bow player";
+    public static string Head_Int = "head";
+    public static string Hand_Int = "hand";
     public static string PlName_Str = "name player";
     public static string PlXp_Int = "experience player";
     public static string PlLeague_Int = "league player";
@@ -45,8 +47,11 @@ public class Utils
         Debug.Log($"Difficulty: {(GenDifficulty)PlayerPrefs.GetInt(Difficulty_Int)}\n" +
             $"Size: {(GenSize)PlayerPrefs.GetInt(Size_Int)}\n" +
             $"XP: {PlayerPrefs.GetInt(PlXp_Int)}\n" +
-            $"Bow: {PlayerPrefs.GetInt(Bow_Int)} \n" +
             $"Player name: {PlayerPrefs.GetString(PlName_Str)} \n" +
+            "----------------\n" +
+            $"Bow: {PlayerPrefs.GetInt(Bow_Int)} \n" +
+            $"Head: {PlayerPrefs.GetInt(Head_Int)} \n" +
+            $"Hand: {PlayerPrefs.GetInt(Hand_Int)} \n" +
             "----------------\n" +
             $"Player league: {(League)PlayerPrefs.GetInt(PlLeague_Int)} \n" +
             $"Player total matches: {PlayerPrefs.GetInt(PlMatches_Int)} \n" +
@@ -193,6 +198,7 @@ public class Utils
 #region ENUMS
 public enum MainGameType { MainMenu, Singleplayer, Multiplayer }
 public enum SpType { Endless, Campaign, Practice }
+public enum UiDisplays { InfoStart, CampStart, CampEnd, XpEarned }
 public enum League : byte
 {
     Bronze1, Bronze2, Bronze3, Silver1, Silver2, Silver3, Gold1, Gold2, Gold3, Platinum1, Platinum2, Platinum3, Diamond1, Diamond2, Diamond3, Challenger
@@ -225,6 +231,12 @@ public enum ArrowState { Notched, Flying }
 public interface ITargetForArrow
 {
     void HitMe();
+}
+
+public interface ILateInitialization<T>
+{
+    void InitializeMe(T parentType);
+    bool IsInitialized { get; set; }
 }
 #endregion
 

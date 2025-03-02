@@ -6,15 +6,17 @@ using UnityEngine.InputSystem;
 using DG.Tweening;
 using Unity.Netcode;
 using TMPro;
+using Sirenix.OdinInspector;
+using UnityEngine.Serialization;
 
 public class PlayerControl : NetworkBehaviour
 {
     GameManager gm;
-    public BowControl bowControl;
-    public BowShooting shooting;
+    [SerializeField] Transform parBows, parHeads;
+    [ReadOnly] public BowControl bowCurrent;
+    [ReadOnly] public BowShooting shootingCurrent;
     public Transform displayNameTr;
     [SerializeField] Transform head, leftHand, rightHand;
-    [SerializeField] MeshRenderer[] headMeshes;
     public Animator[] animatedHands;
     public PlayerInteractor[] handInteractors;
     LineRenderer _lrShooting;
@@ -22,17 +24,38 @@ public class PlayerControl : NetworkBehaviour
 
     public GenSide SideThatHoldsBow() //GenSide.Center means no bow is being held
     {
-        if (bowControl.interactor == handInteractors[0]) return GenSide.Left;
-        if (bowControl.interactor ==  handInteractors[1]) return GenSide.Right;
+        if (bowCurrent.interactor == handInteractors[0]) return GenSide.Left;
+        if (bowCurrent.interactor == handInteractors[1]) return GenSide.Right;
 
         return GenSide.Center;
+    }
+
+
+    void Awake()
+    {
+        gm = GameManager.Instance;
+
+        int bowIndex = PlayerPrefs.GetInt(Utils.Bow_Int);
+        Utils.ActivateOneArrayElement(Utils.AllChildrenGameObjects(parBows), bowIndex);
+        bowCurrent = parBows.GetChild(bowIndex).GetComponent<BowControl>();
+        shootingCurrent = bowCurrent.transform.GetChild(0).GetComponent<BowShooting>();
+        _lrShooting = shootingCurrent.GetComponent<LineRenderer>();
+
+        int headIndex = PlayerPrefs.GetInt(Utils.Head_Int);
+        Utils.ActivateOneArrayElement(Utils.AllChildrenGameObjects(parHeads), headIndex);
+        MeshRenderer mRend = parHeads.GetChild(headIndex).GetComponent<MeshRenderer>();
+        Material[] mats = mRend.materials;
+        mats[1] = gm.playerDatas[NetworkManager.Singleton.IsHost ? 0 : 1].matMain;
+        mRend.materials = mats;
     }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        gm = GameManager.Instance;
-        _lrShooting = shooting.GetComponent<LineRenderer>();
+        bowCurrent.InitializeMe(this);
+        shootingCurrent.InitializeMe(this);
+
+
         if (IsOwner)
         {
             gm.playerVictoriousNet.OnValueChanged += NetVarEv_End;
@@ -50,9 +73,9 @@ public class PlayerControl : NetworkBehaviour
             VrRigRef.instance.leftController.activateAction.action.canceled += InputActivateLeftOff;
             VrRigRef.instance.rightController.activateAction.action.performed += InputActivateRightOn;
             VrRigRef.instance.rightController.activateAction.action.canceled += InputActivateRightOff;
-            VrRigRef.instance.root.SetPositionAndRotation(gm.bowTablesNet[NetworkManager.Singleton.IsHost ? 0 : 1].transform.position, 
+            VrRigRef.instance.root.SetPositionAndRotation(gm.bowTablesNet[NetworkManager.Singleton.IsHost ? 0 : 1].transform.position,
                 gm.bowTablesNet[NetworkManager.Singleton.IsHost ? 0 : 1].transform.rotation);
-            
+
             CallEv_FadeMethod(true);
             Utils.FadeOut += CallEv_FadeMethod;
 
@@ -71,14 +94,14 @@ public class PlayerControl : NetworkBehaviour
         }
         else
         {
-            bowControl.enabled = false;
-            shooting.enabled = false;
+            bowCurrent.enabled = false;
+            shootingCurrent.enabled = false;
             for (int i = 0; i < 2; i++)
             {
                 handInteractors[i].enabled = false;
             }
         }
-        
+
         if (!IsServer)
         {
             Utils.GameStarted?.Invoke();
@@ -111,15 +134,12 @@ public class PlayerControl : NetworkBehaviour
         gm.playerRegistration.AddPlayer(this, NetworkObject.IsOwnedByServer);
         if (Utils.GameType == MainGameType.Multiplayer) ChangeName_EveryoneRpc();
 
-        for (int i = 0; i < headMeshes.Length; i++)
-        {
-            headMeshes[i].material = gm.playerDatas[NetworkManager.Singleton.IsHost ? 0 : 1].matMain;
-        }
+
     }
 
     [Rpc(SendTo.Everyone)]
     void ChangeName_EveryoneRpc() => gm.playerRegistration.FillDisplay();
-    
+
     [Rpc(SendTo.Everyone)]
     public void LineRendererLength_EveryoneRpc(Vector3 pos) => _lrShooting.SetPosition(1, pos);
 
@@ -181,6 +201,4 @@ public class PlayerControl : NetworkBehaviour
             });
     }
     #endregion
-
-
 }

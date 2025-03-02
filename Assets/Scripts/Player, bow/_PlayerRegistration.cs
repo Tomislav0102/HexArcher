@@ -85,7 +85,7 @@ public class PlayerRegistration
         {
             if (_players[i] != null)
             {
-                Utils.Activation(_players[i].bowControl.gameObject, false);
+                Utils.Activation(_players[i].bowCurrent.gameObject, false);
             }
         }
     }

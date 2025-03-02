@@ -9,13 +9,14 @@ using UnityEngine.SceneManagement;
 
 public class test : MonoBehaviour
 {
-    public string first, second;
+  public Transform head;
+  public Material mat;
+  void Start()
+  {
+    MeshRenderer mRend = head.GetComponent<MeshRenderer>();
+    Material[] mats = mRend.materials;
+    mats[1] = mat;
+    mRend.materials = mats;
 
-
-    [Button]
-    void M()
-    {
-        second = first.Remove(first.Length - 1, 1);
-        print("done");
-    }
+  }
 }

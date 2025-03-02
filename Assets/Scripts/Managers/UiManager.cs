@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,47 +14,40 @@ public class UiManager : NetworkBehaviour
     GameManager gm;
     [SerializeField] TextMeshProUGUI[] displayScores, displayEndScores;
     [SerializeField] Button[] buttonsExit, buttonsRestart;
-    enum CanType { Main, End, Practice_Tut, Camp };
+    enum PanelState { Main, End, Practice_Tut, Camp };
     [SerializeField] GameObject[] canvasElements;
-    Dictionary<CanType?, GameObject> _elements;
-    
-    public TextMeshProUGUI displayStartInfo;
+    Dictionary<PanelState?, GameObject> _elements;
+
+    [SerializeField] TextMeshProUGUI displayStartInfo;
     [SerializeField] TextMeshProUGUI displayJoinCode, displayEarnedXp;
     [SerializeField] GameObject endInfos;
     bool _oneHitExitScene;
     [Title("Tutorial")]
     [SerializeField] Button[] buttonsTutorialDone;
+
     [Title("Campaign")]
-    public TextMeshProUGUI displayCampaignInfoStart;
-    public TextMeshProUGUI displayCampaignInfoEnd;
+    [SerializeField] TextMeshProUGUI displayCampaignInfoStart;
+    [SerializeField] TextMeshProUGUI displayCampaignInfoEnd;
     [SerializeField] Button buttonCampStart;
 
     private void Awake()
     {
         gm = GameManager.Instance;
-        _elements = new Dictionary<CanType?, GameObject>()
-        {
-            { CanType.Main, canvasElements[0] },
-            { CanType.End, canvasElements[1] },
-            { CanType.Practice_Tut, canvasElements[2] },
-            { CanType.Camp, canvasElements[3] }
-        };
-        ActivateDictionary();
     }
 
 
     public override void OnNetworkSpawn()
     {
-        ActivateDictionary(CanType.Main);
+        ActivateDictionary(PanelState.Main);
         switch (Utils.SinglePlayerType)
         {
             case SpType.Endless:
                 break;
             case SpType.Campaign:
-                ActivateDictionary(CanType.Camp);
+                ActivateDictionary(PanelState.Camp);
                 break;
             case SpType.Practice:
-                ActivateDictionary(CanType.Practice_Tut);
+                ActivateDictionary(PanelState.Practice_Tut);
                 break;
         }
 
@@ -83,8 +77,8 @@ public class UiManager : NetworkBehaviour
                 buttonsRestart[i].gameObject.SetActive(false);
             }
 
-            Invoke(nameof(ScoreDisplaying), 0.3f); //unity bug
-            displayStartInfo.enabled = false;
+            Invoke(nameof(ScoreDisplaying), 0.3f);//unity bug
+            SetDisplays(UiDisplays.CampStart, string.Empty);
         }
         else if (Utils.GameType == MainGameType.Multiplayer)
         {
@@ -99,17 +93,6 @@ public class UiManager : NetworkBehaviour
             }
         }
 
-    }
-
-
-
-    void CallEv_ClientConnected(ulong obj)
-    {
-        displayJoinCode.text = "";
-    }
-    void CallEv_ClientDisconnected(ulong obj)
-    {
-        displayJoinCode.text = $"Join code: {Launch.Instance.myLobbyManager.relayCode}";
     }
 
     public override void OnNetworkDespawn()
@@ -140,15 +123,57 @@ public class UiManager : NetworkBehaviour
         base.OnNetworkDespawn();
     }
 
-    void ActivateDictionary(CanType? canType = null)
+    void ActivateDictionary(PanelState? canType = null)
     {
-        foreach (KeyValuePair<CanType?, GameObject> item in _elements)
+        _elements ??= new Dictionary<PanelState?, GameObject>()
+        {
+            { PanelState.Main, canvasElements[0] },
+            { PanelState.End, canvasElements[1] },
+            { PanelState.Practice_Tut, canvasElements[2] },
+            { PanelState.Camp, canvasElements[3] }
+        };
+        
+        foreach (KeyValuePair<PanelState?, GameObject> item in _elements)
         {
             Utils.Activation(item.Value, false);
         }
         if (canType == null) return;
         Utils.Activation(_elements[canType], true);
     }
+    void ScoreDisplaying()
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            displayScores[i].text = gm.scoresNet[i].ToString();
+        }
+    }
+
+    public void SetDisplays(UiDisplays displays, string message)
+    {
+        TextMeshProUGUI textMesh;
+        switch (displays)
+        {
+            case UiDisplays.InfoStart:
+                textMesh = displayStartInfo;
+                break;
+            case UiDisplays.CampStart:
+                textMesh = displayCampaignInfoStart;
+                break;
+            case UiDisplays.CampEnd:
+                textMesh = displayCampaignInfoEnd;
+                break;
+            case UiDisplays.XpEarned:
+                textMesh = displayEarnedXp;
+                break;
+            default:
+                return;
+        }
+        
+        textMesh.text = message;
+    }
+    
+
+    #region BUTTONS/CALLS
     
     [ContextMenu("BtnMethodExit")]
     void BtnMethodExit()
@@ -175,73 +200,45 @@ public class UiManager : NetworkBehaviour
 
     void BtnMethodSpCanStart()
     {
-        ActivateDictionary(CanType.Main);
+        ActivateDictionary(PanelState.Main);
         Utils.GameStarted?.Invoke();
     }
 
-    
+    void CallEv_ClientConnected(ulong obj) => displayJoinCode.text = "";
+    void CallEv_ClientDisconnected(ulong obj) => displayJoinCode.text = $"Join code: {Launch.Instance.myLobbyManager.relayCode}";
+
     private void NetVarEv_ScoreChange(NetworkListEvent<uint> changeevent) => ScoreDisplaying();
-
-    void ScoreDisplaying()
-    {
-        for (int i = 0; i < 2; i++)
-        {
-            displayScores[i].text = gm.scoresNet[i].ToString();
-        }
-    }
-
 
     private void NetVarEv_PlayerVictorious(PlayerColor previousValue, PlayerColor newValue)
     {
         if (newValue == PlayerColor.Undefined) return;
         
-        ActivateDictionary(CanType.End);
-        Transform tr = _elements[CanType.End].transform;
+        ActivateDictionary(PanelState.End);
+        Transform tr = _elements[PanelState.End].transform;
         for (int i = 0; i < tr.childCount; i++)
         {
             Utils.Activation(tr.GetChild(i).gameObject, false);
         }
-        int currentXp = PlayerPrefs.GetInt(Utils.PlXp_Int);
         switch (newValue)
         {
             case PlayerColor.Blue:
-                if (IsServer)
-                {
-                    tr.GetChild(0).gameObject.SetActive(true);
-                    PlayerLeveling.AddToXp(GenResult.Win);
-                }
-                else
-                {
-                    tr.GetChild(3).gameObject.SetActive(true);
-                    PlayerLeveling.AddToXp(GenResult.Lose);
-                }
+                Utils.Activation(tr.GetChild(IsServer ? 0 : 3).gameObject, true);
                 break;
             case PlayerColor.Red:
-                if (IsServer)
-                {
-                    tr.GetChild(1).gameObject.SetActive(true);
-                    PlayerLeveling.AddToXp(GenResult.Lose);
-                }
-                else
-                {
-                    tr.GetChild(2).gameObject.SetActive(true);
-                    PlayerLeveling.AddToXp(GenResult.Win);
-                }
+                Utils.Activation(tr.GetChild(IsServer ? 1 : 2).gameObject, true);
                 break;
             case PlayerColor.None:
-                tr.GetChild(4).gameObject.SetActive(true);
-                PlayerLeveling.AddToXp(GenResult.Draw);
+                Utils.Activation(tr.GetChild(4).gameObject, true);
                 break;
         }
         Utils.Activation(endInfos, true);
-        int xpEarned = PlayerPrefs.GetInt(Utils.PlXp_Int) - currentXp;
-        displayEarnedXp.text = $"You've earned {xpEarned} XP!";
         for (int i = 0; i < 2; i++)
         {
             displayEndScores[i].text = gm.scoresNet[i].ToString();
         }
 
     }
+    #endregion
 
 
 

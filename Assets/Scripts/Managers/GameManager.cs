@@ -156,7 +156,7 @@ public class GameManager : NetworkBehaviour
     IEnumerator CountdownMultiplayer()
     {
         int seconds = 0;
-        string st = "";
+        string st = string.Empty;
         switch (Utils.GameType)
         {
             case MainGameType.Singleplayer:
@@ -169,11 +169,11 @@ public class GameManager : NetworkBehaviour
         while (seconds > 1)
         {
             seconds--;
-            uImanager.displayStartInfo.text = $"Bot will spawn in {seconds} seconds";
+            uImanager.SetDisplays(UiDisplays.InfoStart, $"Bot will spawn in {seconds} seconds");
             yield return new WaitForSeconds(1);
         }
         Utils.GameStarted?.Invoke();
-        uImanager.displayStartInfo.text = st;
+        uImanager.SetDisplays(UiDisplays.InfoStart, st);
     }
 
 
@@ -246,23 +246,31 @@ public class GameManager : NetworkBehaviour
         void PlayerVictoriousContinue(GenResult gameResult)
         {
             PlayerPrefs.SetInt(Utils.PlMatches_Int, PlayerPrefs.GetInt(Utils.PlMatches_Int) + 1);
+            int currentXp = PlayerPrefs.GetInt(Utils.PlXp_Int);
+
             switch (gameResult)
             {
                 case GenResult.Win:
                     audioManager.PlaySFX(audioManager.win);
                     Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreLeaderboardGlobalValues.x;
                     PlayerPrefs.SetInt(Utils.PlWins_Int, PlayerPrefs.GetInt(Utils.PlWins_Int) + 1);
+                    PlayerLeveling.AddToXp(GenResult.Win);
                     break;
+                
                 case GenResult.Lose:
                     audioManager.PlaySFX(audioManager.loose);
                     Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreLeaderboardGlobalValues.y;
                     PlayerPrefs.SetInt(Utils.PlDefeats_Int, PlayerPrefs.GetInt(Utils.PlDefeats_Int) + 1);
+                    PlayerLeveling.AddToXp(GenResult.Lose);
                     break;
                 case GenResult.Draw:
                     audioManager.PlaySFX(audioManager.draw);
+                    PlayerLeveling.AddToXp(GenResult.Draw);
                     break;
             }
             Launch.Instance.myDatabaseManager.UploadMyScore();
+            int xpEarned = PlayerPrefs.GetInt(Utils.PlXp_Int) - currentXp;
+            uImanager.SetDisplays(UiDisplays.XpEarned, $"You've earned {xpEarned} XP!");
 
             int myLeague = PlayerPrefs.GetInt(Utils.PlLeague_Int);
             if (PlayerPrefs.GetInt(Utils.PlWins_Int) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].z

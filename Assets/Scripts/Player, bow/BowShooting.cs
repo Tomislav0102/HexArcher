@@ -6,18 +6,19 @@ using Sirenix.OdinInspector;
 using Unity.Netcode;
 
 
-public class BowShooting : MonoBehaviour
+public class BowShooting : MonoBehaviour, ILateInitialization<PlayerControl>
 {
     GameManager gm;
-    [SerializeField] BowControl bow;
-    [SerializeField] PlayerControl playerControl;
-    [SerializeField] AudioSource audioSource;
+    BowControl _bow;
+    PlayerControl _playerControl;
+    public bool IsInitialized { get; set; }
+    AudioSource _audioSource;
     bool _oneHitAudioDraw;
     public BoxCollider myCollider;
     [SerializeField] Transform end;
     float _maxLength, _offsetStart;
     [SerializeField] Transform notch;
-    public float _pullAmount;
+    float _pullAmount;
     Transform _myTransform;
 
     [ReadOnly] public float power;
@@ -26,24 +27,22 @@ public class BowShooting : MonoBehaviour
 
     [SerializeField] bool vRSimulation = true; //only for keyboard control
     
-    void Awake()
+    
+    public void InitializeMe(PlayerControl playerControl)
     {
+        _playerControl = playerControl;
+        _bow = playerControl.bowCurrent;
+        _audioSource = _bow.GetComponent<AudioSource>();
         gm = GameManager.Instance;
         _myTransform = transform;
-    }
-
-    private void Start()
-    {
         _offsetStart = Mathf.Abs(_myTransform.localPosition.z);
         //_maxLength = (end.localPosition - notch.localPosition).magnitude;
         _maxLength =  Mathf.Abs(end.localPosition.z - _myTransform.localPosition.z);
-        Utils.Activation(end.gameObject, false);
+        gm.playerTurnNet.OnValueChanged += NetVarEv_PlayerTurn;
+        IsInitialized = true;
     }
 
-    void OnEnable()
-    {
-        gm.playerTurnNet.OnValueChanged += NetVarEv_PlayerTurn;
-    }
+
 
     void OnDisable()
     {
@@ -56,7 +55,7 @@ public class BowShooting : MonoBehaviour
 
     private void Update()
     {
-        if(!gm.MyTurn()) return;
+        if (!IsInitialized || !gm.MyTurn()) return;
 
         if (controllerPullingString)
         {
@@ -70,7 +69,7 @@ public class BowShooting : MonoBehaviour
             if (_oneHitArrowNotched && _pullAmount > 0.3f && !_oneHitAudioDraw)
             {
                 _oneHitAudioDraw = true;
-                gm.audioManager.PlayOnMyAudioSource(audioSource, gm.audioManager.bowDraw);
+                gm.audioManager.PlayOnMyAudioSource(_audioSource, gm.audioManager.bowDraw);
             }
 
         }
@@ -84,14 +83,14 @@ public class BowShooting : MonoBehaviour
     }
     private void LateUpdate()
     {
-        if (!controllerPullingString || !gm.MyTurn() || gm.arrowReal == null) return;
+        if (!IsInitialized || !controllerPullingString || !gm.MyTurn() || gm.arrowReal == null) return;
         ProcessNotchedArrow();
     }
 
     void ProcessNotchedArrow()
     {
-        int handThaPullsString = ((int)playerControl.SideThatHoldsBow() + 1) % 2;
-        Vector3 handPos = playerControl.handInteractors[handThaPullsString].myTransform.position;
+        int handThaPullsString = ((int)_playerControl.SideThatHoldsBow() + 1) % 2;
+        Vector3 handPos = _playerControl.handInteractors[handThaPullsString].myTransform.position;
         Vector3 pullDir = notch.position - handPos;
 
         Vector3 endPoint;
@@ -117,7 +116,7 @@ public class BowShooting : MonoBehaviour
         _pullAmount = (Mathf.Abs(_myTransform.InverseTransformPoint(endPoint).z)) / _maxLength;
         gm.forceArrow = _pullAmount * power; 
 
-        playerControl.LineRendererLength_EveryoneRpc(_myTransform.InverseTransformPoint(endPoint));
+        _playerControl.LineRendererLength_EveryoneRpc(_myTransform.InverseTransformPoint(endPoint));
     }
 
     public void ReleaseString()
@@ -128,9 +127,9 @@ public class BowShooting : MonoBehaviour
         controllerPullingString = false;
         _oneHitArrowNotched = false;
         gm.arrowReal = null;
-        playerControl.LineRendererLength_EveryoneRpc(Vector3.zero);
+        _playerControl.LineRendererLength_EveryoneRpc(Vector3.zero);
 
-        gm.audioManager.PlayOnMyAudioSource(audioSource, gm.audioManager.bowRelease);
+        gm.audioManager.PlayOnMyAudioSource(_audioSource, gm.audioManager.bowRelease);
         _oneHitAudioDraw = false;
     }
 

@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b39b3c9bacce794bbbc3e780d33929f, type: 3}
   m_Name: Bow Garbage
   m_EditorClassIdentifier: 
-  ordinal: 1
-  bowName: Garbage Bow
-  power: 60
+  index: 1
+  itemName: Garbage Bow
+  power: 65

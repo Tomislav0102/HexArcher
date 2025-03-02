@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu]
-public class SoBowData : ScriptableObject
+public class SoBowData : SoItem
 {
-    public int ordinal;
-    public string bowName;
     public int power;
 }

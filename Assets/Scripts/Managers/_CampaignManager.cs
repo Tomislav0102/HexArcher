@@ -15,13 +15,12 @@ public class CampaignManager
         gm = GameManager.Instance;
         gm.playerVictoriousNet.OnValueChanged += NetVar_PlayerVictorious;
         if (Utils.CampLevel >= levels.Length) Utils.CampLevel = 0;
-        gm.uImanager.displayCampaignInfoStart.text = $"Campaign\nLevel {Utils.CampLevel + 1}";
+        gm.uImanager.SetDisplays(UiDisplays.CampStart, $"Campaign\nLevel {Utils.CampLevel + 1}");
     }
 
     void NetVar_PlayerVictorious(PlayerColor previousValue, PlayerColor newValue)
     {
         string st = string.Empty;
-        gm.uImanager.displayCampaignInfoEnd.enabled = true;
         switch (newValue)
         {
             case PlayerColor.Blue:
@@ -38,7 +37,7 @@ public class CampaignManager
                 st = "Not good enough... Try again?";
                 break;
         }
-        gm.uImanager.displayCampaignInfoEnd.text = st;
+        gm.uImanager.SetDisplays(UiDisplays.CampEnd, st);
     }
 
     public GameObject NextLevel() => levels[Utils.CampLevel];

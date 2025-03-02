@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-public class BowControl : MonoBehaviour
+public class BowControl : MonoBehaviour, ILateInitialization<PlayerControl>
 {
     GameManager gm;
     public SoBowData bowData;
-    [SerializeField] PlayerControl playerControl;
+    PlayerControl _playerControl;
+    public bool IsInitialized { get; set; }
     [SerializeField] GameObject bowBody;
     [SerializeField] Transform myTransform;
     [SerializeField] Rigidbody myRigid;
@@ -26,7 +27,7 @@ public class BowControl : MonoBehaviour
         set
         {
             myRigid.isKinematic = true;
-            playerControl.shooting.myCollider.enabled = false;
+            _playerControl.shootingCurrent.myCollider.enabled = false;
             myCollider.enabled = true;
             _bowState = value;
             switch (value)
@@ -42,11 +43,11 @@ public class BowControl : MonoBehaviour
 
                 case BowState.InHand:
                     gm.bowRacks[NetworkManager.Singleton.IsHost ? 0 : 1].HideRack();
-                    playerControl.shooting.myCollider.enabled = true;
+                    _playerControl.shootingCurrent.myCollider.enabled = true;
                     break;
 
                 case BowState.Free:
-                    playerControl.shooting.ReleaseString();
+                    _playerControl.shootingCurrent.ReleaseString();
                     interactor = null;
                     myRigid.isKinematic = false;
                     myRigid.velocity = CONST_ThrowVelocity * _diffPos;
@@ -58,17 +59,19 @@ public class BowControl : MonoBehaviour
     public PlayerInteractor interactor;
 
 
-    private void Awake()
-    {
-        gm = GameManager.Instance;
-        playerControl.shooting.power = bowData.power;
 
-        _rackParent = gm.bowRacks[NetworkManager.Singleton.IsHost ? 0 : 1].spawnPoint;
-    }
-    private void OnEnable()
+    public void InitializeMe(PlayerControl playerControl)
     {
+        _playerControl = playerControl;
+        gm = GameManager.Instance;
+        _playerControl.shootingCurrent.power = bowData.power;
+        _rackParent = gm.bowRacks[NetworkManager.Singleton.IsHost ? 0 : 1].spawnPoint;
         Utils.GameStarted += ReturnBowToRack_Initial;
+        if (Utils.GameType == MainGameType.Singleplayer && Utils.SinglePlayerType == SpType.Endless) ReturnBowToRack_Initial();
+        IsInitialized = true;
     }
+
+
     private void OnDisable()
     {
         Utils.GameStarted -= ReturnBowToRack_Initial;
@@ -76,6 +79,7 @@ public class BowControl : MonoBehaviour
 
     private void Update()
     {
+        if (!IsInitialized) return;
         switch (Bstate)
         {
             case BowState.RackMoving:

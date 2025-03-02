@@ -28,7 +28,7 @@ public class VrRigRef : MonoBehaviour
     }
     public void UIhoverLeftCallFromVrRig(bool hover)
     {
-        if (playerControl == null || playerControl.shooting.controllerPullingString) return;
+        if (playerControl == null || playerControl.shootingCurrent.controllerPullingString) return;
 
         leftHandRayLineRend.material = hover ? matLineRenderer : matInvisible;
         if (audioManager == null || !hover) return;
@@ -36,7 +36,7 @@ public class VrRigRef : MonoBehaviour
     }
     public void UIhoverRightCallFromVrRig(bool hover)
     {
-        if (playerControl == null || playerControl.shooting.controllerPullingString) return;
+        if (playerControl == null || playerControl.shootingCurrent.controllerPullingString) return;
 
         rightHandRayLineRend.material = hover ? matLineRenderer : matInvisible;
         if (audioManager == null || !hover) return;

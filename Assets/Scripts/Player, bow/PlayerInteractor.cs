@@ -25,12 +25,12 @@ public class PlayerInteractor : MonoBehaviour
 
                 if (playerControl.SideThatHoldsBow() == side)
                 {
-                    playerControl.bowControl.Bstate = BowState.Free;
+                    playerControl.bowCurrent.Bstate = BowState.Free;
                 }
-                else if (_inBow && playerControl.bowControl.Bstate != BowState.RackMoving)
+                else if (_inBow && playerControl.bowCurrent.Bstate != BowState.RackMoving)
                 {
-                    playerControl.bowControl.interactor = this;
-                    playerControl.bowControl.Bstate = BowState.InHand;
+                    playerControl.bowCurrent.interactor = this;
+                    playerControl.bowCurrent.Bstate = BowState.InHand;
                     playerControl.animatedHands[((int)side + 1) % 2].SetFloat("Fist", 0);
                 }
                 _inBow = false;
@@ -59,12 +59,12 @@ public class PlayerInteractor : MonoBehaviour
             if (value)
             {
                 if (!_inString) return;
-                playerControl.shooting.controllerPullingString = true;
+                playerControl.shootingCurrent.controllerPullingString = true;
                 VrRigRef.instance.RemoveLines();
             }
             else
             {
-                playerControl.shooting.controllerPullingString = false;
+                playerControl.shootingCurrent.controllerPullingString = false;
             }
         }
     }

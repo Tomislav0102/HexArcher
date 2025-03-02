@@ -17,7 +17,7 @@ public class BotManager : MonoBehaviour
         {
             _isActive = value;
            // print($"bot {value}");
-            gm.uImanager.displayStartInfo.text = "";
+           gm.uImanager.SetDisplays(UiDisplays.InfoStart, string.Empty);
             if (value)
             {
                 Utils.Activation(bow, true);
