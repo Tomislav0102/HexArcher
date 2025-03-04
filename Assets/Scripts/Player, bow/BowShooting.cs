@@ -46,6 +46,7 @@ public class BowShooting : MonoBehaviour, ILateInitialization<PlayerControl>
 
     void OnDisable()
     {
+        if (!IsInitialized) return;
         gm.playerTurnNet.OnValueChanged -= NetVarEv_PlayerTurn;
     }
     private void NetVarEv_PlayerTurn(PlayerColor previousValue, PlayerColor newValue)
@@ -90,7 +91,7 @@ public class BowShooting : MonoBehaviour, ILateInitialization<PlayerControl>
     void ProcessNotchedArrow()
     {
         int handThaPullsString = ((int)_playerControl.SideThatHoldsBow() + 1) % 2;
-        Vector3 handPos = _playerControl.handInteractors[handThaPullsString].myTransform.position;
+        Vector3 handPos = _playerControl.handsInteractorCurrent[handThaPullsString].myTransform.position;
         Vector3 pullDir = notch.position - handPos;
 
         Vector3 endPoint;

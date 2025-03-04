@@ -42,7 +42,7 @@ public class LeaderboardUi : MonoBehaviour
         btnNext.interactable = false;
         Utils.Activation(parDisplays.gameObject, false);
         Utils.ActivateOneArrayElement(_displaysGo);
-        if (_db.dataLoaded)
+        if (_db.dataLeaderboardLoaded)
         {
             Utils.Activation(parDisplays.gameObject, true);
             int maxCounter = _totalOnSingleScreen;
@@ -65,18 +65,18 @@ public class LeaderboardUi : MonoBehaviour
             UpdateMyEntry();
         }
 
-        Utils.DatabaseClientSynced += UpdateMyEntry;
+        Utils.LeaderboardDataClientSynced += UpdateMyEntry;
     }
     private void OnDisable()
     {
         btnPrev.onClick.RemoveAllListeners();
         btnNext.onClick.RemoveAllListeners();
-        Utils.DatabaseClientSynced -= UpdateMyEntry;
+        Utils.LeaderboardDataClientSynced -= UpdateMyEntry;
     }
     
     void UpdateMyEntry()
     {
-        int myPos = _db.GetMyPositionOnLeaderboard(Utils.MyIdLeaderboard());
+        int myPos = _db.GetMyPositionOnLeaderboard(Utils.MyId());
         if (myPos > 0)
         {
             Utils.Activation(parMyEntry.gameObject, true);

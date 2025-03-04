@@ -31,13 +31,16 @@ public class ChoosingInventory : MonoBehaviour
                     Utils.Activation(parHands.gameObject, true);
                     break;
             }
-            Utils.ActivateOneArrayElement(_itemGroups[(int)value].gos, PlayerPrefs.GetInt(_itemGroups[(int)value].savedData));
             for (int i = 0; i < _outlines.Length; i++)
             {
                 _outlines[i].enabled = false;
             }
             _outlines[(int)value].enabled = true;
-            displayItemName.text = _itemGroups[(int)value].gos[_itemGroups[(int)value].counter].GetComponent<ItemSoCarrierUi>().myItem.itemName;
+            
+            ItemGroup itemGroup = _itemGroups[(int)value];
+            int index = int.Parse(Launch.Instance.myLobbyManager.playerData[itemGroup.savedData]);
+            Utils.ActivateOneArrayElement(itemGroup.gos, index);
+            displayItemName.text = itemGroup.gos[index].GetComponent<ItemSoCarrierUi>().myItem.itemName;
         }
     }
     InventoryState _currentState;
@@ -54,10 +57,10 @@ public class ChoosingInventory : MonoBehaviour
     {
         public InventoryState state;
         public GameObject[] gos;
-        public string savedData;
+        public PlayerDataType savedData;
         public int counter;
 
-        public ItemGroup(InventoryState state, GameObject[] gos, string savedData)
+        public ItemGroup(InventoryState state, GameObject[] gos, PlayerDataType savedData)
         {
             this.state = state;
             this.gos = gos;
@@ -69,9 +72,9 @@ public class ChoosingInventory : MonoBehaviour
     {
         _itemGroups = new ItemGroup[3]
         {
-            new ItemGroup(InventoryState.Bows, Utils.AllChildrenGameObjects(parBows), Utils.Bow_Int),
-            new ItemGroup(InventoryState.Heads, Utils.AllChildrenGameObjects(parHeads), Utils.Head_Int),
-            new ItemGroup(InventoryState.Hands, Utils.AllChildrenGameObjects(parHands), Utils.Hand_Int),
+            new ItemGroup(InventoryState.Bows, Utils.AllChildrenGameObjects(parBows), PlayerDataType.BowIndex),
+            new ItemGroup(InventoryState.Heads, Utils.AllChildrenGameObjects(parHeads), PlayerDataType.HeadIndex),
+            new ItemGroup(InventoryState.Hands, Utils.AllChildrenGameObjects(parHands), PlayerDataType.HandsIndex),
         };
         _outlines = new Outline[buttonsGroups.Length];
         for (int i = 0; i < _outlines.Length; i++)
@@ -111,9 +114,10 @@ public class ChoosingInventory : MonoBehaviour
     void ButtonMethodNext()
     {
         ItemGroup itemGroup = _itemGroups[(int)CurrentSate];
+        itemGroup.counter = int.Parse(Launch.Instance.myLobbyManager.playerData[itemGroup.savedData]);
         itemGroup.counter = (1 + itemGroup.counter) % itemGroup.gos.Length;
-        Utils.ActivateOneArrayElement(itemGroup.gos, itemGroup.counter);
-        displayItemName.text = itemGroup.gos[itemGroup.counter].GetComponent<ItemSoCarrierUi>().myItem.itemName;
-        PlayerPrefs.SetInt(itemGroup.savedData, itemGroup.counter);
+        Launch.Instance.myLobbyManager.playerData[itemGroup.savedData] = itemGroup.counter.ToString();
+        
+        CurrentSate = itemGroup.state;
     }
 }

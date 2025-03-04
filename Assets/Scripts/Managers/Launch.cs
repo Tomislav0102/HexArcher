@@ -9,10 +9,10 @@ public class Launch : MonoBehaviour
     public MyLobbyManager myLobbyManager;
     public MySceneManager mySceneManager;
     public DatabaseManager myDatabaseManager;
-
     void Awake()
     {
         Instance = this;
         DontDestroyOnLoad(this);
     }
 }
+

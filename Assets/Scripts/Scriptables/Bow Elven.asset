@@ -9,8 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9ae042aa844b751468187b1c9c6d56fc, type: 3}
-  m_Name: Head girlBeach
+  m_Script: {fileID: 11500000, guid: 3b39b3c9bacce794bbbc3e780d33929f, type: 3}
+  m_Name: Bow Elven
   m_EditorClassIdentifier: 
-  index: 0
-  itemName: Girl
+  index: 1
+  itemName: Elven Bow
+  power: 100

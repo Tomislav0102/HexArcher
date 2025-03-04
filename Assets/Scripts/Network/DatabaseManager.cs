@@ -2,6 +2,8 @@
 using UnityEngine;
 using Firebase.Firestore;
 using Firebase.Extensions;
+using Sirenix.OdinInspector;
+using UnityEngine.Serialization;
 #if(UNITY_EDITOR)
 using ParrelSync;
 #endif
@@ -12,9 +14,9 @@ public class DatabaseManager : MonoBehaviour
     [SerializeField] bool useDatabase = true;
     FirebaseFirestore _db;
 
-    string _collectionName = "leaderboard";
+    string _collectionNameLeaderboard = "leaderboard";
 
-    public bool dataLoaded;
+    public bool dataLeaderboardLoaded;
 
     Dictionary<string, int> _dataNamesFromCloud = new Dictionary<string, int>();
     Dictionary<string, int> _dataIdsFromCloud = new Dictionary<string, int>();
@@ -34,7 +36,6 @@ public class DatabaseManager : MonoBehaviour
     
     private void Awake()
     {
-        if (AimIclone()) return;
         _db = FirebaseFirestore.DefaultInstance;
     }
     private void Start()
@@ -43,14 +44,12 @@ public class DatabaseManager : MonoBehaviour
     }
     private void OnEnable()
     {
-        if(AimIclone()) return;
-        Utils.DatabaseClientSynced += CallEv_DataSynced;
+        if(!AimIclone()) Utils.LeaderboardDataClientSynced += CallEv_LeaderboardDataSynced;
     }
 
     private void OnDisable()
     {
-        if(AimIclone()) return;
-        Utils.DatabaseClientSynced -= CallEv_DataSynced;
+        if(!AimIclone()) Utils.LeaderboardDataClientSynced -= CallEv_LeaderboardDataSynced;
     }
 
     public bool AimIclone()
@@ -63,12 +62,14 @@ public class DatabaseManager : MonoBehaviour
         #endif
         return false;
     }
-    private void CallEv_DataSynced()
+
+    #region LEADERBOARD
+    private void CallEv_LeaderboardDataSynced()
     {
         print("leaderboard data loaded");
-        dataLoaded = true;
+        dataLeaderboardLoaded = true;
         
-        int myPos = GetMyPositionOnLeaderboard(Utils.MyIdLeaderboard());
+        int myPos = GetMyPositionOnLeaderboard(Utils.MyId());
         PlayerPrefs.SetInt(Utils.PlLeaderBoardRank_Int, myPos);
         if (myPos < 0) return; //no entry in LB
         if (LocalScore > scores[myPos]) LocalScore = scores[myPos]; //user has tampered with playerprefs. local score can't be higher than cloud score
@@ -84,7 +85,7 @@ public class DatabaseManager : MonoBehaviour
             return;
         }
         
-        DocumentReference documentReference = _db.Collection(_collectionName).Document(Utils.MyIdLeaderboard());
+        DocumentReference documentReference = _db.Collection(_collectionNameLeaderboard).Document(Utils.MyId());
         documentReference.GetSnapshotAsync().ContinueWithOnMainThread(task =>
         {
             DocumentSnapshot snapShot = task.Result;
@@ -114,12 +115,12 @@ public class DatabaseManager : MonoBehaviour
 
         void UploadFinal()
         {
-            int myPos = GetMyPositionOnLeaderboard(Utils.MyIdLeaderboard());
+            int myPos = GetMyPositionOnLeaderboard(Utils.MyId());
             if (myPos < 0 || LocalScore > scores[myPos])
             {
                 Dictionary<string, object> dictionary = new Dictionary<string, object>()
                 {
-                    {PlayerPrefs.GetString(Utils.PlName_Str), LocalScore.ToString() }
+                    {Launch.Instance.myLobbyManager.GetPlayerName(0), LocalScore.ToString() }
                 };
 
                 documentReference.SetAsync(dictionary).ContinueWithOnMainThread(task1 =>
@@ -142,7 +143,7 @@ public class DatabaseManager : MonoBehaviour
         _dataNamesFromCloud.Clear();
         _dataIdsFromCloud.Clear();
 
-        Query allHighscores = _db.Collection(_collectionName);
+        Query allHighscores = _db.Collection(_collectionNameLeaderboard);
         allHighscores.GetSnapshotAsync().ContinueWithOnMainThread(task =>
         {
             QuerySnapshot allHighscoreesSnapshot = task.Result;
@@ -157,7 +158,7 @@ public class DatabaseManager : MonoBehaviour
             }
             SortDictionaryIntoLists();
 
-            Utils.DatabaseClientSynced?.Invoke();
+            Utils.LeaderboardDataClientSynced?.Invoke();
         });
 
 
@@ -199,7 +200,7 @@ public class DatabaseManager : MonoBehaviour
     [ContextMenu("Remove my entry")]
     void RemoveMyEntry()
     {
-        DocumentReference documentReference = _db.Collection(_collectionName).Document(Utils.MyIdLeaderboard());
+        DocumentReference documentReference = _db.Collection(_collectionNameLeaderboard).Document(Utils.MyId());
         documentReference.DeleteAsync().ContinueWithOnMainThread(task =>
         {
             print("entry deleted");
@@ -214,36 +215,18 @@ public class DatabaseManager : MonoBehaviour
             if (_ids[i] == id) return i;
         }
         return -1;
-    }
-
-
-
+    }   
+    
     [ContextMenu("Print all playerprefs")]
     void M3() => Utils.DisplayAllPlayerPrefs();
 
     [ContextMenu("My pos on LB")]
-    void M4() => print(GetMyPositionOnLeaderboard(Utils.MyIdLeaderboard()));
+    void M4() => print(GetMyPositionOnLeaderboard(Utils.MyId()));
+
+    #endregion
+    
+
+
 
 }
 
-// public class MyDummyUsernamesClass
-// {
-//     public string[] usernames;
-//     
-//     async void GenerateDummyData()
-//     {
-//         dummyUsernames = JsonUtility.FromJson<MyDummyUsernamesClass>(jsonObj.ToString());
-//         for (int i = 0; i < dummyUsernames.usernames.Length; i++)
-//         {
-//             DocumentReference documentReference = _db.Collection(_collectionName).Document(System.Guid.NewGuid().ToString());
-//             Dictionary<string, object> dictionary = new Dictionary<string, object>()
-//             {
-//                 {dummyUsernames.usernames[i], Random.Range(1, 1000).ToString() }
-//             };
-//             await documentReference.SetAsync(dictionary);
-//         }
-//         
-//         print("done");
-//     }
-//
-// }

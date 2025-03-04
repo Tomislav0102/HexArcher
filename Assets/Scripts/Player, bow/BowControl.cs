@@ -1,4 +1,4 @@
-//using Sirenix.OdinInspector
+using Sirenix.OdinInspector;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
@@ -56,7 +56,7 @@ public class BowControl : MonoBehaviour, ILateInitialization<PlayerControl>
         }
     }
     /*[ShowInInspector]*//*[ReadOnly]*/ BowState _bowState;
-    public PlayerInteractor interactor;
+    [ReadOnly] public PlayerInteractor interactor;
 
 
 
@@ -74,6 +74,7 @@ public class BowControl : MonoBehaviour, ILateInitialization<PlayerControl>
 
     private void OnDisable()
     {
+        if (!IsInitialized) return;
         Utils.GameStarted -= ReturnBowToRack_Initial;
     }
 

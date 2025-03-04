@@ -14,33 +14,6 @@ public class PlayerRegistration
         int index = isHost ? 0 : 1;
         _players[index] = player;
         _displays[index] = _players[index].displayNameTr.GetComponent<TextMeshPro>();
-        // string myName = "";
-        // string levelDisplay = "Level - ";
-        // string rankDisplay = "Leaderboard - ";
-        // if (isHost)
-        // {
-        //     myName = GameManager.Instance.nameBlueNet.Value.ToString();
-        //     levelDisplay += GameManager.Instance.leveBlueNet.Value.ToString();
-        //     if (GameManager.Instance.leaderboardBlueNet.Value < 0) rankDisplay = string.Empty;
-        //     else
-        //     {
-        //         int rank = GameManager.Instance.leaderboardBlueNet.Value;
-        //         rankDisplay += (rank + 1).ToString();
-        //     }
-        // }
-        // else
-        // {
-        //     myName = GameManager.Instance.nameRedNet.Value.ToString();
-        //     levelDisplay += GameManager.Instance.leveRedNet.Value.ToString();
-        //     if (GameManager.Instance.leaderboardRedNet.Value < 0) rankDisplay = string.Empty;
-        //     else
-        //     {
-        //         int rank = GameManager.Instance.leaderboardRedNet.Value;
-        //         rankDisplay += (rank + 1).ToString();
-        //     }
-        //
-        // }
-        // if(_displays[index] != null) _displays[index].text = myName + "\n" + levelDisplay+ "\n" + rankDisplay;
     }
     public void RemovePlayer(PlayerControl player)
     {

@@ -19,7 +19,7 @@ using TMPro;
 using Random = UnityEngine.Random;
 
 
-public class MyLobbyManager : MonoBehaviour
+public class MyLobbyManager : SerializedMonoBehaviour
 {
     League _myRank; 
     [SerializeField] string env = "dev";
@@ -29,8 +29,7 @@ public class MyLobbyManager : MonoBehaviour
     
     RelayManager _relayManager;
     public string relayCode;
-    string _playerId, _playerLeaderboardId, _playerName, _playerLevel;
-
+    string _playerName;
     Lobby _currentLobby;
 
     string ConnectionType()
@@ -50,8 +49,9 @@ public class MyLobbyManager : MonoBehaviour
 
     float _timerHeartbeat, _timerUpdateLobbyData;
     const string CONST_KeyJoinCode = "RelayJoinCode";
-    const string CONST_HostRank = "HostRank";
     const string CONST_RankingOperation = "RankingOperation";
+    public bool isHost; //only for editor
+    public Dictionary<PlayerDataType, string> playerData = new Dictionary<PlayerDataType, string>();
 
     [Header("UI")]
     [SerializeField] Button btnCreate;
@@ -70,7 +70,7 @@ public class MyLobbyManager : MonoBehaviour
         DontDestroyOnLoad(this);
 
 #if (UNITY_EDITOR)
-       // Invoke(nameof(Btn_Ready), 0.3f);
+      //  Invoke(nameof(Btn_Ready), 0.3f);
 #endif
     }
 
@@ -86,13 +86,13 @@ public class MyLobbyManager : MonoBehaviour
         btnJoinByCode.onClick.AddListener(Btn_Join);
         btnReady.onClick.AddListener(Btn_Ready);
 
-        if (PlayerPrefs.GetString(Utils.PlName_Str) == string.Empty) PlayerPrefs.SetString(Utils.PlName_Str, $"Player{Random.Range(0, 100)}");
-        inputPlName.text = PlayerPrefs.GetString(Utils.PlName_Str);
+        if (inputPlName.text == string.Empty) _playerName = $"Player{Random.Range(0, 100)}";
+        inputPlName.text = _playerName.Replace(" ", "");
         inputPlName.onValueChanged.AddListener(x => InField_PlayerName());
 
         _oneHitBtnCreate = _oneHitBtnJoin = _oneHitBtnReady = false;
     }
-    async Task Authenticate(string playerName)
+    async Task Authenticate()
     {
         if (UnityServices.State == ServicesInitializationState.Uninitialized)
         {
@@ -107,17 +107,11 @@ public class MyLobbyManager : MonoBehaviour
             await UnityServices.InitializeAsync(options);
         }
 
-        AuthenticationService.Instance.SignedIn += () => { print($"Signed in as {AuthenticationService.Instance.PlayerId} with {playerName} name"); };
+        AuthenticationService.Instance.SignedIn += () => { print($"Signed in as {AuthenticationService.Instance.PlayerId} with {_playerName} name"); };
 
         if (!AuthenticationService.Instance.IsSignedIn)
         {
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
-
-            _playerId = AuthenticationService.Instance.PlayerId;
-            _playerLeaderboardId = Utils.MyIdLeaderboard();
-            _playerName = playerName;
-            PlayerLeveling.CalculateLevelFromXp(out int lv, out int xp);
-            _playerLevel = lv.ToString();
         }
 
     }
@@ -126,8 +120,8 @@ public class MyLobbyManager : MonoBehaviour
     #region UI CONTROLS
     private void InField_PlayerName()
     {
-        string str = inputPlName.text.Replace(" ", "");
-        PlayerPrefs.SetString(Utils.PlName_Str, str);
+        _playerName = inputPlName.text.Replace(" ", "");
+        _currentLobby.Players[isHost ? 0 : 1].Profile = new PlayerProfile(_playerName);
     }
 
     async void Btn_Create()
@@ -135,7 +129,7 @@ public class MyLobbyManager : MonoBehaviour
         if (_oneHitBtnCreate) return;
         _oneHitBtnCreate = true;
 
-        await Authenticate(PlayerPrefs.GetString(Utils.PlName_Str));
+        await Authenticate();
         await CreateLobby();
         StartCoroutine(Launch.Instance.mySceneManager.NewSceneAfterFadeIn(MainGameType.Multiplayer));
     }
@@ -147,7 +141,7 @@ public class MyLobbyManager : MonoBehaviour
 
         Utils.FadeOut?.Invoke(false);
         Utils.GameType = MainGameType.Multiplayer;
-        await Authenticate(PlayerPrefs.GetString(Utils.PlName_Str));
+        await Authenticate();
         await QuickJoinLobby();
     }
 
@@ -158,7 +152,7 @@ public class MyLobbyManager : MonoBehaviour
 
         Utils.FadeOut?.Invoke(false);
         Utils.GameType = MainGameType.Multiplayer;
-        await Authenticate(PlayerPrefs.GetString(Utils.PlName_Str));
+        await Authenticate();
         await JoinWithRelayCode(inputJoinCode.text);
     }
 
@@ -169,7 +163,7 @@ public class MyLobbyManager : MonoBehaviour
 
         Utils.FadeOut?.Invoke(false);
         Utils.GameType = MainGameType.Multiplayer;
-        await Authenticate(PlayerPrefs.GetString(Utils.PlName_Str));
+        await Authenticate();
         await QuickJoinLobby();
         if (_currentLobby == null)
         {
@@ -232,7 +226,7 @@ public class MyLobbyManager : MonoBehaviour
                 Player = GetPlayer()
             };
             _currentLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, options);
-            _myRank = (League)PlayerPrefs.GetInt(Utils.PlLeague_Int);
+            _myRank = System.Enum.Parse<League>(playerData[PlayerDataType.League]);
             await LobbyService.Instance.UpdateLobbyAsync(_currentLobby.Id, new UpdateLobbyOptions
             {
                 Data = new Dictionary<string, DataObject>
@@ -277,7 +271,7 @@ public class MyLobbyManager : MonoBehaviour
 
             bool CanJoinThisLobby()
             {
-                int myRank = PlayerPrefs.GetInt(Utils.PlLeague_Int);
+                int myRank = int.Parse(playerData[PlayerDataType.League]);
                 int hostRank = int.Parse(bufferLobby.Data[CONST_RankingOperation].Value);
                 
                 if (hostRank == System.Enum.GetNames(typeof(League)).Length - 1 && hostRank != myRank) return false;
@@ -405,20 +399,32 @@ public class MyLobbyManager : MonoBehaviour
         }
     }
 
-    public string GetPlayerName(int index) => _currentLobby.Players[index].Data["PlayerName"].Value;
-    public string GetPlayerLeaderboardId(int index) => _currentLobby.Players[index].Data["LeaderboardId"].Value;
-    public string GetPlayerLevel(int index) => _currentLobby.Players[index].Data["PlayerLevel"].Value;
-    public string GetPlayerId(int index) => _currentLobby.Players[index].Id;
+    public string GetPlayerData(PlayerDataType dataType, int index) => _currentLobby.Players[index].Data[dataType.ToString()].Value;
 
+    public string GetPlayerName(int index) => _playerName;
     Player GetPlayer()
     {
         return new Player()
         {
+            Profile = new PlayerProfile(_playerName),
             Data = new Dictionary<string, PlayerDataObject>()
             {
-                { "PlayerName", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, _playerName) },
-                { "PlayerLevel", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, _playerLevel) },
-                { "LeaderboardId", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Private, _playerLeaderboardId) }
+                { PlayerDataType.Xp.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
+                    playerData[PlayerDataType.Xp]) },
+                { PlayerDataType.League.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
+                    playerData[PlayerDataType.League]) },
+                { PlayerDataType.TotalMatches.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
+                    playerData[PlayerDataType.TotalMatches]) },
+                { PlayerDataType.Defeats.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
+                    playerData[PlayerDataType.Defeats]) },
+                { PlayerDataType.Wins.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
+                    playerData[PlayerDataType.Wins]) },
+                { PlayerDataType.BowIndex.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
+                    playerData[PlayerDataType.BowIndex]) },
+                { PlayerDataType.HeadIndex.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
+                    playerData[PlayerDataType.HeadIndex]) },
+                { PlayerDataType.HandsIndex.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
+                    playerData[PlayerDataType.HandsIndex]) },
             }
         };
     }
@@ -445,7 +451,7 @@ public class MyLobbyManager : MonoBehaviour
     {
         try
         {
-            await Authenticate(PlayerPrefs.GetString(Utils.PlName_Str));
+            await Authenticate();
             QueryLobbiesOptions options = new QueryLobbiesOptions()
             {
                 Count = 5,

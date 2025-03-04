@@ -8,7 +8,7 @@ using UnityEngine.Networking;
 
 public class Utils
 {
-    public static System.Action DatabaseClientSynced;
+    public static System.Action LeaderboardDataClientSynced;
     public static System.Action GameStarted; //after bot finished first countdown or 2nd player connects
     public static System.Action<bool> FadeOut; //lasts 2 seconds, no need for callback action as a 2nd delegate
     public static System.Action MainUiUnselect;
@@ -20,18 +20,18 @@ public class Utils
     public static string Size_Int = "size of grid";
     public static string WindAmount_Fl = "wind amount";
     public static string TrajectoryVisible_Int = "trajectory is visible"; 
-    public static string Bow_Int = "chosen bow player";
-    public static string Head_Int = "head";
-    public static string Hand_Int = "hand";
-    public static string PlName_Str = "name player";
-    public static string PlXp_Int = "experience player";
-    public static string PlLeague_Int = "league player";
-    public static string PlMatches_Int = "total matches player";
-    public static string PlDefeats_Int = "defeats player";
-    public static string PlWins_Int = "wins player";
-    static string plLeaderBoardIdStr = "leaderboard id";
-    public static string PlLeaderBoardRank_Int = "leaderboard rank";
-    public static string PlLeaderBoardLocalScore_Int = "local score";
+    // public static string Bow_Int = "chosen bow player";
+    // public static string Head_Int = "head";
+    // public static string Hands_Int = "hand";
+    // public static string PlName_Str = "name player";
+    //public static string PlXp_Int = "experience player";
+    // public static string PlLeague_Int = "league player";
+    // public static string PlMatches_Int = "total matches player";
+    // public static string PlDefeats_Int = "defeats player";
+    // public static string PlWins_Int = "wins player";
+    static string plLeaderboardId_Str = "id";
+     public static string PlLeaderBoardRank_Int = "leaderboard rank";
+     public static string PlLeaderBoardLocalScore_Int = "local score";
     #endregion
 
     public static MainGameType GameType;
@@ -44,26 +44,26 @@ public class Utils
     #region HELPER METHODS
     public static void DisplayAllPlayerPrefs()
     {
-        Debug.Log($"Difficulty: {(GenDifficulty)PlayerPrefs.GetInt(Difficulty_Int)}\n" +
-            $"Size: {(GenSize)PlayerPrefs.GetInt(Size_Int)}\n" +
-            $"XP: {PlayerPrefs.GetInt(PlXp_Int)}\n" +
-            $"Player name: {PlayerPrefs.GetString(PlName_Str)} \n" +
-            "----------------\n" +
-            $"Bow: {PlayerPrefs.GetInt(Bow_Int)} \n" +
-            $"Head: {PlayerPrefs.GetInt(Head_Int)} \n" +
-            $"Hand: {PlayerPrefs.GetInt(Hand_Int)} \n" +
-            "----------------\n" +
-            $"Player league: {(League)PlayerPrefs.GetInt(PlLeague_Int)} \n" +
-            $"Player total matches: {PlayerPrefs.GetInt(PlMatches_Int)} \n" +
-            $"Player defeats: {PlayerPrefs.GetInt(PlDefeats_Int)} \n" +
-            $"Player wins: {PlayerPrefs.GetInt(PlWins_Int)} \n" +
-            "----------------\n" +
-            $"Wind amount: {PlayerPrefs.GetFloat(WindAmount_Fl)} \n" +
-            $"Trajectory visible: {PlayerPrefs.GetInt(TrajectoryVisible_Int)} \n" +
-            "----------------\n" +
-            $"LB id: {PlayerPrefs.GetString(plLeaderBoardIdStr)} \n" +
-            $"LB rank: {PlayerPrefs.GetInt(PlLeaderBoardRank_Int)} \n" +
-            $"LB local score: {PlayerPrefs.GetInt(PlLeaderBoardLocalScore_Int)}");
+        // Debug.Log($"Difficulty: {(GenDifficulty)PlayerPrefs.GetInt(Difficulty_Int)}\n" +
+        //     $"Size: {(GenSize)PlayerPrefs.GetInt(Size_Int)}\n" +
+        //     $"XP: {PlayerPrefs.GetInt(PlXp_Int)}\n" +
+        //     // $"Player name: {PlayerPrefs.GetString(PlName_Str)} \n" +
+        //     // "----------------\n" +
+        //     // $"Bow: {PlayerPrefs.GetInt(Bow_Int)} \n" +
+        //     // $"Head: {PlayerPrefs.GetInt(Head_Int)} \n" +
+        //     // $"Hand: {PlayerPrefs.GetInt(Hands_Int)} \n" +
+        //     "----------------\n" +
+        //     $"Player league: {(League)PlayerPrefs.GetInt(PlLeague_Int)} \n" +
+        //     $"Player total matches: {PlayerPrefs.GetInt(PlMatches_Int)} \n" +
+        //     $"Player defeats: {PlayerPrefs.GetInt(PlDefeats_Int)} \n" +
+        //     $"Player wins: {PlayerPrefs.GetInt(PlWins_Int)} \n" +
+        //     "----------------\n" +
+        //     $"Wind amount: {PlayerPrefs.GetFloat(WindAmount_Fl)} \n" +
+        //     $"Trajectory visible: {PlayerPrefs.GetInt(TrajectoryVisible_Int)} \n" +
+        //     "----------------\n" +
+        //     $"LB id: {PlayerPrefs.GetString(plLeaderboardId_Str)} \n" +
+        //     $"LB rank: {PlayerPrefs.GetInt(PlLeaderBoardRank_Int)} \n" +
+        //     $"LB local score: {PlayerPrefs.GetInt(PlLeaderBoardLocalScore_Int)}");
     }
 
     public static Dictionary<League, Vector3Int> LeaguesTotalDefeatWinsTable = new Dictionary<League, Vector3Int>()
@@ -169,10 +169,10 @@ public class Utils
         return list;
     }
 
-    public static string MyIdLeaderboard()
+    public static string MyId()
     {
-        if (!PlayerPrefs.HasKey(plLeaderBoardIdStr)) PlayerPrefs.SetString(plLeaderBoardIdStr, System.Guid.NewGuid().ToString());
-        return PlayerPrefs.GetString(plLeaderBoardIdStr);
+        if (!PlayerPrefs.HasKey(plLeaderboardId_Str)) PlayerPrefs.SetString(plLeaderboardId_Str, System.Guid.NewGuid().ToString());
+        return PlayerPrefs.GetString(plLeaderboardId_Str);
     }
 
     public static string[] PurgedString(string stInput)
@@ -216,6 +216,7 @@ public enum GenSide { Left, Right, Center }
 public enum GenResult { Win, Lose, Draw }
 public enum GenChange { Increase, Decrease }
 public enum TileState { Free, InActive, Taken }
+public enum PlayerDataType { Xp, League, TotalMatches, Defeats, Wins, BowIndex, HeadIndex, HandsIndex }
 public enum PlayerColor
 {
     Blue,

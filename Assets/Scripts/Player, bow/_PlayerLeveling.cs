@@ -8,7 +8,7 @@ static class PlayerLeveling
 
     public static void CalculateLevelFromXp(out int lv, out int toNext)
     {
-        int xp = PlayerPrefs.GetInt(Utils.PlXp_Int);
+        int xp = int.Parse(Launch.Instance.myLobbyManager.playerData[PlayerDataType.Xp]);
 
         for (int i = 0; i < xpMilestones.Length; i++)
         {
@@ -46,8 +46,8 @@ static class PlayerLeveling
                 break;
         }
         
-        int final = PlayerPrefs.GetInt(Utils.PlXp_Int) + (int)(diffMod * sizeMod * wld);
-        PlayerPrefs.SetInt(Utils.PlXp_Int, final);
+        int final = int.Parse(Launch.Instance.myLobbyManager.playerData[PlayerDataType.Xp]) + (int)(diffMod * sizeMod * wld);
+        Launch.Instance.myLobbyManager.playerData[PlayerDataType.Xp] = final.ToString();
         Utils.PlayerXpUpdated?.Invoke();
         
         float Mod(int rank) => 1 + rank * 0.5f;
@@ -58,7 +58,7 @@ static class PlayerLeveling
     {
         CalculateLevelFromXp(out int lv, out int toNext);
         if(targetLevel <= lv || targetLevel > 10) return;
-        PlayerPrefs.SetInt(Utils.PlXp_Int, xpMilestones[targetLevel - 1]);
+        Launch.Instance.myLobbyManager.playerData[PlayerDataType.Xp] = xpMilestones[targetLevel - 1].ToString();
     }
     #endregion
 }

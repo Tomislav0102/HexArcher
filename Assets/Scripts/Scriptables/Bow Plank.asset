@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Bow Plank
   m_EditorClassIdentifier: 
   index: 2
-  itemName: Plnak Bow
+  itemName: Plank  Bow
   power: 75

@@ -68,7 +68,10 @@ public class GameManager : NetworkBehaviour
     public NetworkList<byte> leagueNet;
     public NetworkList<FixedString128Bytes> nameNet;
     NetworkList<FixedString128Bytes> _authIdNet;
-
+    public NetworkList<byte> bowNet;
+    public NetworkList<byte> headNet;
+    public NetworkList<byte> handsNet;
+    
     private void Awake()
     {
         Instance = this;
@@ -87,7 +90,9 @@ public class GameManager : NetworkBehaviour
         leagueNet = new NetworkList<byte>(new List<byte>() { 0, 0 });
         nameNet = new NetworkList<FixedString128Bytes>(new List<FixedString128Bytes>() { new FixedString128Bytes(), new FixedString128Bytes() });
         _authIdNet = new NetworkList<FixedString128Bytes>(new List<FixedString128Bytes>() { new FixedString128Bytes(), new FixedString128Bytes() });
-
+        bowNet = new NetworkList<byte>(new List<byte>() { 0, 0 });
+        headNet = new NetworkList<byte>(new List<byte>() { 0, 0 });
+        handsNet = new NetworkList<byte>(new List<byte>() { 0, 0 });
     }
 
     public override void OnNetworkSpawn()
@@ -245,22 +250,30 @@ public class GameManager : NetworkBehaviour
         
         void PlayerVictoriousContinue(GenResult gameResult)
         {
-            PlayerPrefs.SetInt(Utils.PlMatches_Int, PlayerPrefs.GetInt(Utils.PlMatches_Int) + 1);
-            int currentXp = PlayerPrefs.GetInt(Utils.PlXp_Int);
+            MyLobbyManager mlm = Launch.Instance.myLobbyManager;
+            
+            int totalMatches = int.Parse(mlm.playerData[PlayerDataType.TotalMatches]);
+            totalMatches++;
+            mlm.playerData[PlayerDataType.TotalMatches] = totalMatches.ToString();
+            int currentXp = int.Parse(mlm.playerData[PlayerDataType.Xp]);
 
             switch (gameResult)
             {
                 case GenResult.Win:
                     audioManager.PlaySFX(audioManager.win);
                     Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreLeaderboardGlobalValues.x;
-                    PlayerPrefs.SetInt(Utils.PlWins_Int, PlayerPrefs.GetInt(Utils.PlWins_Int) + 1);
+                    int wins = int.Parse(mlm.playerData[PlayerDataType.Wins]);
+                    wins++;
+                    mlm.playerData[PlayerDataType.Wins] = wins.ToString();
                     PlayerLeveling.AddToXp(GenResult.Win);
                     break;
                 
                 case GenResult.Lose:
                     audioManager.PlaySFX(audioManager.loose);
                     Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreLeaderboardGlobalValues.y;
-                    PlayerPrefs.SetInt(Utils.PlDefeats_Int, PlayerPrefs.GetInt(Utils.PlDefeats_Int) + 1);
+                    int defeats = int.Parse(mlm.playerData[PlayerDataType.Defeats]);
+                    defeats++;
+                    mlm.playerData[PlayerDataType.Defeats] = defeats.ToString();
                     PlayerLeveling.AddToXp(GenResult.Lose);
                     break;
                 case GenResult.Draw:
@@ -269,24 +282,23 @@ public class GameManager : NetworkBehaviour
                     break;
             }
             Launch.Instance.myDatabaseManager.UploadMyScore();
-            int xpEarned = PlayerPrefs.GetInt(Utils.PlXp_Int) - currentXp;
+            int xpEarned = int.Parse(mlm.playerData[PlayerDataType.Xp]) - currentXp;
             uImanager.SetDisplays(UiDisplays.XpEarned, $"You've earned {xpEarned} XP!");
 
-            int myLeague = PlayerPrefs.GetInt(Utils.PlLeague_Int);
-            if (PlayerPrefs.GetInt(Utils.PlWins_Int) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].z
-                && PlayerPrefs.GetInt(Utils.PlMatches_Int) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].x) LeagueChange(GenChange.Increase);
-            else if (PlayerPrefs.GetInt(Utils.PlDefeats_Int) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].y) LeagueChange(GenChange.Decrease);
+            int myLeague = int.Parse(mlm.playerData[PlayerDataType.League]);
+            if (int.Parse(mlm.playerData[PlayerDataType.Wins]) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].z
+                && int.Parse(mlm.playerData[PlayerDataType.TotalMatches]) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].x) LeagueChange(GenChange.Increase);
+            else if (int.Parse(mlm.playerData[PlayerDataType.Defeats]) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].y) LeagueChange(GenChange.Decrease);
 
             void LeagueChange(GenChange change)
             {
                 int prevLeague = myLeague; //debug only
-                PlayerPrefs.SetInt(Utils.PlWins_Int, 0);
-                PlayerPrefs.SetInt(Utils.PlDefeats_Int, 0);
+                mlm.playerData[PlayerDataType.Wins] = mlm.playerData[PlayerDataType.Defeats] = "0";
                 if (change != GenChange.Increase) myLeague++;
                 else myLeague--;
                 if (myLeague < 0) myLeague = 0;
                 
-                PlayerPrefs.SetInt(Utils.PlLeague_Int, myLeague);
+                mlm.playerData[PlayerDataType.League] = myLeague.ToString();
                 print($"League changed from {(League)prevLeague} to {(League)myLeague}");
             }
         }
@@ -310,7 +322,11 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.Server)]
     public void RegisterName_ServerRpc(FixedString128Bytes playerName,  int index) =>  nameNet[index] = playerName;
     [Rpc(SendTo.Server)]
-    public void RegisterAuthenticationId_ServerRpc(FixedString128Bytes authId,  int index) =>  _authIdNet[index] = authId;
+    public void RegisterBow_ServerRpc(byte val,  int index) =>  bowNet[index] = val;
+    [Rpc(SendTo.Server)]
+    public void RegisterHead_ServerRpc(byte val,  int index) =>  headNet[index] = val;
+    [Rpc(SendTo.Server)]
+    public void RegisterHands_ServerRpc(byte val,  int index) =>  handsNet[index] = val;
 
 
     [Rpc(SendTo.Server)]
