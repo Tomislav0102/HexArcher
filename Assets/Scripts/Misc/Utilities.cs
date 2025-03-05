@@ -30,8 +30,8 @@ public class Utils
     // public static string PlDefeats_Int = "defeats player";
     // public static string PlWins_Int = "wins player";
     static string plLeaderboardId_Str = "id";
-     public static string PlLeaderBoardRank_Int = "leaderboard rank";
-     public static string PlLeaderBoardLocalScore_Int = "local score";
+     // public static string PlLeaderBoardRank_Int = "leaderboard rank";
+     // public static string PlLeaderBoardLocalScore_Int = "local score";
     #endregion
 
     public static MainGameType GameType;
@@ -216,7 +216,7 @@ public enum GenSide { Left, Right, Center }
 public enum GenResult { Win, Lose, Draw }
 public enum GenChange { Increase, Decrease }
 public enum TileState { Free, InActive, Taken }
-public enum PlayerDataType { Xp, League, TotalMatches, Defeats, Wins, BowIndex, HeadIndex, HandsIndex }
+public enum MyData { Id, Name, Xp, League, TotalMatches, Defeats, Wins, BowIndex, HeadIndex, HandsIndex, LeaderboardId, LeaderboardRank, LeaderboardScore }
 public enum PlayerColor
 {
     Blue,

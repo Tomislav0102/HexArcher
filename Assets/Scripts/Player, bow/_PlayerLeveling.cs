@@ -8,7 +8,8 @@ static class PlayerLeveling
 
     public static void CalculateLevelFromXp(out int lv, out int toNext)
     {
-        int xp = int.Parse(Launch.Instance.myLobbyManager.playerData[PlayerDataType.Xp]);
+        DatabaseManager dm = Launch.Instance.myDatabaseManager;
+        int xp = dm.GetValFromKeyEnum<int>(MyData.Xp);
 
         for (int i = 0; i < xpMilestones.Length; i++)
         {
@@ -46,8 +47,9 @@ static class PlayerLeveling
                 break;
         }
         
-        int final = int.Parse(Launch.Instance.myLobbyManager.playerData[PlayerDataType.Xp]) + (int)(diffMod * sizeMod * wld);
-        Launch.Instance.myLobbyManager.playerData[PlayerDataType.Xp] = final.ToString();
+        DatabaseManager dm = Launch.Instance.myDatabaseManager;
+        int final = dm.GetValFromKeyEnum<int>(MyData.Xp) + (int)(diffMod * sizeMod * wld);
+        dm.myData[MyData.Xp] = final.ToString();
         Utils.PlayerXpUpdated?.Invoke();
         
         float Mod(int rank) => 1 + rank * 0.5f;
@@ -58,7 +60,7 @@ static class PlayerLeveling
     {
         CalculateLevelFromXp(out int lv, out int toNext);
         if(targetLevel <= lv || targetLevel > 10) return;
-        Launch.Instance.myLobbyManager.playerData[PlayerDataType.Xp] = xpMilestones[targetLevel - 1].ToString();
+        Launch.Instance.myDatabaseManager.myData[MyData.Xp] = xpMilestones[targetLevel - 1].ToString();
     }
     #endregion
 }

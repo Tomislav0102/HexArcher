@@ -19,17 +19,17 @@ using TMPro;
 using Random = UnityEngine.Random;
 
 
-public class MyLobbyManager : SerializedMonoBehaviour
+public class MyLobbyManager : MonoBehaviour
 {
-    League _myRank; 
+    League _myLeague; 
     [SerializeField] string env = "dev";
     [SerializeField] string lobbyName = "Lobby";
     [SerializeField] int maxPlayers = 4;
     [SerializeField] EncryptionType encryption = EncryptionType.DTLS;
-    
+
+    DatabaseManager _db;
     RelayManager _relayManager;
     public string relayCode;
-    string _playerName;
     Lobby _currentLobby;
 
     string ConnectionType()
@@ -50,8 +50,6 @@ public class MyLobbyManager : SerializedMonoBehaviour
     float _timerHeartbeat, _timerUpdateLobbyData;
     const string CONST_KeyJoinCode = "RelayJoinCode";
     const string CONST_RankingOperation = "RankingOperation";
-    public bool isHost; //only for editor
-    public Dictionary<PlayerDataType, string> playerData = new Dictionary<PlayerDataType, string>();
 
     [Header("UI")]
     [SerializeField] Button btnCreate;
@@ -63,14 +61,18 @@ public class MyLobbyManager : SerializedMonoBehaviour
     bool _oneHitBtnCreate, _oneHitBtnJoin, _oneHitBtnReady;
 
     #region INITIALIZATION
-    
+    void Awake()
+    {
+        _db = Launch.Instance.myDatabaseManager;
+    }
+
     void Start()
     {
         _relayManager = new RelayManager(maxPlayers);
         DontDestroyOnLoad(this);
 
 #if (UNITY_EDITOR)
-      //  Invoke(nameof(Btn_Ready), 0.3f);
+        Invoke(nameof(Btn_Ready), 0.3f);
 #endif
     }
 
@@ -86,8 +88,8 @@ public class MyLobbyManager : SerializedMonoBehaviour
         btnJoinByCode.onClick.AddListener(Btn_Join);
         btnReady.onClick.AddListener(Btn_Ready);
 
-        if (inputPlName.text == string.Empty) _playerName = $"Player{Random.Range(0, 100)}";
-        inputPlName.text = _playerName.Replace(" ", "");
+        if (_db.myData[MyData.Name] == null || _db.myData[MyData.Name].Length == 0) _db.myData[MyData.Name] = $"Player{Random.Range(0, 100)}";
+        inputPlName.text = _db.myData[MyData.Name];
         inputPlName.onValueChanged.AddListener(x => InField_PlayerName());
 
         _oneHitBtnCreate = _oneHitBtnJoin = _oneHitBtnReady = false;
@@ -107,11 +109,12 @@ public class MyLobbyManager : SerializedMonoBehaviour
             await UnityServices.InitializeAsync(options);
         }
 
-        AuthenticationService.Instance.SignedIn += () => { print($"Signed in as {AuthenticationService.Instance.PlayerId} with {_playerName} name"); };
+        AuthenticationService.Instance.SignedIn += () => { print($"Signed in as {AuthenticationService.Instance.PlayerId} with {_db.myData[MyData.Name]} name"); };
 
         if (!AuthenticationService.Instance.IsSignedIn)
         {
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
+            _db.myData[MyData.Id] = AuthenticationService.Instance.PlayerId;
         }
 
     }
@@ -120,8 +123,7 @@ public class MyLobbyManager : SerializedMonoBehaviour
     #region UI CONTROLS
     private void InField_PlayerName()
     {
-        _playerName = inputPlName.text.Replace(" ", "");
-        _currentLobby.Players[isHost ? 0 : 1].Profile = new PlayerProfile(_playerName);
+        _db.myData[MyData.Name] = inputPlName.text.Replace(" ", "");
     }
 
     async void Btn_Create()
@@ -226,13 +228,13 @@ public class MyLobbyManager : SerializedMonoBehaviour
                 Player = GetPlayer()
             };
             _currentLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, options);
-            _myRank = System.Enum.Parse<League>(playerData[PlayerDataType.League]);
+            _myLeague = System.Enum.Parse<League>(_db.myData[MyData.League]);
             await LobbyService.Instance.UpdateLobbyAsync(_currentLobby.Id, new UpdateLobbyOptions
             {
                 Data = new Dictionary<string, DataObject>
                 {
                     { CONST_KeyJoinCode, new DataObject(DataObject.VisibilityOptions.Public, relayCode) },
-                    { CONST_RankingOperation, new DataObject(DataObject.VisibilityOptions.Public, ((int)_myRank).ToString()) },
+                    { CONST_RankingOperation, new DataObject(DataObject.VisibilityOptions.Public, ((int)_myLeague).ToString()) },
                 }
             });
 
@@ -271,17 +273,17 @@ public class MyLobbyManager : SerializedMonoBehaviour
 
             bool CanJoinThisLobby()
             {
-                int myRank = int.Parse(playerData[PlayerDataType.League]);
-                int hostRank = int.Parse(bufferLobby.Data[CONST_RankingOperation].Value);
+                int myLeague = _db.GetValFromKeyEnum<int>(MyData.League);
+                int hostLeague = int.Parse(bufferLobby.Data[CONST_RankingOperation].Value);
                 
-                if (hostRank == System.Enum.GetNames(typeof(League)).Length - 1 && hostRank != myRank) return false;
-                if (Mathf.Abs(hostRank - myRank) > 2)
+                if (hostLeague == System.Enum.GetNames(typeof(League)).Length - 1 && hostLeague != myLeague) return false;
+                if (Mathf.Abs(hostLeague - myLeague) > 2)
                 {
-                    if ((League)hostRank == League.Silver1 && (League)myRank == League.Bronze1) return true;
-                    if ((League)myRank == League.Silver1 && (League)hostRank == League.Bronze1) return true;
+                    if ((League)hostLeague == League.Silver1 && (League)myLeague == League.Bronze1) return true;
+                    if ((League)myLeague == League.Silver1 && (League)hostLeague == League.Bronze1) return true;
                     
-                    if ((League)hostRank == League.Platinum3 && (League)myRank == League.Diamond3) return true;
-                    if ((League)myRank == League.Platinum3 && (League)hostRank == League.Diamond3) return true;
+                    if ((League)hostLeague == League.Platinum3 && (League)myLeague == League.Diamond3) return true;
+                    if ((League)myLeague == League.Platinum3 && (League)hostLeague == League.Diamond3) return true;
                     
                     return false;
                 }
@@ -399,33 +401,10 @@ public class MyLobbyManager : SerializedMonoBehaviour
         }
     }
 
-    public string GetPlayerData(PlayerDataType dataType, int index) => _currentLobby.Players[index].Data[dataType.ToString()].Value;
-
-    public string GetPlayerName(int index) => _playerName;
     Player GetPlayer()
     {
         return new Player()
         {
-            Profile = new PlayerProfile(_playerName),
-            Data = new Dictionary<string, PlayerDataObject>()
-            {
-                { PlayerDataType.Xp.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
-                    playerData[PlayerDataType.Xp]) },
-                { PlayerDataType.League.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
-                    playerData[PlayerDataType.League]) },
-                { PlayerDataType.TotalMatches.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
-                    playerData[PlayerDataType.TotalMatches]) },
-                { PlayerDataType.Defeats.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
-                    playerData[PlayerDataType.Defeats]) },
-                { PlayerDataType.Wins.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
-                    playerData[PlayerDataType.Wins]) },
-                { PlayerDataType.BowIndex.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
-                    playerData[PlayerDataType.BowIndex]) },
-                { PlayerDataType.HeadIndex.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
-                    playerData[PlayerDataType.HeadIndex]) },
-                { PlayerDataType.HandsIndex.ToString(), new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, 
-                    playerData[PlayerDataType.HandsIndex]) },
-            }
         };
     }
     #endregion
@@ -480,93 +459,4 @@ public class MyLobbyManager : SerializedMonoBehaviour
 
 }
 
-    // async Task CreateLobby()
-    // {
-    //     try
-    //     {
-    //         Allocation allocation = await _relayManager.AllocateRelay();
-    //         relayCode = await _relayManager.GetRelayJoinCode(allocation);
-    //
-    //         CreateLobbyOptions options = new CreateLobbyOptions
-    //         {
-    //             IsPrivate = false,
-    //             Player = GetPlayer()
-    //         };
-    //         _currentLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, options);
-    //         _myRank = (Ranking)PlayerPrefs.GetInt(Utils.PlRank_Int);
-    //         await LobbyService.Instance.UpdateLobbyAsync(_currentLobby.Id, new UpdateLobbyOptions
-    //         {
-    //             Data = new Dictionary<string, DataObject>
-    //             {
-    //                 { CONST_KeyJoinCode, new DataObject(DataObject.VisibilityOptions.Public, relayCode) },
-    //                 { CONST_RankingOperation, new DataObject(DataObject.VisibilityOptions.Public, ((int)_myRank).ToString(), DataObject.IndexOptions.N1) },
-    //             }
-    //         });
-    //
-    //         RelayHostData hostData = new RelayHostData
-    //         {
-    //             JoinCode = relayCode,
-    //             Key = allocation.Key,
-    //             Port = (ushort)allocation.RelayServer.Port,
-    //             AllocationID = allocation.AllocationId,
-    //             AllocationIDBytes = allocation.AllocationIdBytes,
-    //             IPv4Address = allocation.RelayServer.IpV4,
-    //             ConnectionData = allocation.ConnectionData,
-    //         };
-    //         NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(hostData.IPv4Address, hostData.Port, hostData.AllocationIDBytes, hostData.Key, hostData.ConnectionData);
-    //         NetworkManager.Singleton.StartHost();
-    //         Launch.Instance.mySceneManager.SubscribeAll();
-    //         _activeUpdates = true;
-    //         print($"Created lobby: {_currentLobby.Name}  with  relay code: {relayCode}");
-    //     }
-    //     catch (LobbyServiceException e)
-    //     {
-    //         Debug.LogError("Failed to create lobby: " + e.Message);
-    //         _oneHitBtnJoin = false;
-    //     }
-    // }
-    //
-    // async Task QuickJoinLobby()
-    // {
-    //     try
-    //     {
-    //         _myRank = (Ranking)PlayerPrefs.GetInt(Utils.PlRank_Int);
-    //         QuickJoinLobbyOptions options = new QuickJoinLobbyOptions()
-    //         {
-    //             Player = GetPlayer(),
-    //             Filter = new List<QueryFilter>()
-    //             {
-    //                 new QueryFilter(QueryFilter.FieldOptions.N1, 
-    //                     ((int)_myRank).ToString(), 
-    //                     QueryFilter.OpOptions.GE) //compare filed (from lobby, host) with value (me, client)
-    //             }
-    //         };
-    //         _currentLobby = await LobbyService.Instance.QuickJoinLobbyAsync(options);
-    //
-    //         relayCode = _currentLobby.Data[CONST_KeyJoinCode].Value;
-    //         JoinAllocation allocation = await Relay.Instance.JoinAllocationAsync(relayCode);
-    //         RelayJoinData joinData = new RelayJoinData
-    //         {
-    //             Key = allocation.Key,
-    //             Port = (ushort)allocation.RelayServer.Port,
-    //             AllocationID = allocation.AllocationId,
-    //             AllocationIDBytes = allocation.AllocationIdBytes,
-    //             IPv4Address = allocation.RelayServer.IpV4,
-    //             ConnectionData = allocation.ConnectionData,
-    //             HostConnectionData = allocation.HostConnectionData,
-    //             JoinCode = relayCode
-    //         };
-    //
-    //         NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(joinData.IPv4Address, joinData.Port, joinData.AllocationIDBytes, joinData.Key, joinData.ConnectionData, joinData.HostConnectionData);
-    //         NetworkManager.Singleton.StartClient();
-    //         Launch.Instance.mySceneManager.SubscribeAll();
-    //         print($"starting client with {relayCode}");
-    //         _activeUpdates = false;
-    //     }
-    //     catch (LobbyServiceException e)
-    //     {
-    //         Debug.LogError("Failed to quick join lobby: " + e.Message);
-    //         _oneHitBtnJoin = false;
-    //     }
-    // }
 

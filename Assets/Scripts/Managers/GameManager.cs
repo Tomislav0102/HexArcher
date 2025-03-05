@@ -6,7 +6,6 @@ using Sirenix.OdinInspector;
 using TMPro;
 using Unity.Collections;
 using Unity.Netcode;
-using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 public class GameManager : NetworkBehaviour
@@ -18,7 +17,7 @@ public class GameManager : NetworkBehaviour
     [Title("References", TitleAlignment = TitleAlignments.Centered)]
     [SerializeField] Camera camMain;
     [HideInInspector] public Transform camMainTransform;
-    public SoPlayerData[] playerDatas;
+    public SoFactionData[] playerDatas;
     public UiManager uImanager;
     public AudioManager audioManager;
     public BowRack[] bowRacks;
@@ -33,8 +32,6 @@ public class GameManager : NetworkBehaviour
     public LayerMask layTargets;
 
     public LayerMask layForTrajectory;
-    public LayerMask layBow;
-    public LayerMask layHands;
 
     Material[] _matsSkyboxSp;
     NetworkVariable<byte> _skyboxIndexNet = new NetworkVariable<byte>(byte.MaxValue);
@@ -67,7 +64,6 @@ public class GameManager : NetworkBehaviour
     public NetworkList<int> leaderboardNet;
     public NetworkList<byte> leagueNet;
     public NetworkList<FixedString128Bytes> nameNet;
-    NetworkList<FixedString128Bytes> _authIdNet;
     public NetworkList<byte> bowNet;
     public NetworkList<byte> headNet;
     public NetworkList<byte> handsNet;
@@ -89,7 +85,6 @@ public class GameManager : NetworkBehaviour
         leaderboardNet = new NetworkList<int>(new List<int>() { 0, 0 });
         leagueNet = new NetworkList<byte>(new List<byte>() { 0, 0 });
         nameNet = new NetworkList<FixedString128Bytes>(new List<FixedString128Bytes>() { new FixedString128Bytes(), new FixedString128Bytes() });
-        _authIdNet = new NetworkList<FixedString128Bytes>(new List<FixedString128Bytes>() { new FixedString128Bytes(), new FixedString128Bytes() });
         bowNet = new NetworkList<byte>(new List<byte>() { 0, 0 });
         headNet = new NetworkList<byte>(new List<byte>() { 0, 0 });
         handsNet = new NetworkList<byte>(new List<byte>() { 0, 0 });
@@ -250,30 +245,30 @@ public class GameManager : NetworkBehaviour
         
         void PlayerVictoriousContinue(GenResult gameResult)
         {
-            MyLobbyManager mlm = Launch.Instance.myLobbyManager;
-            
-            int totalMatches = int.Parse(mlm.playerData[PlayerDataType.TotalMatches]);
+            DatabaseManager dm = Launch.Instance.myDatabaseManager;
+
+            int totalMatches = dm.GetValFromKeyEnum<int>(MyData.TotalMatches);
             totalMatches++;
-            mlm.playerData[PlayerDataType.TotalMatches] = totalMatches.ToString();
-            int currentXp = int.Parse(mlm.playerData[PlayerDataType.Xp]);
+            dm.myData[MyData.TotalMatches] = totalMatches.ToString();
+            int currentXp = dm.GetValFromKeyEnum<int>(MyData.Xp);
 
             switch (gameResult)
             {
                 case GenResult.Win:
                     audioManager.PlaySFX(audioManager.win);
                     Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreLeaderboardGlobalValues.x;
-                    int wins = int.Parse(mlm.playerData[PlayerDataType.Wins]);
+                    int wins = dm.GetValFromKeyEnum<int>(MyData.Wins);
                     wins++;
-                    mlm.playerData[PlayerDataType.Wins] = wins.ToString();
+                    dm.myData[MyData.Wins] = wins.ToString();
                     PlayerLeveling.AddToXp(GenResult.Win);
                     break;
                 
                 case GenResult.Lose:
                     audioManager.PlaySFX(audioManager.loose);
                     Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreLeaderboardGlobalValues.y;
-                    int defeats = int.Parse(mlm.playerData[PlayerDataType.Defeats]);
+                    int defeats = dm.GetValFromKeyEnum<int>(MyData.Defeats);
                     defeats++;
-                    mlm.playerData[PlayerDataType.Defeats] = defeats.ToString();
+                    dm.myData[MyData.Defeats] = defeats.ToString();
                     PlayerLeveling.AddToXp(GenResult.Lose);
                     break;
                 case GenResult.Draw:
@@ -281,24 +276,24 @@ public class GameManager : NetworkBehaviour
                     PlayerLeveling.AddToXp(GenResult.Draw);
                     break;
             }
-            Launch.Instance.myDatabaseManager.UploadMyScore();
-            int xpEarned = int.Parse(mlm.playerData[PlayerDataType.Xp]) - currentXp;
+            dm.UploadMyScore();
+            int xpEarned = dm.GetValFromKeyEnum<int>(MyData.Xp) - currentXp;
             uImanager.SetDisplays(UiDisplays.XpEarned, $"You've earned {xpEarned} XP!");
 
-            int myLeague = int.Parse(mlm.playerData[PlayerDataType.League]);
-            if (int.Parse(mlm.playerData[PlayerDataType.Wins]) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].z
-                && int.Parse(mlm.playerData[PlayerDataType.TotalMatches]) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].x) LeagueChange(GenChange.Increase);
-            else if (int.Parse(mlm.playerData[PlayerDataType.Defeats]) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].y) LeagueChange(GenChange.Decrease);
+            int myLeague = dm.GetValFromKeyEnum<int>(MyData.League);
+            if (dm.GetValFromKeyEnum<int>(MyData.Wins) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].z
+                && dm.GetValFromKeyEnum<int>(MyData.TotalMatches) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].x) LeagueChange(GenChange.Increase);
+            else if (dm.GetValFromKeyEnum<int>(MyData.Defeats) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].y) LeagueChange(GenChange.Decrease);
 
             void LeagueChange(GenChange change)
             {
                 int prevLeague = myLeague; //debug only
-                mlm.playerData[PlayerDataType.Wins] = mlm.playerData[PlayerDataType.Defeats] = "0";
+                dm.myData[MyData.Wins] = dm.myData[MyData.Defeats] = "0";
                 if (change != GenChange.Increase) myLeague++;
                 else myLeague--;
                 if (myLeague < 0) myLeague = 0;
                 
-                mlm.playerData[PlayerDataType.League] = myLeague.ToString();
+                dm.myData[MyData.League] = myLeague.ToString();
                 print($"League changed from {(League)prevLeague} to {(League)myLeague}");
             }
         }
@@ -314,19 +309,19 @@ public class GameManager : NetworkBehaviour
 
     #region REGISTRATIONS
     [Rpc(SendTo.Server)]
+    public void RegisterName_ServerRpc(FixedString128Bytes playerName,  int index) =>  nameNet[index] = playerName;
+    [Rpc(SendTo.Server)]
     public void RegisterLevel_ServerRpc(uint level, int index) =>  levelsNet[index] = level;
     [Rpc(SendTo.Server)]
-    public void RegisterLeaderboardRank_ServerRpc(int rank, int index) =>  leaderboardNet[index] = rank;
-    [Rpc(SendTo.Server)]
-    public void RegisterLeague_ServerRpc(int league, int index) =>  leagueNet[index] = (byte)league;
-    [Rpc(SendTo.Server)]
-    public void RegisterName_ServerRpc(FixedString128Bytes playerName,  int index) =>  nameNet[index] = playerName;
+    public void RegisterLeague_ServerRpc(byte league, int index) =>  leagueNet[index] = (byte)league;
     [Rpc(SendTo.Server)]
     public void RegisterBow_ServerRpc(byte val,  int index) =>  bowNet[index] = val;
     [Rpc(SendTo.Server)]
     public void RegisterHead_ServerRpc(byte val,  int index) =>  headNet[index] = val;
     [Rpc(SendTo.Server)]
     public void RegisterHands_ServerRpc(byte val,  int index) =>  handsNet[index] = val;
+    [Rpc(SendTo.Server)]
+    public void RegisterLeaderboardRank_ServerRpc(int rank, int index) =>  leaderboardNet[index] = rank;
 
 
     [Rpc(SendTo.Server)]
@@ -526,8 +521,40 @@ public class GameManager : NetworkBehaviour
     [ContextMenu("test net collections")]
     void Metoda14()
     {
-        print(leagueNet[0]);
-        print(leagueNet[1]);
+        string st = "";
+        for (int i = 0; i < scoresNet.Count; i++)
+        {
+            st+=$"score {i} is {scoresNet[i]}\n";
+        }
+        for (int i = 0; i < levelsNet.Count; i++)
+        {
+            st+=$"level {i} is {levelsNet[i]}\n";
+        }
+        for (int i = 0; i < leaderboardNet.Count; i++)
+        {
+            st+=$"leaderboard {i} is {leaderboardNet[i]}\n";
+        }
+        for (int i = 0; i < leagueNet.Count; i++)
+        {
+            st+=$"league {i} is {leagueNet[i]}\n";
+        }
+        for (int i = 0; i < nameNet.Count; i++)
+        {
+            st+=$"name {i} is {nameNet[i]}\n";
+        }
+        for (int i = 0; i < bowNet.Count; i++)
+        {
+            st+=$"bowNet {i} is {bowNet[i]}\n";
+        }
+        for (int i = 0; i < headNet.Count; i++)
+        {
+            st+=$"headNet {i} is {headNet[i]}\n";
+        }
+        for (int i = 0; i < handsNet.Count; i++)
+        {
+            st+=$"handsNet {i} is {handsNet[i]}\n";
+        }
+        print(st);
     }
 
     #endregion

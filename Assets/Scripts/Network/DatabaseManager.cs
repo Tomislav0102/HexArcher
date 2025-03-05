@@ -9,7 +9,7 @@ using ParrelSync;
 #endif
 
 
-public class DatabaseManager : MonoBehaviour
+public class DatabaseManager : SerializedMonoBehaviour
 {
     [SerializeField] bool useDatabase = true;
     FirebaseFirestore _db;
@@ -20,19 +20,22 @@ public class DatabaseManager : MonoBehaviour
 
     Dictionary<string, int> _dataNamesFromCloud = new Dictionary<string, int>();
     Dictionary<string, int> _dataIdsFromCloud = new Dictionary<string, int>();
-    public List<string> names = new List<string>();
+    [HideInInspector] public List<string> names = new List<string>();
     List<string> _ids = new List<string>();
-    public List<int> scores = new List<int>();
+    [HideInInspector] public List<int> scores = new List<int>();
     public int LocalScore
     {
-        get => PlayerPrefs.GetInt(Utils.PlLeaderBoardLocalScore_Int);
+        get => GetValFromKeyEnum<int>(MyData.LeaderboardScore); 
         set
         {
             int val = value;
             if (val < 0) val = 0;
-            PlayerPrefs.SetInt(Utils.PlLeaderBoardLocalScore_Int, val);
+            myData[MyData.LeaderboardScore] = val.ToString();
         }
     }
+
+    [Title("My data")]
+    public Dictionary<MyData, string> myData = new Dictionary<MyData, string>(); 
     
     private void Awake()
     {
@@ -70,7 +73,7 @@ public class DatabaseManager : MonoBehaviour
         dataLeaderboardLoaded = true;
         
         int myPos = GetMyPositionOnLeaderboard(Utils.MyId());
-        PlayerPrefs.SetInt(Utils.PlLeaderBoardRank_Int, myPos);
+        myData[MyData.LeaderboardRank] = myPos.ToString();
         if (myPos < 0) return; //no entry in LB
         if (LocalScore > scores[myPos]) LocalScore = scores[myPos]; //user has tampered with playerprefs. local score can't be higher than cloud score
     }
@@ -120,7 +123,7 @@ public class DatabaseManager : MonoBehaviour
             {
                 Dictionary<string, object> dictionary = new Dictionary<string, object>()
                 {
-                    {Launch.Instance.myLobbyManager.GetPlayerName(0), LocalScore.ToString() }
+                    {myData[MyData.Name], LocalScore.ToString() }
                 };
 
                 documentReference.SetAsync(dictionary).ContinueWithOnMainThread(task1 =>
@@ -139,7 +142,7 @@ public class DatabaseManager : MonoBehaviour
     public void DownloadLeaderboard()
     {
         if (!useDatabase) return;
-        PlayerPrefs.SetInt(Utils.PlLeaderBoardRank_Int, -1);
+        myData[MyData.LeaderboardRank] = "-1";
         _dataNamesFromCloud.Clear();
         _dataIdsFromCloud.Clear();
 
@@ -224,8 +227,8 @@ public class DatabaseManager : MonoBehaviour
     void M4() => print(GetMyPositionOnLeaderboard(Utils.MyId()));
 
     #endregion
-    
 
+    public T GetValFromKeyEnum<T>(MyData dataEnum) where T : notnull => (T)System.Convert.ChangeType(myData[dataEnum], typeof(T));
 
 
 }

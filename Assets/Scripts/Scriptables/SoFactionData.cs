@@ -2,7 +2,7 @@ using UnityEngine;
 using Unity.Netcode;
 
 //[CreateAssetMenu]
-public class SoPlayerData : ScriptableObject
+public class SoFactionData : ScriptableObject
 {
     public PlayerColor playerColor;
     public Color colMain;

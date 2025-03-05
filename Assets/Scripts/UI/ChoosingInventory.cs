@@ -9,6 +9,7 @@ using UnityEngine.Serialization;
 
 public class ChoosingInventory : MonoBehaviour
 {
+    DatabaseManager _db;
     enum InventoryState { Bows, Heads, Hands };
     InventoryState CurrentSate
     {
@@ -38,7 +39,7 @@ public class ChoosingInventory : MonoBehaviour
             _outlines[(int)value].enabled = true;
             
             ItemGroup itemGroup = _itemGroups[(int)value];
-            int index = int.Parse(Launch.Instance.myLobbyManager.playerData[itemGroup.savedData]);
+            int index = _db.GetValFromKeyEnum<int>(itemGroup.savedData);
             Utils.ActivateOneArrayElement(itemGroup.gos, index);
             displayItemName.text = itemGroup.gos[index].GetComponent<ItemSoCarrierUi>().myItem.itemName;
         }
@@ -57,10 +58,10 @@ public class ChoosingInventory : MonoBehaviour
     {
         public InventoryState state;
         public GameObject[] gos;
-        public PlayerDataType savedData;
+        public MyData savedData;
         public int counter;
 
-        public ItemGroup(InventoryState state, GameObject[] gos, PlayerDataType savedData)
+        public ItemGroup(InventoryState state, GameObject[] gos, MyData savedData)
         {
             this.state = state;
             this.gos = gos;
@@ -70,11 +71,12 @@ public class ChoosingInventory : MonoBehaviour
 
     void Start()
     {
+        _db = Launch.Instance.myDatabaseManager;
         _itemGroups = new ItemGroup[3]
         {
-            new ItemGroup(InventoryState.Bows, Utils.AllChildrenGameObjects(parBows), PlayerDataType.BowIndex),
-            new ItemGroup(InventoryState.Heads, Utils.AllChildrenGameObjects(parHeads), PlayerDataType.HeadIndex),
-            new ItemGroup(InventoryState.Hands, Utils.AllChildrenGameObjects(parHands), PlayerDataType.HandsIndex),
+            new ItemGroup(InventoryState.Bows, Utils.AllChildrenGameObjects(parBows), MyData.BowIndex),
+            new ItemGroup(InventoryState.Heads, Utils.AllChildrenGameObjects(parHeads), MyData.HeadIndex),
+            new ItemGroup(InventoryState.Hands, Utils.AllChildrenGameObjects(parHands), MyData.HandsIndex),
         };
         _outlines = new Outline[buttonsGroups.Length];
         for (int i = 0; i < _outlines.Length; i++)
@@ -114,9 +116,9 @@ public class ChoosingInventory : MonoBehaviour
     void ButtonMethodNext()
     {
         ItemGroup itemGroup = _itemGroups[(int)CurrentSate];
-        itemGroup.counter = int.Parse(Launch.Instance.myLobbyManager.playerData[itemGroup.savedData]);
+        itemGroup.counter =  _db.GetValFromKeyEnum<int>(itemGroup.savedData);
         itemGroup.counter = (1 + itemGroup.counter) % itemGroup.gos.Length;
-        Launch.Instance.myLobbyManager.playerData[itemGroup.savedData] = itemGroup.counter.ToString();
+        _db.myData[itemGroup.savedData] = itemGroup.counter.ToString();
         
         CurrentSate = itemGroup.state;
     }
