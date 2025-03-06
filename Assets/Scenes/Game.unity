@@ -5457,6 +5457,11 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 2919896993893836254, guid: 5cc261a4f64a69e41b5092b9998fb518, type: 3}
   m_PrefabInstance: {fileID: 565676635}
   m_PrefabAsset: {fileID: 0}
+--- !u!23 &565676640 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 8066206321412909161, guid: 5cc261a4f64a69e41b5092b9998fb518, type: 3}
+  m_PrefabInstance: {fileID: 565676635}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &568601386
 GameObject:
   m_ObjectHideFlags: 0
@@ -22318,6 +22323,14 @@ PrefabInstance:
       propertyPath: InScenePlacedSourceGlobalObjectIdHash
       value: 1922622479
       objectReference: {fileID: 0}
+    - target: {fileID: 2895029376144740023, guid: 5cc261a4f64a69e41b5092b9998fb518, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4204239073490515987, guid: 5cc261a4f64a69e41b5092b9998fb518, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6579026061961886853, guid: 5cc261a4f64a69e41b5092b9998fb518, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2
@@ -22380,6 +22393,11 @@ MonoBehaviour:
 --- !u!4 &982143164932457979 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1807783552665899540, guid: 5cc261a4f64a69e41b5092b9998fb518, type: 3}
+  m_PrefabInstance: {fileID: 982143164932457977}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &982143164932457980 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 8066206321412909161, guid: 5cc261a4f64a69e41b5092b9998fb518, type: 3}
   m_PrefabInstance: {fileID: 982143164932457977}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &982143164932457982 stripped
@@ -26990,6 +27008,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
+      propertyPath: st
+      value: i host
+      objectReference: {fileID: 0}
+    - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
       propertyPath: camMain
       value: 
       objectReference: {fileID: 1863154120}
@@ -27046,6 +27068,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2044680449}
     - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
+      propertyPath: playerMeshMarker.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
       propertyPath: windManager.displayWindValue
       value: 
       objectReference: {fileID: 1389291381}
@@ -27060,9 +27086,17 @@ PrefabInstance:
     - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
       propertyPath: playerMeshMarker.Array.data[0]
       value: 
-      objectReference: {fileID: 905983967}
+      objectReference: {fileID: 982143164932457980}
     - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
       propertyPath: playerMeshMarker.Array.data[1]
+      value: 
+      objectReference: {fileID: 905983967}
+    - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
+      propertyPath: playerMeshMarker.Array.data[2]
+      value: 
+      objectReference: {fileID: 565676640}
+    - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
+      propertyPath: playerMeshMarker.Array.data[3]
       value: 
       objectReference: {fileID: 565676639}
     - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}

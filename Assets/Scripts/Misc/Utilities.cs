@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,24 +15,24 @@ public class Utils
     public static System.Action MainUiUnselect;
     public static System.Action PlayerXpUpdated; //probably debug only
 
-    #region STRINGS FOR PLAYERPREFS 
+    #region STRINGS FOR PLAYERPREFS
     //suffix is Type
     public static string Difficulty_Int = "difficulty AI";
     public static string Size_Int = "size of grid";
     public static string WindAmount_Fl = "wind amount";
-    public static string TrajectoryVisible_Int = "trajectory is visible"; 
-    // public static string Bow_Int = "chosen bow player";
-    // public static string Head_Int = "head";
-    // public static string Hands_Int = "hand";
-    // public static string PlName_Str = "name player";
-    //public static string PlXp_Int = "experience player";
-    // public static string PlLeague_Int = "league player";
-    // public static string PlMatches_Int = "total matches player";
-    // public static string PlDefeats_Int = "defeats player";
-    // public static string PlWins_Int = "wins player";
+    public static string TrajectoryVisible_Int = "trajectory is visible";
+    public static string Bow_Int = "chosen bow player";
+    public static string Head_Int = "head";
+    public static string Hands_Int = "hand";
+    public static string PlName_Str = "name player";
+    public static string PlXp_Int = "experience player";
+    public static string PlLeague_Int = "league player";
+    public static string PlMatches_Int = "total matches player";
+    public static string PlDefeats_Int = "defeats player";
+    public static string PlWins_Int = "wins player";
     static string plLeaderboardId_Str = "id";
-     // public static string PlLeaderBoardRank_Int = "leaderboard rank";
-     // public static string PlLeaderBoardLocalScore_Int = "local score";
+    public static string PlLeaderBoardRank_Int = "leaderboard rank";
+    public static string PlLeaderBoardLocalScore_Int = "local score";
     #endregion
 
     public static MainGameType GameType;
@@ -44,26 +45,26 @@ public class Utils
     #region HELPER METHODS
     public static void DisplayAllPlayerPrefs()
     {
-        // Debug.Log($"Difficulty: {(GenDifficulty)PlayerPrefs.GetInt(Difficulty_Int)}\n" +
-        //     $"Size: {(GenSize)PlayerPrefs.GetInt(Size_Int)}\n" +
-        //     $"XP: {PlayerPrefs.GetInt(PlXp_Int)}\n" +
-        //     // $"Player name: {PlayerPrefs.GetString(PlName_Str)} \n" +
-        //     // "----------------\n" +
-        //     // $"Bow: {PlayerPrefs.GetInt(Bow_Int)} \n" +
-        //     // $"Head: {PlayerPrefs.GetInt(Head_Int)} \n" +
-        //     // $"Hand: {PlayerPrefs.GetInt(Hands_Int)} \n" +
-        //     "----------------\n" +
-        //     $"Player league: {(League)PlayerPrefs.GetInt(PlLeague_Int)} \n" +
-        //     $"Player total matches: {PlayerPrefs.GetInt(PlMatches_Int)} \n" +
-        //     $"Player defeats: {PlayerPrefs.GetInt(PlDefeats_Int)} \n" +
-        //     $"Player wins: {PlayerPrefs.GetInt(PlWins_Int)} \n" +
-        //     "----------------\n" +
-        //     $"Wind amount: {PlayerPrefs.GetFloat(WindAmount_Fl)} \n" +
-        //     $"Trajectory visible: {PlayerPrefs.GetInt(TrajectoryVisible_Int)} \n" +
-        //     "----------------\n" +
-        //     $"LB id: {PlayerPrefs.GetString(plLeaderboardId_Str)} \n" +
-        //     $"LB rank: {PlayerPrefs.GetInt(PlLeaderBoardRank_Int)} \n" +
-        //     $"LB local score: {PlayerPrefs.GetInt(PlLeaderBoardLocalScore_Int)}");
+        Debug.Log($"Difficulty: {(GenDifficulty)PlayerPrefs.GetInt(Difficulty_Int)}\n" +
+                  $"Size: {(GenSize)PlayerPrefs.GetInt(Size_Int)}\n" +
+                  $"XP: {PlayerPrefs.GetInt(PlXp_Int)}\n" +
+                  $"Player name: {PlayerPrefs.GetString(PlName_Str)} \n" +
+                  "----------------\n" +
+                  $"Bow: {PlayerPrefs.GetInt(Bow_Int)} \n" +
+                  $"Head: {PlayerPrefs.GetInt(Head_Int)} \n" +
+                  $"Hand: {PlayerPrefs.GetInt(Hands_Int)} \n" +
+                  "----------------\n" +
+                  $"Player league: {(League)PlayerPrefs.GetInt(PlLeague_Int)} \n" +
+                  $"Player total matches: {PlayerPrefs.GetInt(PlMatches_Int)} \n" +
+                  $"Player defeats: {PlayerPrefs.GetInt(PlDefeats_Int)} \n" +
+                  $"Player wins: {PlayerPrefs.GetInt(PlWins_Int)} \n" +
+                  "----------------\n" +
+                  $"Wind amount: {PlayerPrefs.GetFloat(WindAmount_Fl)} \n" +
+                  $"Trajectory visible: {PlayerPrefs.GetInt(TrajectoryVisible_Int)} \n" +
+                  "----------------\n" +
+                  $"LB id: {PlayerPrefs.GetString(plLeaderboardId_Str)} \n" +
+                  $"LB rank: {PlayerPrefs.GetInt(PlLeaderBoardRank_Int)} \n" +
+                  $"LB local score: {PlayerPrefs.GetInt(PlLeaderBoardLocalScore_Int)}");
     }
 
     public static Dictionary<League, Vector3Int> LeaguesTotalDefeatWinsTable = new Dictionary<League, Vector3Int>()
@@ -92,20 +93,22 @@ public class Utils
         yield return request.SendWebRequest();
         if (request.error == null)
         {
-           // Debug.Log("success, connected to internet");
+            // Debug.Log("success, connected to internet");
             isConnected?.Invoke(true);
         }
         else
         {
-           // Debug.Log("no internet connection");
+            // Debug.Log("no internet connection");
             isConnected?.Invoke(false);
         }
     }
+
     public static void Activation(GameObject go, bool activateGo)
     {
         if (go == null) return;
         if (go.activeInHierarchy != activateGo) go.SetActive(activateGo);
     }
+
     public static void DestroyGo(GameObject go)
     {
         if (go != null) GameObject.Destroy(go);
@@ -120,6 +123,7 @@ public class Utils
         }
         return gos;
     }
+
     public static T[] AllChildren<T>(Transform parTransform) where T : Component
     {
         T[] children = new T[parTransform.childCount];
@@ -129,22 +133,26 @@ public class Utils
         }
         return children;
     }
+
     public static void ActivateOneArrayElement(GameObject[] arr, int ordinal = System.Int32.MaxValue)
     {
         for (int i = 0; i < arr.Length; i++)
         {
-           Activation(arr[i], false);
+            Activation(arr[i], false);
         }
         if (ordinal < arr.Length) Activation(arr[ordinal], true);
 
     }
+
     static readonly Dictionary<float, WaitForSeconds> WaitDictionary = new Dictionary<float, WaitForSeconds>();
+
     public static WaitForSeconds GetWait(float time)
     {
         if (WaitDictionary.TryGetValue(time, out WaitForSeconds wait)) return wait;
         WaitDictionary[time] = new WaitForSeconds(time);
         return WaitDictionary[time];
     }
+
     public static List<int> RandomList(int size)
     {
         List<int> nums = Enumerable.Range(0, size).ToList();
@@ -157,6 +165,7 @@ public class Utils
         }
         return list;
     }
+
     public static List<T> RandomListByType<T>(List<T> listToRandomize)
     {
         var rnd = new System.Random();
@@ -181,6 +190,7 @@ public class Utils
         stInput = stInput.Replace("\r\n", ".");
         return stInput.Split('.');
     }
+
     public static string AdjustedGuid(int length = -1)
     {
         string st = System.Guid.NewGuid().ToString();
@@ -284,6 +294,54 @@ public struct NetHexState : INetworkSerializable
         serializer.SerializeValue(ref tState);
     }
 }
+public struct NetPlayerDisplay : INetworkSerializable, System.IEquatable<NetPlayerDisplay>
+{
+    public FixedString128Bytes name;
+    public uint level;
+    public byte league;
+    public int leaderboard;
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref name);
+        serializer.SerializeValue(ref level);
+        serializer.SerializeValue(ref league);
+        serializer.SerializeValue(ref leaderboard);
+    }
+
+    public bool Equals(NetPlayerDisplay other)
+    {
+        return name.Equals(other.name) && level == other.level && league == other.league && leaderboard == other.leaderboard;
+    }
+
+    public override bool Equals(object obj)
+    {
+        return obj is NetPlayerDisplay other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(name, level, league, leaderboard);
+    }
+}
+
+public struct NetPlayerEquipment : INetworkSerializable, System.IEquatable<NetPlayerEquipment>
+{
+    public byte bowIndex;
+    public byte headIndex;
+    public byte handsIndex;
+    
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref bowIndex);
+        serializer.SerializeValue(ref headIndex);
+        serializer.SerializeValue(ref handsIndex);
+    }
+
+    public bool Equals(NetPlayerEquipment other)
+    {
+        return bowIndex.Equals(other.bowIndex) && headIndex.Equals(other.headIndex) && handsIndex.Equals(other.handsIndex);
+    }
+}
 
 
 public struct LeagueWrapper : System.IEquatable<LeagueWrapper>, INetworkSerializable
@@ -308,44 +366,6 @@ public struct LeagueWrapper : System.IEquatable<LeagueWrapper>, INetworkSerializ
     public static implicit operator League(LeagueWrapper wrapper) => wrapper.value;
     public static implicit operator LeagueWrapper(League value) => new LeagueWrapper(value);
 }
-public struct FixedArrayWrapper : INetworkSerializable
-{
-    public int[] values;
-    public FixedString128Bytes[] names;
-    
-    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
-    {
-        if (serializer.IsWriter)
-        {
-            serializer.GetFastBufferWriter().WriteValueSafe(values.Length);
-            foreach (int item in values)
-            {
-                serializer.GetFastBufferWriter().WriteValueSafe(item);
-            }
-            
-            serializer.GetFastBufferWriter().WriteValueSafe(names.Length);
-            foreach (FixedString128Bytes item in names)
-            {
-                serializer.GetFastBufferWriter().WriteValueSafe(item);
-            }
-        }
-        else
-        {
-            serializer.GetFastBufferReader().ReadValueSafe(out int lenInt);
-            values = new int[lenInt];
-            for (int i = 0; i < values.Length; i++)
-            {
-                serializer.GetFastBufferReader().ReadValueSafe(out values[i]);
-            }
-            
-            serializer.GetFastBufferReader().ReadValueSafe(out int lenString128);
-            names = new FixedString128Bytes[lenString128];
-            for (int i = 0; i < names.Length; i++)
-            {
-                serializer.GetFastBufferReader().ReadValueSafe(out names[i]);
-            }
-        }
-    }
-}
+
 #endregion
 

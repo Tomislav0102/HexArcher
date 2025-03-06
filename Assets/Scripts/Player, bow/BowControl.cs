@@ -68,6 +68,7 @@ public class BowControl : MonoBehaviour, ILateInitialization<PlayerControl>
         _rackParent = gm.bowRacks[NetworkManager.Singleton.IsHost ? 0 : 1].spawnPoint;
         Utils.GameStarted += ReturnBowToRack_Initial;
         if (Utils.GameType == MainGameType.Singleplayer && Utils.SinglePlayerType == SpType.Endless) ReturnBowToRack_Initial();
+        if (!NetworkManager.Singleton.IsHost) ReturnBowToRack_Initial();
         IsInitialized = true;
     }
 

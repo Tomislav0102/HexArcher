@@ -65,7 +65,7 @@ public class MainMenuManager : MonoBehaviour
         BtnMethodDiff(PlayerPrefs.GetInt(Utils.Difficulty_Int));
         Utils.FadeOut?.Invoke(true);
         Utils.Activation(Launch.Instance.myLobbyManager.gameObject, true);
-        if(!Launch.Instance.myDatabaseManager.AimIclone()) Launch.Instance.myDatabaseManager.DownloadLeaderboard();
+        if(!Launch.Instance.myDatabaseManager.Clone()) Launch.Instance.myDatabaseManager.DownloadLeaderboard();
         Launch.Instance.myLobbyManager.Init();
         if (NetworkManager.Singleton.IsListening)
         {
@@ -214,7 +214,7 @@ public class MainMenuManager : MonoBehaviour
     {
         PlayerLeveling.CalculateLevelFromXp(out int level, out int xpToNext);
         displayLevel.text = $"Level: {level}";
-        displayCurrent.text = $"Current XP: {Launch.Instance.myDatabaseManager.myData[MyData.Xp]}";
+        displayCurrent.text = $"Current XP: {Launch.Instance.myDatabaseManager._myData[MyData.Xp]}";
         displayToNext.text = xpToNext == 0 ? "Max level reached" : $"XP to next level: {xpToNext}";
     }
 

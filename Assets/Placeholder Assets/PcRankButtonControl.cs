@@ -45,7 +45,7 @@ public class PcRankButtonControl : MonoBehaviour
 
     void ButtonMethodRank(int index)
     {
-        Launch.Instance.myDatabaseManager.myData[MyData.League] = index.ToString();
+        Launch.Instance.myDatabaseManager._myData[MyData.League] = index.ToString();
         for (int i = 0; i < _rankOutlines.Length; i++)
         {
             _rankOutlines[i].enabled = false;

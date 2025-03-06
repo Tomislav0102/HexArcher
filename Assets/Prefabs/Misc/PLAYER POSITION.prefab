@@ -1071,7 +1071,7 @@ PrefabInstance:
     - target: {fileID: 1592940457032849177, guid: 280e657cb7f9f38418ad0b5e90a37b3a, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 11e1c55ec24ab2e43a5b4526ad4d0ad4, type: 2}
+      objectReference: {fileID: 2100000, guid: 33af1822255b75745af49b068ab0a382, type: 2}
     - target: {fileID: 5892569714021151175, guid: 280e657cb7f9f38418ad0b5e90a37b3a, type: 3}
       propertyPath: m_Name
       value: Hexagon mesh column

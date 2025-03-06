@@ -50,10 +50,9 @@ public class PlayerControl : NetworkBehaviour
     {
         base.OnNetworkSpawn();
         DatabaseManager dm = Launch.Instance.myDatabaseManager;
-        gm.bowNet.OnListChanged += NetVar_Bow;
-        gm.headNet.OnListChanged += NetVar_Head;
-        gm.handsNet.OnListChanged += NetVar_Hands;
-
+        gm.playerDisplayNet.OnListChanged += NetVar_PlayerData;
+        gm.equipmentNet.OnListChanged += NetVar_Equipment;
+        
         if (IsOwner)
         {
             gm.playerVictoriousNet.OnValueChanged += NetVarEv_End;
@@ -76,13 +75,18 @@ public class PlayerControl : NetworkBehaviour
             Utils.Activation(displayNameTr.gameObject, false);
 
             PlayerLeveling.CalculateLevelFromXp(out int level, out _);
-            gm.RegisterLevel_ServerRpc((uint)level, Index());
-            gm.RegisterName_ServerRpc(dm.myData[MyData.Name], Index());
-            gm.RegisterLeague_ServerRpc(dm.GetValFromKeyEnum<byte>(MyData.League), Index());
-            gm.RegisterLeaderboardRank_ServerRpc(dm.GetValFromKeyEnum<int>(MyData.LeaderboardRank), Index());
-            gm.RegisterBow_ServerRpc(dm.GetValFromKeyEnum<byte>(MyData.BowIndex), Index());
-            gm.RegisterHead_ServerRpc(dm.GetValFromKeyEnum<byte>(MyData.HeadIndex), Index());
-            gm.RegisterHands_ServerRpc(dm.GetValFromKeyEnum<byte>(MyData.HandsIndex), Index());
+            gm.RegisterPlayerDisplay_ServerRpc(Index(), dm._myData[MyData.Name], 
+                (uint)level, 
+                dm.GetValFromKeyEnum<byte>(MyData.League),
+                dm.GetValFromKeyEnum<int>(MyData.LeaderboardRank));
+
+            gm.RegisterPlayerEquipment_ServerRpc(Index(), new byte[3]
+            {
+                dm.GetValFromKeyEnum<byte>(MyData.BowIndex),
+                dm.GetValFromKeyEnum<byte>(MyData.HeadIndex),
+                dm.GetValFromKeyEnum<byte>(MyData.HandsIndex)
+            });
+            
             if (Index() == 1) gm.ChangeOwnershipOfBowTable_ServerRpc(NetworkManager.Singleton.LocalClientId);
         }
 
@@ -93,6 +97,9 @@ public class PlayerControl : NetworkBehaviour
         }
 
     }
+
+
+
 
 
 
@@ -112,22 +119,11 @@ public class PlayerControl : NetworkBehaviour
 
             Utils.FadeOut -= CallEv_FadeMethod;
         }
-        gm.playerRegistration.RemovePlayer(this);
-        gm.bowNet.OnListChanged -= NetVar_Bow;
-        gm.headNet.OnListChanged -= NetVar_Head;
-        gm.handsNet.OnListChanged -= NetVar_Hands;
-
+        gm.playerDisplayNet.OnListChanged -= NetVar_PlayerData;
+        gm.equipmentNet.OnListChanged -= NetVar_Equipment;
+        
         base.OnNetworkDespawn();
     }
-
-    private void Start() 
-    {
-        gm.playerRegistration.AddPlayer(this, NetworkObject.IsOwnedByServer);
-        if (Utils.GameType == MainGameType.Multiplayer) ChangeName_EveryoneRpc();
-    }
-
-    [Rpc(SendTo.Everyone)]
-    void ChangeName_EveryoneRpc() => gm.playerRegistration.FillDisplay();
 
     [Rpc(SendTo.Everyone)]
     public void LineRendererLength_EveryoneRpc(Vector3 pos) => _lrShooting.SetPosition(1, pos);
@@ -145,18 +141,14 @@ public class PlayerControl : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner)
-        {
-            if (gm.playerRegistration.HasSecondPlayer()) displayNameTr.LookAt(gm.camMainTransform.position);
-        }
+        if (IsOwner) return;
+        displayNameTr.LookAt(gm.camMainTransform.position);
     }
 
     void LateUpdate()
     {
-        if (!IsOwner)
-        {
-            return;
-        }
+        if (!IsOwner) return;
+        
         transform.SetPositionAndRotation(VrRigRef.instance.root.position, VrRigRef.instance.root.rotation);
         head.SetPositionAndRotation(VrRigRef.instance.head.position, VrRigRef.instance.head.rotation);
         _handsTransformCurrent[0].SetPositionAndRotation(VrRigRef.instance.leftHand.position, VrRigRef.instance.leftHand.rotation);
@@ -170,18 +162,39 @@ public class PlayerControl : NetworkBehaviour
 
 
     #region CALL EVENTS & EVENTS
-
-    private void NetVarEv_End(PlayerColor previousValue, PlayerColor newValue)
+    void NetVar_PlayerData(NetworkListEvent<NetPlayerDisplay> changeevent)
     {
-        if (newValue != PlayerColor.Undefined)
+        int index = Index();
+        string myName = "";
+        string levelDisplay = "Level - ";
+        string leagueDisplay = "Rank - ";
+        string lbDisplay = "Leaderboard - ";
+            
+        myName = gm.playerDisplayNet[index].name.ToString();
+        levelDisplay += gm.playerDisplayNet[index].level.ToString();
+        leagueDisplay += ((League)gm.playerDisplayNet[index].league).ToString();
+        if ((League)gm.playerDisplayNet[index].league != League.Challenger) leagueDisplay = leagueDisplay.Remove(leagueDisplay.Length - 1, 1);
+        if (gm.playerDisplayNet[index].leaderboard < 0) lbDisplay = string.Empty;
+        else
         {
-            handsAnimCurrent[0].SetFloat("Fist", 0);
-            handsAnimCurrent[1].SetFloat("Fist", 0);
+            int rank = gm.playerDisplayNet[index].leaderboard;
+            lbDisplay += (rank + 1).ToString();
         }
+            
+        displayNameTr.GetComponent<TextMeshPro>().text = myName + "\n" + levelDisplay + "\n" + leagueDisplay + "\n" + lbDisplay;
+        gameObject.name = $"Igrach {index}";
+
     }
-    void NetVar_Hands(NetworkListEvent<byte> changeevent)
+    void NetVar_Equipment(NetworkListEvent<NetPlayerEquipment> changeevent)
     {
-        int handIndex = gm.handsNet[Index()];
+        int bowIndex = gm.equipmentNet[Index()].bowIndex;
+        Utils.ActivateOneArrayElement(Utils.AllChildrenGameObjects(parBows), bowIndex);
+        bowCurrent = parBows.GetChild(bowIndex).GetComponent<BowControl>();
+        _bowTransform = bowCurrent.transform;
+        shootingCurrent = bowCurrent.transform.GetChild(0).GetComponent<BowShooting>();
+        _lrShooting = shootingCurrent.GetComponent<LineRenderer>();
+
+        int handIndex = gm.equipmentNet[Index()].handsIndex;
         Utils.ActivateOneArrayElement(Utils.AllChildrenGameObjects(parHands), handIndex);
         _handsTransformCurrent = new Transform[2];
         handsAnimCurrent = new Animator[2];
@@ -192,9 +205,12 @@ public class PlayerControl : NetworkBehaviour
             handsAnimCurrent[i] = _handsTransformCurrent[i].GetChild(0).GetComponent<Animator>();
             handsInteractorCurrent[i] = _handsTransformCurrent[i].GetChild(1).GetComponent<PlayerInteractor>();
         }
-
+        
         if (IsOwner)
         {
+            bowCurrent.InitializeMe(this);
+            shootingCurrent.InitializeMe(this);
+            
             for (int i = 0; i < 2; i++)
             {
                 handsInteractorCurrent[i].playerControl = this;
@@ -202,48 +218,33 @@ public class PlayerControl : NetworkBehaviour
         }
         else
         {
-            for (int i = 0; i < 2; i++)
-            {
-                handsInteractorCurrent[i].enabled = false;
-            }
-
-        }
-
-    }
-
-    void NetVar_Head(NetworkListEvent<byte> changeevent)
-    {
-        if (!IsOwner)
-        {
-            int headIndex = gm.headNet[Index()];
+            bowCurrent.enabled = false;
+            shootingCurrent.enabled = false;
+            
+            int headIndex = gm.equipmentNet[Index()].headIndex;
             Utils.ActivateOneArrayElement(Utils.AllChildrenGameObjects(parHeads), headIndex);
             for (int i = 0; i < 2; i++)
             {
                 parHeads.GetChild(headIndex).GetChild(0).GetChild(i).GetComponent<MeshRenderer>().material = gm.playerDatas[Index()].matMain;
             }
+            
+            for (int i = 0; i < 2; i++)
+            {
+                handsInteractorCurrent[i].enabled = false;
+            }
         }
     }
-
-    void NetVar_Bow(NetworkListEvent<byte> changeevent)
+    private void NetVarEv_End(PlayerColor previousValue, PlayerColor newValue)
     {
-        int bowIndex = gm.bowNet[Index()];
-        Utils.ActivateOneArrayElement(Utils.AllChildrenGameObjects(parBows), bowIndex);
-        bowCurrent = parBows.GetChild(bowIndex).GetComponent<BowControl>();
-        _bowTransform = bowCurrent.transform;
-        shootingCurrent = bowCurrent.transform.GetChild(0).GetComponent<BowShooting>();
-        _lrShooting = shootingCurrent.GetComponent<LineRenderer>();
-
-        if (IsOwner)
+        if (newValue != PlayerColor.Undefined)
         {
-            bowCurrent.InitializeMe(this);
-            shootingCurrent.InitializeMe(this);
-        }
-        else
-        {
-            bowCurrent.enabled = false;
-            shootingCurrent.enabled = false;
+            handsAnimCurrent[0].SetFloat("Fist", 0);
+            handsAnimCurrent[1].SetFloat("Fist", 0);
+            Utils.Activation(bowCurrent.gameObject, false);
         }
     }
+
+    
     private void InputSelectLeftOn(InputAction.CallbackContext context) => handsInteractorCurrent[0].Selected = true;
     private void InputSelectLeftOff(InputAction.CallbackContext context) => handsInteractorCurrent[0].Selected = false;
     private void InputSelectRightOn(InputAction.CallbackContext context) => handsInteractorCurrent[1].Selected = true;

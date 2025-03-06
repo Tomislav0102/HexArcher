@@ -47,7 +47,6 @@ public class GameManager : NetworkBehaviour
     public NetworkObject[] bowTablesNet;
     [SerializeField] MeshRenderer[] playerMeshMarker;
     [SerializeField] GameObject[] scoreVisualMarker;
-    public PlayerRegistration playerRegistration = new PlayerRegistration();
 
     [Title("Public network variables", TitleAlignment = TitleAlignments.Centered)]
     public NetworkVariable<GenDifficulty> difficultyNet = new NetworkVariable<GenDifficulty>();
@@ -60,13 +59,8 @@ public class GameManager : NetworkBehaviour
     
     [Title("Public network variables - players", TitleAlignment = TitleAlignments.Centered)]
     public NetworkList<uint> scoresNet;
-    public NetworkList<uint> levelsNet;
-    public NetworkList<int> leaderboardNet;
-    public NetworkList<byte> leagueNet;
-    public NetworkList<FixedString128Bytes> nameNet;
-    public NetworkList<byte> bowNet;
-    public NetworkList<byte> headNet;
-    public NetworkList<byte> handsNet;
+    public NetworkList<NetPlayerEquipment> equipmentNet;
+    public NetworkList<NetPlayerDisplay> playerDisplayNet;
     
     private void Awake()
     {
@@ -81,13 +75,8 @@ public class GameManager : NetworkBehaviour
         camMainTransform = camMain.transform;
 
         scoresNet = new NetworkList<uint>(new List<uint>() { 0, 0 });
-        levelsNet = new NetworkList<uint>(new List<uint>() { 0, 0 });
-        leaderboardNet = new NetworkList<int>(new List<int>() { 0, 0 });
-        leagueNet = new NetworkList<byte>(new List<byte>() { 0, 0 });
-        nameNet = new NetworkList<FixedString128Bytes>(new List<FixedString128Bytes>() { new FixedString128Bytes(), new FixedString128Bytes() });
-        bowNet = new NetworkList<byte>(new List<byte>() { 0, 0 });
-        headNet = new NetworkList<byte>(new List<byte>() { 0, 0 });
-        handsNet = new NetworkList<byte>(new List<byte>() { 0, 0 });
+        equipmentNet = new NetworkList<NetPlayerEquipment>(new List<NetPlayerEquipment>() { new NetPlayerEquipment(), new NetPlayerEquipment() });
+        playerDisplayNet = new NetworkList<NetPlayerDisplay>(new List<NetPlayerDisplay>() { new NetPlayerDisplay(), new NetPlayerDisplay() });
     }
 
     public override void OnNetworkSpawn()
@@ -128,8 +117,8 @@ public class GameManager : NetworkBehaviour
         else
         {
             gridManager.GridUseNetworkVariables();
-            ChangeVisualMarkers_EveryoneRpc(playerTurnNet.Value);
             Utils.Activation(botManager.gameObject, false);
+            ChangeVisualMarkers_EveryoneRpc(playerTurnNet.Value);
         }
         Utils.FadeOut?.Invoke(true);
         audioManager.PlaySFX(audioManager.gameStarted);
@@ -141,6 +130,7 @@ public class GameManager : NetworkBehaviour
         windManager.WindChange(float.MinValue, windAmountNet.Value);
         windAmountNet.OnValueChanged += windManager.WindChange;
         drawTrajectory.showTrajectory = trajectoryVisible.Value;
+
     }
 
 
@@ -221,7 +211,6 @@ public class GameManager : NetworkBehaviour
 
     private void NetVarEv_PlayerVictorious(PlayerColor previousValue, PlayerColor newValue)
     {
-        playerRegistration.GameOver();
         if (Utils.GameType == MainGameType.Multiplayer && NetworkManager.Singleton.ConnectedClients.Count > 1) PlayerVictorious_EveryoneRpc(newValue);
         
         botManager.EndBot();
@@ -249,7 +238,7 @@ public class GameManager : NetworkBehaviour
 
             int totalMatches = dm.GetValFromKeyEnum<int>(MyData.TotalMatches);
             totalMatches++;
-            dm.myData[MyData.TotalMatches] = totalMatches.ToString();
+            dm._myData[MyData.TotalMatches] = totalMatches.ToString();
             int currentXp = dm.GetValFromKeyEnum<int>(MyData.Xp);
 
             switch (gameResult)
@@ -259,7 +248,7 @@ public class GameManager : NetworkBehaviour
                     Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreLeaderboardGlobalValues.x;
                     int wins = dm.GetValFromKeyEnum<int>(MyData.Wins);
                     wins++;
-                    dm.myData[MyData.Wins] = wins.ToString();
+                    dm._myData[MyData.Wins] = wins.ToString();
                     PlayerLeveling.AddToXp(GenResult.Win);
                     break;
                 
@@ -268,7 +257,7 @@ public class GameManager : NetworkBehaviour
                     Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreLeaderboardGlobalValues.y;
                     int defeats = dm.GetValFromKeyEnum<int>(MyData.Defeats);
                     defeats++;
-                    dm.myData[MyData.Defeats] = defeats.ToString();
+                    dm._myData[MyData.Defeats] = defeats.ToString();
                     PlayerLeveling.AddToXp(GenResult.Lose);
                     break;
                 case GenResult.Draw:
@@ -288,12 +277,12 @@ public class GameManager : NetworkBehaviour
             void LeagueChange(GenChange change)
             {
                 int prevLeague = myLeague; //debug only
-                dm.myData[MyData.Wins] = dm.myData[MyData.Defeats] = "0";
+                dm._myData[MyData.Wins] = dm._myData[MyData.Defeats] = "0";
                 if (change != GenChange.Increase) myLeague++;
                 else myLeague--;
                 if (myLeague < 0) myLeague = 0;
                 
-                dm.myData[MyData.League] = myLeague.ToString();
+                dm._myData[MyData.League] = myLeague.ToString();
                 print($"League changed from {(League)prevLeague} to {(League)myLeague}");
             }
         }
@@ -309,19 +298,28 @@ public class GameManager : NetworkBehaviour
 
     #region REGISTRATIONS
     [Rpc(SendTo.Server)]
-    public void RegisterName_ServerRpc(FixedString128Bytes playerName,  int index) =>  nameNet[index] = playerName;
+    public void RegisterPlayerDisplay_ServerRpc(int index, FixedString128Bytes playerName, uint level, byte league, int leaderboard)
+    {
+        NetPlayerDisplay netPlayerDisplay = new NetPlayerDisplay()
+        {
+            name = playerName,
+            level = level,
+            league = league,
+            leaderboard = leaderboard
+        };
+        playerDisplayNet[index] = netPlayerDisplay;
+    }
     [Rpc(SendTo.Server)]
-    public void RegisterLevel_ServerRpc(uint level, int index) =>  levelsNet[index] = level;
-    [Rpc(SendTo.Server)]
-    public void RegisterLeague_ServerRpc(byte league, int index) =>  leagueNet[index] = (byte)league;
-    [Rpc(SendTo.Server)]
-    public void RegisterBow_ServerRpc(byte val,  int index) =>  bowNet[index] = val;
-    [Rpc(SendTo.Server)]
-    public void RegisterHead_ServerRpc(byte val,  int index) =>  headNet[index] = val;
-    [Rpc(SendTo.Server)]
-    public void RegisterHands_ServerRpc(byte val,  int index) =>  handsNet[index] = val;
-    [Rpc(SendTo.Server)]
-    public void RegisterLeaderboardRank_ServerRpc(int rank, int index) =>  leaderboardNet[index] = rank;
+    public void RegisterPlayerEquipment_ServerRpc(int index, byte[] equipmentIndices)
+    {
+        NetPlayerEquipment netPlayerEquipment = new NetPlayerEquipment()
+        {
+            bowIndex = equipmentIndices[0],
+            headIndex = equipmentIndices[1],
+            handsIndex = equipmentIndices[2],
+        };
+        equipmentNet[index] = netPlayerEquipment;
+    }
 
 
     [Rpc(SendTo.Server)]
@@ -365,12 +363,12 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.Everyone)]
     void ChangeVisualMarkers_EveryoneRpc(PlayerColor newValue)
     {
-        for (int i = 0; i < 2; i++)
+        Utils.ActivateOneArrayElement(scoreVisualMarker,(int)newValue);
+        
+        for (int i = 0; i < 4; i++)
         {
-            Utils.Activation(scoreVisualMarker[i], false);
             playerMeshMarker[i].material = playerDatas[(int)newValue].matMain;
         }
-        Utils.Activation(scoreVisualMarker[(int)newValue], true);
     }
 
     [Rpc(SendTo.Server)]
@@ -513,49 +511,28 @@ public class GameManager : NetworkBehaviour
             print(scoresNet[i]);
         }
     }
-    [ContextMenu("Name blue")]
-    void Metoda13()
+
+    [ContextMenu("test upload")]
+    void Metoda15()
     {
-        print(nameNet[0].Value);
+        int index = NetworkManager.Singleton.IsHost ? 0 : 1;
+        RegisterPlayerDisplay_ServerRpc(index, index == 0 ? "host":"client", 
+            (uint)(index == 0 ? 1 : 10), 
+            (byte)(index == 0 ? 2 : 20), 
+            index == 0 ? 3 : 30);
     }
-    [ContextMenu("test net collections")]
-    void Metoda14()
+    [ContextMenu("test display")]
+    void Metoda16()
     {
-        string st = "";
-        for (int i = 0; i < scoresNet.Count; i++)
+        for (int i = 0; i < playerDisplayNet.Count; i++)
         {
-            st+=$"score {i} is {scoresNet[i]}\n";
+            print($"{i} - {playerDisplayNet[i].name}");
+            print($"{i} - {playerDisplayNet[i].level}");
+            print($"{i} - {playerDisplayNet[i].league}");
+            print($"{i} - {playerDisplayNet[i].leaderboard}");
         }
-        for (int i = 0; i < levelsNet.Count; i++)
-        {
-            st+=$"level {i} is {levelsNet[i]}\n";
-        }
-        for (int i = 0; i < leaderboardNet.Count; i++)
-        {
-            st+=$"leaderboard {i} is {leaderboardNet[i]}\n";
-        }
-        for (int i = 0; i < leagueNet.Count; i++)
-        {
-            st+=$"league {i} is {leagueNet[i]}\n";
-        }
-        for (int i = 0; i < nameNet.Count; i++)
-        {
-            st+=$"name {i} is {nameNet[i]}\n";
-        }
-        for (int i = 0; i < bowNet.Count; i++)
-        {
-            st+=$"bowNet {i} is {bowNet[i]}\n";
-        }
-        for (int i = 0; i < headNet.Count; i++)
-        {
-            st+=$"headNet {i} is {headNet[i]}\n";
-        }
-        for (int i = 0; i < handsNet.Count; i++)
-        {
-            st+=$"handsNet {i} is {handsNet[i]}\n";
-        }
-        print(st);
     }
+
 
     #endregion
 }
