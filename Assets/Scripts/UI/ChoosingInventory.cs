@@ -118,7 +118,7 @@ public class ChoosingInventory : MonoBehaviour
         ItemGroup itemGroup = _itemGroups[(int)CurrentSate];
         itemGroup.counter =  _db.GetValFromKeyEnum<int>(itemGroup.savedData);
         itemGroup.counter = (1 + itemGroup.counter) % itemGroup.gos.Length;
-        _db._myData[itemGroup.savedData] = itemGroup.counter.ToString();
+        _db.observableData[itemGroup.savedData] = itemGroup.counter.ToString();
         
         CurrentSate = itemGroup.state;
     }

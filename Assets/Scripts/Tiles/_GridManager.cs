@@ -10,7 +10,7 @@ public class GridManager
 
     const float CONST_ProbabilityToSpawnEmpty = 0.3f;
     const int CONST_MinNumberOfHexesInGrid = 2; 
-    Vector2Int _dim = new Vector2Int(10, 10);
+    Vector2Int _dim = new Vector2Int(11, 11);
     ParentHex[,] _tilesInGame;
     [HideInInspector] public float scale = 0.2f;
     GenSize _size;
@@ -25,8 +25,8 @@ public class GridManager
         for (int i = 0; i < _dim.x * _dim.y; i++)
         {
             ParentHex hex = containerFinal.GetChild(i).GetComponent<ParentHex>();
-            int x = hex.transform.GetSiblingIndex() / 10;
-            int y = hex.transform.GetSiblingIndex() % 10;
+            int x = hex.transform.GetSiblingIndex() / _dim.x;
+            int y = hex.transform.GetSiblingIndex() % _dim.y;
             hex.pos = new Vector2Int(x, y);
             _tilesInGame[x, y] = hex;
         }
@@ -40,9 +40,9 @@ public class GridManager
         {
             if (levelToCreate != null)
             {
-                for (int i = 0; i < 100; i++)
+                for (int i = 0; i < _dim.x * _dim.y; i++)
                 {
-                    TileState tss =  levelToCreate.transform.GetChild(i).GetComponent<TileParent>()._tState;
+                    TileState tss = levelToCreate.transform.GetChild(i).GetComponent<TileParent>()._tState;
                     gm.gridValuesNet.Add(0);
                     gm.gridTileStatesNet.Add((byte)tss);
                     containerFinal.GetChild(i).GetComponent<ParentHex>().HexDefinition(gm.gridTileStatesNet[i], gm.gridValuesNet[i]);
@@ -87,8 +87,8 @@ public class GridManager
                 ParentHex hex = _tilesInGame[i, j];
                 if (tss == TileState.Free && 
                     (hex.pos.x < sizeBorder ||
-                    hex.pos.x > (9 - sizeBorder) ||
-                    hex.pos.y > (9 - sizeBorder * 2))) tss = TileState.InActive;
+                    hex.pos.x > (_dim.x - 1 - sizeBorder) ||
+                    hex.pos.y > (_dim.y - 1 - sizeBorder * 2))) tss = TileState.InActive;
                 
 
                 gm.gridTileStatesNet.Add((byte)tss);

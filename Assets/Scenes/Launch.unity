@@ -369,10 +369,10 @@ MonoBehaviour:
     PrefabModificationsReferencedUnityObjects: []
     PrefabModifications: []
     SerializationNodes:
-    - Name: myData
+    - Name: observableData
       Entry: 7
-      Data: 0|System.Collections.Generic.Dictionary`2[[MyData, Assembly-CSharp],[System.String,
-        mscorlib]], mscorlib
+      Data: 0|ObservableDictionary`2[[MyData, Assembly-CSharp],[System.String, mscorlib]],
+        Assembly-CSharp
     - Name: comparer
       Entry: 7
       Data: 1|System.Collections.Generic.EnumEqualityComparer`1[[MyData, Assembly-CSharp]],
@@ -388,7 +388,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 12
-      Data: 13
+      Data: 14
     - Name: 
       Entry: 7
       Data: 
@@ -421,7 +421,7 @@ MonoBehaviour:
       Data: 2
     - Name: $v
       Entry: 1
-      Data: 1000
+      Data: 2000
     - Name: 
       Entry: 8
       Data: 
@@ -542,6 +542,18 @@ MonoBehaviour:
     - Name: $v
       Entry: 1
       Data: 0
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 13
+    - Name: $v
+      Entry: 1
+      Data: 100
     - Name: 
       Entry: 8
       Data: 

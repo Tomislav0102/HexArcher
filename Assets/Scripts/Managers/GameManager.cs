@@ -14,6 +14,7 @@ public class GameManager : NetworkBehaviour
     public bool MyTurn() => playerTurnNet.Value == playerDatas[NetworkManager.Singleton.IsHost ? 0 : 1].playerColor;
     int _counterMisses;
 
+    [SerializeField] GameObject parFog;
     [Title("References", TitleAlignment = TitleAlignments.Centered)]
     [SerializeField] Camera camMain;
     [HideInInspector] public Transform camMainTransform;
@@ -77,6 +78,8 @@ public class GameManager : NetworkBehaviour
         scoresNet = new NetworkList<uint>(new List<uint>() { 0, 0 });
         equipmentNet = new NetworkList<NetPlayerEquipment>(new List<NetPlayerEquipment>() { new NetPlayerEquipment(), new NetPlayerEquipment() });
         playerDisplayNet = new NetworkList<NetPlayerDisplay>(new List<NetPlayerDisplay>() { new NetPlayerDisplay(), new NetPlayerDisplay() });
+        
+        Utils.Activation(parFog, !Application.isEditor);
     }
 
     public override void OnNetworkSpawn()
@@ -238,7 +241,7 @@ public class GameManager : NetworkBehaviour
 
             int totalMatches = dm.GetValFromKeyEnum<int>(MyData.TotalMatches);
             totalMatches++;
-            dm._myData[MyData.TotalMatches] = totalMatches.ToString();
+            dm.observableData[MyData.TotalMatches] = totalMatches.ToString();
             int currentXp = dm.GetValFromKeyEnum<int>(MyData.Xp);
 
             switch (gameResult)
@@ -248,7 +251,7 @@ public class GameManager : NetworkBehaviour
                     Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreLeaderboardGlobalValues.x;
                     int wins = dm.GetValFromKeyEnum<int>(MyData.Wins);
                     wins++;
-                    dm._myData[MyData.Wins] = wins.ToString();
+                    dm.observableData[MyData.Wins] = wins.ToString();
                     PlayerLeveling.AddToXp(GenResult.Win);
                     break;
                 
@@ -257,7 +260,7 @@ public class GameManager : NetworkBehaviour
                     Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreLeaderboardGlobalValues.y;
                     int defeats = dm.GetValFromKeyEnum<int>(MyData.Defeats);
                     defeats++;
-                    dm._myData[MyData.Defeats] = defeats.ToString();
+                    dm.observableData[MyData.Defeats] = defeats.ToString();
                     PlayerLeveling.AddToXp(GenResult.Lose);
                     break;
                 case GenResult.Draw:
@@ -277,12 +280,12 @@ public class GameManager : NetworkBehaviour
             void LeagueChange(GenChange change)
             {
                 int prevLeague = myLeague; //debug only
-                dm._myData[MyData.Wins] = dm._myData[MyData.Defeats] = "0";
+                dm.observableData[MyData.Wins] = dm.observableData[MyData.Defeats] = "0";
                 if (change != GenChange.Increase) myLeague++;
                 else myLeague--;
                 if (myLeague < 0) myLeague = 0;
                 
-                dm._myData[MyData.League] = myLeague.ToString();
+                dm.observableData[MyData.League] = myLeague.ToString();
                 print($"League changed from {(League)prevLeague} to {(League)myLeague}");
             }
         }

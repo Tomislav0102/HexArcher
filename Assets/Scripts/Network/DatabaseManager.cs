@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Firebase.Firestore;
 using Firebase.Extensions;
@@ -31,92 +30,81 @@ public class DatabaseManager : SerializedMonoBehaviour
         {
             int val = value;
             if (val < 0) val = 0;
-            _myData[MyData.LeaderboardScore] = val.ToString();
+            observableData[MyData.LeaderboardScore] = val.ToString();
         }
     }
 
     [Title("My data")]
-    public Dictionary<MyData, string> EncapsulatedData
-    {
-        get
-        {
-#if !UNITY_EDITOR
-        myData[MyData.Name] = PlayerPrefs.GetString(Utils.PlName_Str);
-        myData[MyData.Xp] = PlayerPrefs.GetInt(Utils.PlXp_Int).ToString();
-        myData[MyData.League] = PlayerPrefs.GetInt(Utils.PlLeague_Int).ToString();
-        myData[MyData.TotalMatches] = PlayerPrefs.GetInt(Utils.PlMatches_Int).ToString();
-        myData[MyData.Defeats] = PlayerPrefs.GetInt(Utils.PlDefeats_Int).ToString();
-        myData[MyData.Wins] = PlayerPrefs.GetInt(Utils.PlWins_Int).ToString();
-        myData[MyData.BowIndex] = PlayerPrefs.GetInt(Utils.Bow_Int).ToString();
-        myData[MyData.HeadIndex] = PlayerPrefs.GetInt(Utils.Head_Int).ToString();
-        myData[MyData.HandsIndex] = PlayerPrefs.GetInt(Utils.Hands_Int).ToString();
-        myData[MyData.LeaderboardId] = Utils.MyId();
-        myData[MyData.LeaderboardRank] = PlayerPrefs.GetInt(Utils.PlLeaderBoardRank_Int).ToString();
-        myData[MyData.LeaderboardScore] = PlayerPrefs.GetInt(Utils.PlLeaderBoardLocalScore_Int).ToString();
-#endif
-
-            return _myData;
-        }
-        set
-        {
-            _myData = value;
-#if !UNITY_EDITOR
-            foreach (KeyValuePair<MyData,string> item in value)
-            {
-                switch (item.Key)
-                {
-                    case MyData.Id:
-                        break;
-                    case MyData.Name:
-                        PlayerPrefs.SetString(Utils.PlName_Str, item.Value);
-                        break;
-                    case MyData.Xp:
-                        PlayerPrefs.SetInt(Utils.PlXp_Int, int.Parse(item.Value));
-                        break;
-                    case MyData.League:
-                        PlayerPrefs.SetInt(Utils.PlLeague_Int, int.Parse(item.Value));
-                        break;
-                    case MyData.TotalMatches:
-                        PlayerPrefs.SetInt(Utils.PlMatches_Int, int.Parse(item.Value));
-                        break;
-                    case MyData.Defeats:
-                        PlayerPrefs.SetInt(Utils.PlDefeats_Int, int.Parse(item.Value));
-                        break;
-                    case MyData.Wins:
-                        PlayerPrefs.SetInt(Utils.PlWins_Int, int.Parse(item.Value));
-                        break;
-                    case MyData.BowIndex:
-                        PlayerPrefs.SetInt(Utils.Bow_Int, int.Parse(item.Value));
-                        break;
-                    case MyData.HeadIndex:
-                        PlayerPrefs.SetInt(Utils.Head_Int, int.Parse(item.Value));
-                        break;
-                    case MyData.HandsIndex:
-                        PlayerPrefs.SetInt(Utils.Hands_Int, int.Parse(item.Value));
-                        break;
-                    case MyData.LeaderboardRank:
-                        PlayerPrefs.SetInt(Utils.PlLeaderBoardRank_Int, int.Parse(item.Value));
-                        break;
-                    case MyData.LeaderboardScore:
-                        PlayerPrefs.SetInt(Utils.PlLeaderBoardLocalScore_Int, int.Parse(item.Value));
-                        break;
-                }
-            }
-#endif
-        }
-    } 
-    public Dictionary<MyData, string> _myData = new Dictionary<MyData, string>(); 
-    
-    
+    public ObservableDictionary<MyData, string> observableData;
     
     private void Awake()
     {
         _db = FirebaseFirestore.DefaultInstance;
+        observableData.OnValueChanged += CallEv_ValueChanged;
     }
     private void Start()
     {
         DontDestroyOnLoad(this);
+        
+        if (Application.isEditor) return;
+        observableData[MyData.Name] = PlayerPrefs.GetString(Utils.PlName_Str);
+        observableData[MyData.Xp] = PlayerPrefs.GetInt(Utils.PlXp_Int).ToString();
+        observableData[MyData.League] = PlayerPrefs.GetInt(Utils.PlLeague_Int).ToString();
+        observableData[MyData.TotalMatches] = PlayerPrefs.GetInt(Utils.PlMatches_Int).ToString();
+        observableData[MyData.Defeats] = PlayerPrefs.GetInt(Utils.PlDefeats_Int).ToString();
+        observableData[MyData.Wins] = PlayerPrefs.GetInt(Utils.PlWins_Int).ToString();
+        observableData[MyData.BowIndex] = PlayerPrefs.GetInt(Utils.Bow_Int).ToString();
+        observableData[MyData.HeadIndex] = PlayerPrefs.GetInt(Utils.Head_Int).ToString();
+        observableData[MyData.HandsIndex] = PlayerPrefs.GetInt(Utils.Hands_Int).ToString();
+        observableData[MyData.LeaderboardId] = Utils.MyId();
+        observableData[MyData.LeaderboardRank] = PlayerPrefs.GetInt(Utils.PlLeaderBoardRank_Int).ToString();
+        observableData[MyData.LeaderboardScore] = PlayerPrefs.GetInt(Utils.PlLeaderBoardLocalScore_Int).ToString();
     }
+
+    void CallEv_ValueChanged(MyData arg1, string arg2)
+    {
+        if (Application.isEditor) return;
+        switch (arg1)
+        {
+            case MyData.Id:
+                break;
+            case MyData.Name:
+                PlayerPrefs.SetString(Utils.PlName_Str, arg2);
+                break;
+            case MyData.Xp:
+                PlayerPrefs.SetInt(Utils.PlXp_Int, int.Parse(arg2));
+                break;
+            case MyData.League:
+                PlayerPrefs.SetInt(Utils.PlLeague_Int, int.Parse(arg2));
+                break;
+            case MyData.TotalMatches:
+                PlayerPrefs.SetInt(Utils.PlMatches_Int, int.Parse(arg2));
+                break;
+            case MyData.Defeats:
+                PlayerPrefs.SetInt(Utils.PlDefeats_Int, int.Parse(arg2));
+                break;
+            case MyData.Wins:
+                PlayerPrefs.SetInt(Utils.PlWins_Int, int.Parse(arg2));
+                break;
+            case MyData.BowIndex:
+                PlayerPrefs.SetInt(Utils.Bow_Int, int.Parse(arg2));
+                break;
+            case MyData.HeadIndex:
+                PlayerPrefs.SetInt(Utils.Head_Int, int.Parse(arg2));
+                break;
+            case MyData.HandsIndex:
+                PlayerPrefs.SetInt(Utils.Hands_Int, int.Parse(arg2));
+                break;
+            case MyData.LeaderboardRank:
+                PlayerPrefs.SetInt(Utils.PlLeaderBoardRank_Int, int.Parse(arg2));
+                break;
+            case MyData.LeaderboardScore:
+                PlayerPrefs.SetInt(Utils.PlLeaderBoardLocalScore_Int, int.Parse(arg2));
+                break;
+        }
+
+    }
+
     private void OnEnable()
     {
         if(!Clone()) Utils.LeaderboardDataClientSynced += CallEv_LeaderboardDataSynced;
@@ -145,7 +133,7 @@ public class DatabaseManager : SerializedMonoBehaviour
         dataLeaderboardLoaded = true;
         
         int myPos = GetMyPositionOnLeaderboard(Utils.MyId());
-        _myData[MyData.LeaderboardRank] = myPos.ToString();
+        observableData[MyData.LeaderboardRank] = myPos.ToString();
         if (myPos < 0) return; //no entry in LB
         if (LocalScore > scores[myPos]) LocalScore = scores[myPos]; //user has tampered with playerprefs. local score can't be higher than cloud score
     }
@@ -195,7 +183,7 @@ public class DatabaseManager : SerializedMonoBehaviour
             {
                 Dictionary<string, object> dictionary = new Dictionary<string, object>()
                 {
-                    {_myData[MyData.Name], LocalScore.ToString() }
+                    {observableData[MyData.Name], LocalScore.ToString() }
                 };
 
                 documentReference.SetAsync(dictionary).ContinueWithOnMainThread(task1 =>
@@ -214,7 +202,7 @@ public class DatabaseManager : SerializedMonoBehaviour
     public void DownloadLeaderboard()
     {
         if (!useDatabase) return;
-        _myData[MyData.LeaderboardRank] = "-1";
+        observableData[MyData.LeaderboardRank] = "-1";
         _dataNamesFromCloud.Clear();
         _dataIdsFromCloud.Clear();
 
@@ -300,8 +288,7 @@ public class DatabaseManager : SerializedMonoBehaviour
 
     #endregion
 
-    public T GetValFromKeyEnum<T>(MyData dataEnum) where T : notnull => (T)System.Convert.ChangeType(_myData[dataEnum], typeof(T));
+    public T GetValFromKeyEnum<T>(MyData dataEnum) where T : notnull => (T)System.Convert.ChangeType(observableData[dataEnum], typeof(T));
 
 
 }
-

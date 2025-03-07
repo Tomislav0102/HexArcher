@@ -75,7 +75,7 @@ public class PlayerControl : NetworkBehaviour
             Utils.Activation(displayNameTr.gameObject, false);
 
             PlayerLeveling.CalculateLevelFromXp(out int level, out _);
-            gm.RegisterPlayerDisplay_ServerRpc(Index(), dm._myData[MyData.Name], 
+            gm.RegisterPlayerDisplay_ServerRpc(Index(), dm.observableData[MyData.Name], 
                 (uint)level, 
                 dm.GetValFromKeyEnum<byte>(MyData.League),
                 dm.GetValFromKeyEnum<int>(MyData.LeaderboardRank));

@@ -72,7 +72,7 @@ public class MyLobbyManager : MonoBehaviour
         DontDestroyOnLoad(this);
 
 #if (UNITY_EDITOR)
-        Invoke(nameof(Btn_Ready), 0.3f);
+       // Invoke(nameof(Btn_Ready), 0.3f);
 #endif
     }
 
@@ -88,8 +88,8 @@ public class MyLobbyManager : MonoBehaviour
         btnJoinByCode.onClick.AddListener(Btn_Join);
         btnReady.onClick.AddListener(Btn_Ready);
 
-        if (_db._myData[MyData.Name] == null || _db._myData[MyData.Name].Length == 0) _db._myData[MyData.Name] = $"Player{Random.Range(0, 100)}";
-        inputPlName.text = _db._myData[MyData.Name];
+        if (_db.observableData[MyData.Name] == null || _db.observableData[MyData.Name].Length == 0) _db.observableData[MyData.Name] = $"Player{Random.Range(0, 100)}";
+        inputPlName.text = _db.observableData[MyData.Name];
         inputPlName.onValueChanged.AddListener(x => InField_PlayerName());
 
         _oneHitBtnCreate = _oneHitBtnJoin = _oneHitBtnReady = false;
@@ -109,12 +109,12 @@ public class MyLobbyManager : MonoBehaviour
             await UnityServices.InitializeAsync(options);
         }
 
-        AuthenticationService.Instance.SignedIn += () => { print($"Signed in as {AuthenticationService.Instance.PlayerId} with {_db._myData[MyData.Name]} name"); };
+        AuthenticationService.Instance.SignedIn += () => { print($"Signed in as {AuthenticationService.Instance.PlayerId} with {_db.observableData[MyData.Name]} name"); };
 
         if (!AuthenticationService.Instance.IsSignedIn)
         {
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
-            _db._myData[MyData.Id] = AuthenticationService.Instance.PlayerId;
+            _db.observableData[MyData.Id] = AuthenticationService.Instance.PlayerId;
         }
 
     }
@@ -123,7 +123,7 @@ public class MyLobbyManager : MonoBehaviour
     #region UI CONTROLS
     private void InField_PlayerName()
     {
-        _db._myData[MyData.Name] = inputPlName.text.Replace(" ", "");
+        _db.observableData[MyData.Name] = inputPlName.text.Replace(" ", "");
     }
 
     async void Btn_Create()
@@ -228,7 +228,7 @@ public class MyLobbyManager : MonoBehaviour
                 Player = GetPlayer()
             };
             _currentLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, options);
-            _myLeague = System.Enum.Parse<League>(_db._myData[MyData.League]);
+            _myLeague = System.Enum.Parse<League>(_db.observableData[MyData.League]);
             await LobbyService.Instance.UpdateLobbyAsync(_currentLobby.Id, new UpdateLobbyOptions
             {
                 Data = new Dictionary<string, DataObject>

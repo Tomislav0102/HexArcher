@@ -20,7 +20,9 @@ public class MainMenuManager : MonoBehaviour
     
     bool _canUseButtonSounds, _oneHitExitScene, _internetCheckSwitch;
     public bool hasInternet;
+
     [Title("General")]
+    [SerializeField] TextMeshProUGUI displayCoins;
     public GameObject[] mainUiElements;
     public GameObject noInternetWindow, requiredLevelWindow;
     [SerializeField] Button[] buttonsReturn;
@@ -59,7 +61,8 @@ public class MainMenuManager : MonoBehaviour
         if (Utils.SinglePlayerType == SpType.Practice) PlayerPrefs.SetInt(Utils.TrajectoryVisible_Int, 0);
         Utils.SinglePlayerType = SpType.Endless;
         Utils.CampLevel = 0;
-        
+
+        displayCoins.text = Launch.Instance.myDatabaseManager.GetValFromKeyEnum<string>(MyData.Coins);
         Utils.ActivateOneArrayElement(mainUiElements, 0);
         BtnMethodMapSize(PlayerPrefs.GetInt(Utils.Size_Int));
         BtnMethodDiff(PlayerPrefs.GetInt(Utils.Difficulty_Int));
@@ -77,6 +80,7 @@ public class MainMenuManager : MonoBehaviour
         windSlider.onValueChanged.AddListener(WindChange);
 
         _canUseButtonSounds = true;
+        
 
         InvokeRepeating(nameof(RegularInternetConnectionCheck), 0f, 15f);
         InitPlayerLeveling();
@@ -214,7 +218,7 @@ public class MainMenuManager : MonoBehaviour
     {
         PlayerLeveling.CalculateLevelFromXp(out int level, out int xpToNext);
         displayLevel.text = $"Level: {level}";
-        displayCurrent.text = $"Current XP: {Launch.Instance.myDatabaseManager._myData[MyData.Xp]}";
+        displayCurrent.text = $"Current XP: {Launch.Instance.myDatabaseManager.observableData[MyData.Xp]}";
         displayToNext.text = xpToNext == 0 ? "Max level reached" : $"XP to next level: {xpToNext}";
     }
 

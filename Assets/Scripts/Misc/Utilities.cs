@@ -226,7 +226,7 @@ public enum GenSide { Left, Right, Center }
 public enum GenResult { Win, Lose, Draw }
 public enum GenChange { Increase, Decrease }
 public enum TileState { Free, InActive, Taken }
-public enum MyData { Id, Name, Xp, League, TotalMatches, Defeats, Wins, BowIndex, HeadIndex, HandsIndex, LeaderboardId, LeaderboardRank, LeaderboardScore }
+public enum MyData { Id, Name, Xp, League, TotalMatches, Defeats, Wins, BowIndex, HeadIndex, HandsIndex, LeaderboardId, LeaderboardRank, LeaderboardScore, Coins }
 public enum PlayerColor
 {
     Blue,
