@@ -6,28 +6,31 @@ using UnityEngine.InputSystem;
 using DG.Tweening;
 using Unity.Netcode;
 using TMPro;
-using Unity.Collections;
+using Sirenix.OdinInspector;
 using UnityEngine.Serialization;
 
 public class PlayerControl : NetworkBehaviour
 {
     GameManager gm;
     [SerializeField] Transform parBows, parHeads, parHands;
-    [Sirenix.OdinInspector.ReadOnly] public BowControl bowCurrent;
+    [ReadOnly] public BowControl bowCurrent;
     Transform _bowTransform;
-    [Sirenix.OdinInspector.ReadOnly] public BowShooting shootingCurrent;
+    LineRenderer _lrShooting;
+    [ReadOnly] public BowShooting shootingCurrent;
     public Transform displayNameTr;
     [SerializeField] Transform head;
-    Transform[] _handsTransformCurrent;
-    [Sirenix.OdinInspector.ReadOnly] public Animator[] handsAnimCurrent;
-    [Sirenix.OdinInspector.ReadOnly] public PlayerInteractor[] handsInteractorCurrent;
-    LineRenderer _lrShooting;
-
+    [Title("Hands")]
+    [SerializeField] Transform[] handsTransform;
+    public Animator[] handsAnim;
+    public PlayerInteractor[] handsInteractor;
+    [SerializeField] SkinnedMeshRenderer[] handsMeshMat0;
+    [SerializeField] SkinnedMeshRenderer[] handsMeshMat1;
+    [SerializeField] SoHands[] handsScriptables;
 
     public GenSide SideThatHoldsBow() //GenSide.Center means no bow is being held
     {
-        if (bowCurrent.interactor == handsInteractorCurrent[0]) return GenSide.Left;
-        if (bowCurrent.interactor == handsInteractorCurrent[1]) return GenSide.Right;
+        if (bowCurrent.interactor == handsInteractor[0]) return GenSide.Left;
+        if (bowCurrent.interactor == handsInteractor[1]) return GenSide.Right;
 
         return GenSide.Center;
     }
@@ -39,10 +42,10 @@ public class PlayerControl : NetworkBehaviour
         gm = GameManager.Instance;
         
         _bowTransform  = parBows.GetChild(0);//to prevent error from Lateupdate
-        _handsTransformCurrent = new Transform[2]; 
+        handsTransform = new Transform[2]; 
         for (int i = 0; i < 2; i++)
         {
-            _handsTransformCurrent[i] = parHands.GetChild(0).GetChild(i);
+            handsTransform[i] = parHands.GetChild(0).GetChild(i);
         }
     }
 
@@ -135,7 +138,7 @@ public class PlayerControl : NetworkBehaviour
     {
         for (int i = 0; i < 2; i++)
         {
-            _handsTransformCurrent[i].SetPositionAndRotation(pos[i], rot[i]);
+            handsTransform[i].SetPositionAndRotation(pos[i], rot[i]);
         }
     }
 
@@ -151,12 +154,12 @@ public class PlayerControl : NetworkBehaviour
         
         transform.SetPositionAndRotation(VrRigRef.instance.root.position, VrRigRef.instance.root.rotation);
         head.SetPositionAndRotation(VrRigRef.instance.head.position, VrRigRef.instance.head.rotation);
-        _handsTransformCurrent[0].SetPositionAndRotation(VrRigRef.instance.leftHand.position, VrRigRef.instance.leftHand.rotation);
-        _handsTransformCurrent[1].SetPositionAndRotation(VrRigRef.instance.rightHand.position, VrRigRef.instance.rightHand.rotation);
+        handsTransform[0].SetPositionAndRotation(VrRigRef.instance.leftHand.position, VrRigRef.instance.leftHand.rotation);
+        handsTransform[1].SetPositionAndRotation(VrRigRef.instance.rightHand.position, VrRigRef.instance.rightHand.rotation);
         
         SyncBow_NotMeRpc(_bowTransform.position, _bowTransform.rotation);
-        Vector3[] pos = new Vector3[2]{ _handsTransformCurrent[0].position, _handsTransformCurrent[1].position };
-        Quaternion[] rot = new Quaternion[2]{ _handsTransformCurrent[0].rotation, _handsTransformCurrent[1].rotation };
+        Vector3[] pos = new Vector3[2]{ handsTransform[0].position, handsTransform[1].position };
+        Quaternion[] rot = new Quaternion[2]{ handsTransform[0].rotation, handsTransform[1].rotation };
         SyncHands_NotMeRpc(pos, rot);
     }
 
@@ -195,15 +198,10 @@ public class PlayerControl : NetworkBehaviour
         _lrShooting = shootingCurrent.GetComponent<LineRenderer>();
 
         int handIndex = gm.equipmentNet[Index()].handsIndex;
-        Utils.ActivateOneArrayElement(Utils.AllChildrenGameObjects(parHands), handIndex);
-        _handsTransformCurrent = new Transform[2];
-        handsAnimCurrent = new Animator[2];
-        handsInteractorCurrent = new PlayerInteractor[2];
         for (int i = 0; i < 2; i++)
         {
-            _handsTransformCurrent[i] = parHands.GetChild(handIndex).GetChild(i);
-            handsAnimCurrent[i] = _handsTransformCurrent[i].GetChild(0).GetComponent<Animator>();
-            handsInteractorCurrent[i] = _handsTransformCurrent[i].GetChild(1).GetComponent<PlayerInteractor>();
+            handsMeshMat0[i].material = handsScriptables[handIndex].mats[0];
+            handsMeshMat1[i].material = handsScriptables[handIndex].mats[1];
         }
         
         if (IsOwner)
@@ -213,7 +211,7 @@ public class PlayerControl : NetworkBehaviour
             
             for (int i = 0; i < 2; i++)
             {
-                handsInteractorCurrent[i].playerControl = this;
+                handsInteractor[i].playerControl = this;
             }
         }
         else
@@ -230,7 +228,8 @@ public class PlayerControl : NetworkBehaviour
             
             for (int i = 0; i < 2; i++)
             {
-                handsInteractorCurrent[i].enabled = false;
+                handsAnim[i].enabled = false;
+                handsInteractor[i].enabled = false;
             }
         }
     }
@@ -238,21 +237,21 @@ public class PlayerControl : NetworkBehaviour
     {
         if (newValue != PlayerColor.Undefined)
         {
-            handsAnimCurrent[0].SetFloat("Fist", 0);
-            handsAnimCurrent[1].SetFloat("Fist", 0);
+            handsAnim[0].SetFloat("Fist", 0);
+            handsAnim[1].SetFloat("Fist", 0);
             Utils.Activation(bowCurrent.gameObject, false);
         }
     }
 
     
-    private void InputSelectLeftOn(InputAction.CallbackContext context) => handsInteractorCurrent[0].Selected = true;
-    private void InputSelectLeftOff(InputAction.CallbackContext context) => handsInteractorCurrent[0].Selected = false;
-    private void InputSelectRightOn(InputAction.CallbackContext context) => handsInteractorCurrent[1].Selected = true;
-    private void InputSelectRightOff(InputAction.CallbackContext context) => handsInteractorCurrent[1].Selected = false;
-    private void InputActivateLeftOn(InputAction.CallbackContext context) => handsInteractorCurrent[0].Activated = true;
-    private void InputActivateLeftOff(InputAction.CallbackContext context) => handsInteractorCurrent[0].Activated = false;
-    private void InputActivateRightOn(InputAction.CallbackContext context) => handsInteractorCurrent[1].Activated = true;
-    private void InputActivateRightOff(InputAction.CallbackContext context) => handsInteractorCurrent[1].Activated = false;
+    private void InputSelectLeftOn(InputAction.CallbackContext context) => handsInteractor[0].Selected = true;
+    private void InputSelectLeftOff(InputAction.CallbackContext context) => handsInteractor[0].Selected = false;
+    private void InputSelectRightOn(InputAction.CallbackContext context) => handsInteractor[1].Selected = true;
+    private void InputSelectRightOff(InputAction.CallbackContext context) => handsInteractor[1].Selected = false;
+    private void InputActivateLeftOn(InputAction.CallbackContext context) => handsInteractor[0].Activated = true;
+    private void InputActivateLeftOff(InputAction.CallbackContext context) => handsInteractor[0].Activated = false;
+    private void InputActivateRightOn(InputAction.CallbackContext context) => handsInteractor[1].Activated = true;
+    private void InputActivateRightOff(InputAction.CallbackContext context) => handsInteractor[1].Activated = false;
 
 
     void CallEv_FadeMethod(bool fadeout)

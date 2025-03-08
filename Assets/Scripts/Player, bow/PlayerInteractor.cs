@@ -20,8 +20,8 @@ public class PlayerInteractor : MonoBehaviour
 
             if (value)
             {
-                if (playerControl.handsAnimCurrent[(int)side].GetFloat("Fist") == 0) playerControl.handsAnimCurrent[(int)side].SetFloat("Fist", 1);
-                else playerControl.handsAnimCurrent[(int)side].SetFloat("Fist", 0);
+                if (playerControl.handsAnim[(int)side].GetFloat("Fist") == 0) playerControl.handsAnim[(int)side].SetFloat("Fist", 1);
+                else playerControl.handsAnim[(int)side].SetFloat("Fist", 0);
 
                 if (playerControl.SideThatHoldsBow() == side)
                 {
@@ -31,14 +31,14 @@ public class PlayerInteractor : MonoBehaviour
                 {
                     playerControl.bowCurrent.interactor = this;
                     playerControl.bowCurrent.Bstate = BowState.InHand;
-                    playerControl.handsAnimCurrent[((int)side + 1) % 2].SetFloat("Fist", 0);
+                    playerControl.handsAnim[((int)side + 1) % 2].SetFloat("Fist", 0);
                 }
                 _inBow = false;
             }
             else
             {
                 if (playerControl.SideThatHoldsBow() == side) return;
-                playerControl.handsAnimCurrent[(int)side].SetFloat("Fist", 0);
+                playerControl.handsAnim[(int)side].SetFloat("Fist", 0);
             }
         }
     }
@@ -54,7 +54,7 @@ public class PlayerInteractor : MonoBehaviour
 
             _activated = value;
 
-            playerControl.handsAnimCurrent[(int)side].SetFloat("Fist", value ? 1 : 0);
+            playerControl.handsAnim[(int)side].SetFloat("Fist", value ? 1 : 0);
 
             if (value)
             {

@@ -91,7 +91,7 @@ public class BowShooting : MonoBehaviour, ILateInitialization<PlayerControl>
     void ProcessNotchedArrow()
     {
         int handThaPullsString = ((int)_playerControl.SideThatHoldsBow() + 1) % 2;
-        Vector3 handPos = _playerControl.handsInteractorCurrent[handThaPullsString].myTransform.position;
+        Vector3 handPos = _playerControl.handsInteractor[handThaPullsString].myTransform.position;
         Vector3 pullDir = notch.position - handPos;
 
         Vector3 endPoint;

@@ -66,7 +66,7 @@ public class ArrowReal : ArrowMain
         }
         if (myTransform.position.y < CONST_EdgeVertical)
         {
-            EndMe(("arrow fell too low"));
+            EndMe(true, ("arrow fell too low"));
         }
         
         
@@ -98,16 +98,16 @@ public class ArrowReal : ArrowMain
         {
             tar.HitMe();
             _oneHitNextPlayer = true;
-            EndMe(($"arrow hit {_hitCollider.name}"));
+            EndMe(true, ($"arrow hit {_hitCollider.name}"));
         }
     }
 
 
-    void EndMe(string message = null)
+    void EndMe(bool destroyMe = false, string message = null)
     {
       //  if (!string.IsNullOrEmpty(message)) print(message);
         if (!_oneHitNextPlayer) gm.NextPlayer_ServerRpc(true, "arrow end");
-        Destroy(gameObject);
+        if (destroyMe) Destroy(gameObject);
     }
 
 }

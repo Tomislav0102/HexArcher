@@ -34933,7 +34933,7 @@ PrefabInstance:
     - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
       propertyPath: prefabPlayer
       value: 
-      objectReference: {fileID: 7522316929256032179, guid: 70dde582248f22c4ab8a2efe50030eb4, type: 3}
+      objectReference: {fileID: 2145494596838230665, guid: a191d641bcb81c2409b5e323d3d2352e, type: 3}
     - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
       propertyPath: windManager.windIcon
       value: 
@@ -35020,20 +35020,28 @@ PrefabInstance:
       objectReference: {fileID: 565676637}
     - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
       propertyPath: campaignManager.levels.Array.size
-      value: 3
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
       propertyPath: campaignManager.levels.Array.data[0]
       value: 
-      objectReference: {fileID: 4186472649873226528, guid: eb3e2bbb8cac5e8448ea9d8e36d87d7f, type: 3}
+      objectReference: {fileID: 2761407809646470484, guid: 6cbefbe44c8144b4c8b1ab713e78f418, type: 3}
     - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
       propertyPath: campaignManager.levels.Array.data[1]
       value: 
-      objectReference: {fileID: 7967719649693147607, guid: a9af26fc4bb722d4d9ac25e771db0ad2, type: 3}
+      objectReference: {fileID: 1356835231906207359, guid: 38c96437a3b970240a628e6d6eb489e8, type: 3}
     - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
       propertyPath: campaignManager.levels.Array.data[2]
       value: 
-      objectReference: {fileID: 3746255651027635964, guid: 1febd338d669b1d459349ea15de754bc, type: 3}
+      objectReference: {fileID: 666256199330748223, guid: 182f23e6bc106e54fb328a439a939630, type: 3}
+    - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
+      propertyPath: campaignManager.levels.Array.data[3]
+      value: 
+      objectReference: {fileID: 3875837993639435759, guid: 0ea45096d576d154694e7ac51be5a09b, type: 3}
+    - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
+      propertyPath: campaignManager.levels.Array.data[4]
+      value: 
+      objectReference: {fileID: 4211925702333544632, guid: 69846468246fc92449e94ab4be72a674, type: 3}
     - target: {fileID: 7480413632692557483, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
       propertyPath: m_Name
       value: Game Manager

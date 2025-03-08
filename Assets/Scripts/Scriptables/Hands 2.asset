@@ -9,8 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9ae042aa844b751468187b1c9c6d56fc, type: 3}
-  m_Name: Hand 1
+  m_Script: {fileID: 11500000, guid: ecd5350dbd07f9d4bb212cd98894e4fa, type: 3}
+  m_Name: Hands 2
   m_EditorClassIdentifier: 
-  index: 0
-  itemName: hand 1
+  index: 2
+  itemName: Hands 2
+  mats:
+  - {fileID: 2100000, guid: 992c26a1284507c4086211f45943ca58, type: 2}
+  - {fileID: 2100000, guid: 4bbbd4a2d45db8b4284fc8ad6eb9ae0f, type: 2}

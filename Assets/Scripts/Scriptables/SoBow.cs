@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu]
-public class SoBowData : SoItem
+public class SoBow : SoItem
 {
     public int power;
 }
