@@ -9,7 +9,7 @@ static class PlayerLeveling
     public static void CalculateLevelFromXp(out int lv, out int toNext)
     {
         DatabaseManager dm = Launch.Instance.myDatabaseManager;
-        int xp = dm.GetValFromKeyEnum<int>(MyData.Xp);
+        int xp = dm.GetValAndCastTo<int>(MyData.Xp);
 
         for (int i = 0; i < xpMilestones.Length; i++)
         {
@@ -48,7 +48,7 @@ static class PlayerLeveling
         }
         
         DatabaseManager dm = Launch.Instance.myDatabaseManager;
-        int final = dm.GetValFromKeyEnum<int>(MyData.Xp) + (int)(diffMod * sizeMod * wld);
+        int final = dm.GetValAndCastTo<int>(MyData.Xp) + (int)(diffMod * sizeMod * wld);
         dm.observableData[MyData.Xp] = final.ToString();
         Utils.PlayerXpUpdated?.Invoke();
         

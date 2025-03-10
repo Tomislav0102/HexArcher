@@ -3,12 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Serialization;
 
-public class BowControl : MonoBehaviour, ILateInitialization<PlayerControl>
+public class BowControl : MonoBehaviour, ILateInitialization<PlayerControl>, IItemCarrier
 {
     GameManager gm;
-    [FormerlySerializedAs("bowData")] public SoBow bow;
+    [field: SerializeField] public SoItem Item { get; set; }
+
     PlayerControl _playerControl;
     public bool IsInitialized { get; set; }
     [SerializeField] GameObject bowBody;
@@ -65,7 +65,7 @@ public class BowControl : MonoBehaviour, ILateInitialization<PlayerControl>
     {
         _playerControl = playerControl;
         gm = GameManager.Instance;
-        _playerControl.shootingCurrent.power = bow.power;
+        _playerControl.shootingCurrent.power = ((SoBow)Item).power;
         _rackParent = gm.bowRacks[NetworkManager.Singleton.IsHost ? 0 : 1].spawnPoint;
         Utils.GameStarted += ReturnBowToRack_Initial;
         if (Utils.GameType == MainGameType.Singleplayer && Utils.SinglePlayerType == SpType.Endless) ReturnBowToRack_Initial();
@@ -116,4 +116,5 @@ public class BowControl : MonoBehaviour, ILateInitialization<PlayerControl>
         _oneHitStartRackMoving = true;
         ReturnBowToRack();
     }
+
 }

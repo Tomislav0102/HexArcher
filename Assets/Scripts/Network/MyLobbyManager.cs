@@ -273,7 +273,7 @@ public class MyLobbyManager : MonoBehaviour
 
             bool CanJoinThisLobby()
             {
-                int myLeague = _db.GetValFromKeyEnum<int>(MyData.League);
+                int myLeague = _db.GetValAndCastTo<int>(MyData.League);
                 int hostLeague = int.Parse(bufferLobby.Data[CONST_RankingOperation].Value);
                 
                 if (hostLeague == System.Enum.GetNames(typeof(League)).Length - 1 && hostLeague != myLeague) return false;

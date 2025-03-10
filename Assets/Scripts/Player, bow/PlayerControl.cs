@@ -42,11 +42,6 @@ public class PlayerControl : NetworkBehaviour
         gm = GameManager.Instance;
         
         _bowTransform  = parBows.GetChild(0);//to prevent error from Lateupdate
-        handsTransform = new Transform[2]; 
-        for (int i = 0; i < 2; i++)
-        {
-            handsTransform[i] = parHands.GetChild(0).GetChild(i);
-        }
     }
 
     public override void OnNetworkSpawn()
@@ -80,14 +75,14 @@ public class PlayerControl : NetworkBehaviour
             PlayerLeveling.CalculateLevelFromXp(out int level, out _);
             gm.RegisterPlayerDisplay_ServerRpc(Index(), dm.observableData[MyData.Name], 
                 (uint)level, 
-                dm.GetValFromKeyEnum<byte>(MyData.League),
-                dm.GetValFromKeyEnum<int>(MyData.LeaderboardRank));
+                dm.GetValAndCastTo<byte>(MyData.League),
+                dm.GetValAndCastTo<int>(MyData.LeaderboardRank));
 
             gm.RegisterPlayerEquipment_ServerRpc(Index(), new byte[3]
             {
-                dm.GetValFromKeyEnum<byte>(MyData.BowIndex),
-                dm.GetValFromKeyEnum<byte>(MyData.HeadIndex),
-                dm.GetValFromKeyEnum<byte>(MyData.HandsIndex)
+                dm.GetValAndCastTo<byte>(MyData.BowIndex),
+                dm.GetValAndCastTo<byte>(MyData.HeadIndex),
+                dm.GetValAndCastTo<byte>(MyData.HandsIndex)
             });
             
             if (Index() == 1) gm.ChangeOwnershipOfBowTable_ServerRpc(NetworkManager.Singleton.LocalClientId);

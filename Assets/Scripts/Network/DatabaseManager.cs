@@ -25,7 +25,7 @@ public class DatabaseManager : SerializedMonoBehaviour
     [HideInInspector] public List<int> scores = new List<int>();
     public int LocalScore
     {
-        get => GetValFromKeyEnum<int>(MyData.LeaderboardScore); 
+        get => GetValAndCastTo<int>(MyData.LeaderboardScore); 
         set
         {
             int val = value;
@@ -36,7 +36,6 @@ public class DatabaseManager : SerializedMonoBehaviour
 
     [Title("My data")]
     public ObservableDictionary<MyData, string> observableData;
-    
     private void Awake()
     {
         _db = FirebaseFirestore.DefaultInstance;
@@ -288,7 +287,7 @@ public class DatabaseManager : SerializedMonoBehaviour
 
     #endregion
 
-    public T GetValFromKeyEnum<T>(MyData dataEnum) where T : notnull => (T)System.Convert.ChangeType(observableData[dataEnum], typeof(T));
+    public T GetValAndCastTo<T>(MyData dataEnum) where T : notnull => (T)System.Convert.ChangeType(observableData[dataEnum], typeof(T));
 
 
 }

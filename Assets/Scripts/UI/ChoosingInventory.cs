@@ -39,9 +39,9 @@ public class ChoosingInventory : MonoBehaviour
             _outlines[(int)value].enabled = true;
             
             ItemGroup itemGroup = _itemGroups[(int)value];
-            int index = _db.GetValFromKeyEnum<int>(itemGroup.savedData);
+            int index = _db.GetValAndCastTo<int>(itemGroup.savedData);
             Utils.ActivateOneArrayElement(itemGroup.gos, index);
-            displayItemName.text = itemGroup.gos[index].GetComponent<ItemSoCarrierUi>().myItem.itemName;
+            displayItemName.text = itemGroup.gos[index].GetComponent<IItemCarrier>().Item.itemName;
         }
     }
     InventoryState _currentState;
@@ -85,6 +85,12 @@ public class ChoosingInventory : MonoBehaviour
             _outlines[i].enabled = false;
         }
         CurrentSate = InventoryState.Bows;
+        
+        System.Random rnd = new System.Random();
+        parBows.Rotate(rnd.Next(-180, 180) * Vector3.up);
+        parHeads.Rotate(rnd.Next(-180, 180) * Vector3.up);
+        parHands.Rotate(rnd.Next(-180, 180) * Vector3.up);
+
     }
 
     void Update()
@@ -116,7 +122,7 @@ public class ChoosingInventory : MonoBehaviour
     void ButtonMethodNext()
     {
         ItemGroup itemGroup = _itemGroups[(int)CurrentSate];
-        itemGroup.counter =  _db.GetValFromKeyEnum<int>(itemGroup.savedData);
+        itemGroup.counter =  _db.GetValAndCastTo<int>(itemGroup.savedData);
         itemGroup.counter = (1 + itemGroup.counter) % itemGroup.gos.Length;
         _db.observableData[itemGroup.savedData] = itemGroup.counter.ToString();
         

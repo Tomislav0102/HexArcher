@@ -5,7 +5,5 @@ using UnityEngine;
 [CreateAssetMenu]
 public class SoItem : ScriptableObject
 {
-    public int index;
     public string itemName;
-
 }

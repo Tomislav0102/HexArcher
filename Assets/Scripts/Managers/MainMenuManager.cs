@@ -62,7 +62,7 @@ public class MainMenuManager : MonoBehaviour
         Utils.SinglePlayerType = SpType.Endless;
         Utils.CampLevel = 0;
 
-        displayCoins.text = Launch.Instance.myDatabaseManager.GetValFromKeyEnum<string>(MyData.Coins);
+        displayCoins.text = Launch.Instance.myDatabaseManager.GetValAndCastTo<string>(MyData.Coins);
         Utils.ActivateOneArrayElement(mainUiElements, 0);
         BtnMethodMapSize(PlayerPrefs.GetInt(Utils.Size_Int));
         BtnMethodDiff(PlayerPrefs.GetInt(Utils.Difficulty_Int));

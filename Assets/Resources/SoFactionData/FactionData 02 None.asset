@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 555c30d21eb2dbc449f59c6809ff1ab0, type: 3}
+  m_Name: FactionData 02 None
+  m_EditorClassIdentifier: 
+  myName: 
+  myLevel: 
+  myAutheticationId: 
+  myLeaderboardRank: 0
+  playerColor: 2
+  netObj: {fileID: 0}
+  playerId: 0
+  playerControl: {fileID: 0}
+  colMain: {r: 0.5283019, g: 0.5283019, b: 0.5283019, a: 1}
+  colGradientTrail:
+    serializedVersion: 2
+    key0: {r: 0.5294118, g: 0.5294118, b: 0.5294118, a: 1}
+    key1: {r: 0.5294118, g: 0.5294118, b: 0.5294118, a: 0}
+    key2: {r: 0, g: 0, b: 0, a: 0}
+    key3: {r: 0, g: 0, b: 0, a: 0}
+    key4: {r: 0, g: 0, b: 0, a: 0}
+    key5: {r: 0, g: 0, b: 0, a: 0}
+    key6: {r: 0, g: 0, b: 0, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 0
+    ctime1: 65535
+    ctime2: 0
+    ctime3: 0
+    ctime4: 0
+    ctime5: 0
+    ctime6: 0
+    ctime7: 0
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_ColorSpace: 0
+    m_NumColorKeys: 2
+    m_NumAlphaKeys: 2
+  matMain: {fileID: 2100000, guid: b2b9821a08c97e34eb1021c87d572e5f, type: 2}
+  matsHex:
+  - {fileID: 2100000, guid: c476a3feea922f649b322da1178f85d8, type: 2}
+  - {fileID: 2100000, guid: cc3e2e1170e10b24097f28378e06d72d, type: 2}
+  - {fileID: 2100000, guid: f857581dc9c17ff49bbfa5b9ca963156, type: 2}
+  - {fileID: 2100000, guid: 7920799df30224a4fae5a0d8499ec96f, type: 2}
+  - {fileID: 2100000, guid: 891b3520dda2f5d45a7340b78dc8958d, type: 2}
+  - {fileID: 2100000, guid: 781c3e5fe0a17b8448f95e835c60fe6b, type: 2}
+  - {fileID: 2100000, guid: e0047a07645a938499a6ca84d5d97f88, type: 2}
+  - {fileID: 2100000, guid: 31cff05c86bf493418644aa80838c81e, type: 2}
+  - {fileID: 2100000, guid: 233d0612487135741b7e0c5323d7ebab, type: 2}
+  - {fileID: 2100000, guid: 3fcca96363f490f4eba5ca94dcce1c33, type: 2}

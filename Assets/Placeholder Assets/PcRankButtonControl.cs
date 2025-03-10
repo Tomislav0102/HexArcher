@@ -22,7 +22,7 @@ public class PcRankButtonControl : MonoBehaviour
         {
             _rankOutlines[i].enabled = false;
         }
-        ButtonMethodRank(Launch.Instance.myDatabaseManager.GetValFromKeyEnum<int>(MyData.League));
+        ButtonMethodRank(Launch.Instance.myDatabaseManager.GetValAndCastTo<int>(MyData.League));
     }
 
     void OnEnable()

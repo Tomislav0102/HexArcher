@@ -18,7 +18,7 @@ public class GameManager : NetworkBehaviour
     [Title("References", TitleAlignment = TitleAlignments.Centered)]
     [SerializeField] Camera camMain;
     [HideInInspector] public Transform camMainTransform;
-    public SoFactionData[] playerDatas;
+    [HideInInspector] public SoFactionData[] playerDatas;
     public UiManager uImanager;
     public AudioManager audioManager;
     public BowRack[] bowRacks;
@@ -66,6 +66,7 @@ public class GameManager : NetworkBehaviour
     private void Awake()
     {
         Instance = this;
+        playerDatas = Resources.LoadAll<SoFactionData>("SoFactionData");
         poolManager.Init();
         Physics.gravity = windManager.gravityVector;
 
@@ -239,17 +240,17 @@ public class GameManager : NetworkBehaviour
         {
             DatabaseManager dm = Launch.Instance.myDatabaseManager;
 
-            int totalMatches = dm.GetValFromKeyEnum<int>(MyData.TotalMatches);
+            int totalMatches = dm.GetValAndCastTo<int>(MyData.TotalMatches);
             totalMatches++;
             dm.observableData[MyData.TotalMatches] = totalMatches.ToString();
-            int currentXp = dm.GetValFromKeyEnum<int>(MyData.Xp);
+            int currentXp = dm.GetValAndCastTo<int>(MyData.Xp);
 
             switch (gameResult)
             {
                 case GenResult.Win:
                     audioManager.PlaySFX(audioManager.win);
                     Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreLeaderboardGlobalValues.x;
-                    int wins = dm.GetValFromKeyEnum<int>(MyData.Wins);
+                    int wins = dm.GetValAndCastTo<int>(MyData.Wins);
                     wins++;
                     dm.observableData[MyData.Wins] = wins.ToString();
                     PlayerLeveling.AddToXp(GenResult.Win);
@@ -258,7 +259,7 @@ public class GameManager : NetworkBehaviour
                 case GenResult.Lose:
                     audioManager.PlaySFX(audioManager.loose);
                     Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreLeaderboardGlobalValues.y;
-                    int defeats = dm.GetValFromKeyEnum<int>(MyData.Defeats);
+                    int defeats = dm.GetValAndCastTo<int>(MyData.Defeats);
                     defeats++;
                     dm.observableData[MyData.Defeats] = defeats.ToString();
                     PlayerLeveling.AddToXp(GenResult.Lose);
@@ -269,13 +270,13 @@ public class GameManager : NetworkBehaviour
                     break;
             }
             dm.UploadMyScore();
-            int xpEarned = dm.GetValFromKeyEnum<int>(MyData.Xp) - currentXp;
+            int xpEarned = dm.GetValAndCastTo<int>(MyData.Xp) - currentXp;
             uImanager.SetDisplays(UiDisplays.XpEarned, $"You've earned {xpEarned} XP!");
 
-            int myLeague = dm.GetValFromKeyEnum<int>(MyData.League);
-            if (dm.GetValFromKeyEnum<int>(MyData.Wins) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].z
-                && dm.GetValFromKeyEnum<int>(MyData.TotalMatches) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].x) LeagueChange(GenChange.Increase);
-            else if (dm.GetValFromKeyEnum<int>(MyData.Defeats) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].y) LeagueChange(GenChange.Decrease);
+            int myLeague = dm.GetValAndCastTo<int>(MyData.League);
+            if (dm.GetValAndCastTo<int>(MyData.Wins) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].z
+                && dm.GetValAndCastTo<int>(MyData.TotalMatches) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].x) LeagueChange(GenChange.Increase);
+            else if (dm.GetValAndCastTo<int>(MyData.Defeats) > Utils.LeaguesTotalDefeatWinsTable[(League)myLeague].y) LeagueChange(GenChange.Decrease);
 
             void LeagueChange(GenChange change)
             {

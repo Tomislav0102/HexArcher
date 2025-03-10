@@ -239,6 +239,10 @@ public enum ArrowState { Notched, Flying }
 #endregion
 
 #region INTERFACES
+public interface IItemCarrier
+{
+    public SoItem Item { get; set; }
+}
 public interface ITargetForArrow
 {
     void HitMe();
