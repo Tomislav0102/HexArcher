@@ -21,6 +21,7 @@ public class Utils
     public static string Size_Int = "size of grid";
     public static string WindAmount_Fl = "wind amount";
     public static string TrajectoryVisible_Int = "trajectory is visible";
+    public static string HeightFog_Int = "height fog";
     public static string Bow_Int = "chosen bow player";
     public static string Head_Int = "head";
     public static string Hands_Int = "hand";

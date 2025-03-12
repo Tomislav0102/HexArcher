@@ -12,6 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b39b3c9bacce794bbbc3e780d33929f, type: 3}
   m_Name: Bow 01 Elven
   m_EditorClassIdentifier: 
-  index: 1
   itemName: Elven Bow
-  power: 90
+  power: 80

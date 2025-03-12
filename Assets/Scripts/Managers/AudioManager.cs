@@ -44,7 +44,7 @@ public class AudioManager : MonoBehaviour
     enum PlayControls { PlayPause, Previous, Next }
     enum AutoPlayControls { Prev, Next, Random }
     AutoPlayControls _autoPlayControls;
-    bool _isPlaying = true;
+    bool _isPlaying;
     void Start()
     {
         if (isMainMenu)
@@ -65,7 +65,6 @@ public class AudioManager : MonoBehaviour
             if (!NetworkManager.Singleton.IsServer) yAngle = -90f;
             musicSelectionTr.localEulerAngles = new Vector3(0, yAngle, 0);
             _autoPlayControls = AutoPlayControls.Random;
-            AutomaticPlay();
         }
     }
 

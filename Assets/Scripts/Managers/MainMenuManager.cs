@@ -23,6 +23,7 @@ public class MainMenuManager : MonoBehaviour
 
     [Title("General")]
     [SerializeField] TextMeshProUGUI displayCoins;
+    [SerializeField] Toggle fogToggle;
     public GameObject[] mainUiElements;
     public GameObject noInternetWindow, requiredLevelWindow;
     [SerializeField] Button[] buttonsReturn;
@@ -124,6 +125,11 @@ public class MainMenuManager : MonoBehaviour
         }
 
         Utils.PlayerXpUpdated += InitPlayerLeveling;
+        fogToggle.isOn = PlayerPrefs.GetInt(Utils.HeightFog_Int) == 1;
+        fogToggle.onValueChanged.AddListener((bool b) =>
+        {
+            PlayerPrefs.SetInt(Utils.HeightFog_Int, b ? 1 : 0);
+        });
     }
 
 
@@ -148,7 +154,7 @@ public class MainMenuManager : MonoBehaviour
         }
         windSlider.onValueChanged.RemoveAllListeners();
         Utils.PlayerXpUpdated -= InitPlayerLeveling;
-        
+        fogToggle.onValueChanged.RemoveAllListeners();
     }
 
 

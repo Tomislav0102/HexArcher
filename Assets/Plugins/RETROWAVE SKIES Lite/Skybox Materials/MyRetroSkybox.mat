@@ -97,8 +97,8 @@ Material:
     - _FogContrast: 30
     - _FogHeight: 0.3
     - _FogPower: 1.53
-    - _HorizonHeight: 0.37
-    - _HorizonStrength: 1.93
+    - _HorizonHeight: -0.12
+    - _HorizonStrength: 2.38
     - _LinesMaskPower: 8.5
     - _LinesSpeed: 1
     - _LinesThickness: 0.092

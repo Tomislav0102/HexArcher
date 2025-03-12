@@ -14,12 +14,12 @@ public class GameManager : NetworkBehaviour
     public bool MyTurn() => playerTurnNet.Value == playerDatas[NetworkManager.Singleton.IsHost ? 0 : 1].playerColor;
     int _counterMisses;
 
-    [SerializeField] GameObject parFog;
     [Title("References", TitleAlignment = TitleAlignments.Centered)]
     [SerializeField] Camera camMain;
     [HideInInspector] public Transform camMainTransform;
     [HideInInspector] public SoFactionData[] playerDatas;
     public UiManager uImanager;
+    public SkyboxHeightFogManager skyboxHeightFogManager;
     public AudioManager audioManager;
     public BowRack[] bowRacks;
     public BotManager botManager;
@@ -31,11 +31,9 @@ public class GameManager : NetworkBehaviour
 
     [Title("Layers", TitleAlignment = TitleAlignments.Centered)]
     public LayerMask layTargets;
-
     public LayerMask layForTrajectory;
 
-    Material[] _matsSkyboxSp;
-    NetworkVariable<byte> _skyboxIndexNet = new NetworkVariable<byte>(byte.MaxValue);
+    public NetworkVariable<byte> _skyboxIndexNet = new NetworkVariable<byte>(byte.MaxValue);
 
     [PropertySpace(SpaceAfter = 0, SpaceBefore = 10)]
     [Title("Players...", TitleAlignment = TitleAlignments.Centered)]
@@ -70,8 +68,6 @@ public class GameManager : NetworkBehaviour
         poolManager.Init();
         Physics.gravity = windManager.gravityVector;
 
-        _matsSkyboxSp = Resources.LoadAll<Material>("Skybox materials SP");
-
         gridTileStatesNet = new NetworkList<byte>(new List<byte>());
         gridValuesNet = new NetworkList<sbyte>(new List<sbyte>());
         camMainTransform = camMain.transform;
@@ -80,13 +76,13 @@ public class GameManager : NetworkBehaviour
         equipmentNet = new NetworkList<NetPlayerEquipment>(new List<NetPlayerEquipment>() { new NetPlayerEquipment(), new NetPlayerEquipment() });
         playerDisplayNet = new NetworkList<NetPlayerDisplay>(new List<NetPlayerDisplay>() { new NetPlayerDisplay(), new NetPlayerDisplay() });
         
-        Utils.Activation(parFog, !Application.isEditor);
     }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
         gridManager.Init();
+
         if (IsServer)
         {
             GameObject level = null;
@@ -109,7 +105,8 @@ public class GameManager : NetworkBehaviour
             gridManager.ChooseGrid(level);
             
             difficultyNet.Value = (GenDifficulty)PlayerPrefs.GetInt(Utils.Difficulty_Int);
-            _skyboxIndexNet.Value = (byte)Random.Range(0, _matsSkyboxSp.Length);
+            _skyboxIndexNet.Value = (byte)Random.Range(0, skyboxHeightFogManager.Mats().Length);
+
             playerVictoriousNet.Value = PlayerColor.Undefined;
             playerTurnNet.OnValueChanged += NetVarEv_PlayerTurnChange;
             playerVictoriousNet.OnValueChanged += NetVarEv_PlayerVictorious;
@@ -123,18 +120,15 @@ public class GameManager : NetworkBehaviour
             gridManager.GridUseNetworkVariables();
             Utils.Activation(botManager.gameObject, false);
             ChangeVisualMarkers_EveryoneRpc(playerTurnNet.Value);
+            
         }
         Utils.FadeOut?.Invoke(true);
         audioManager.PlaySFX(audioManager.gameStarted);
 
-        Material chosenSkybox = _matsSkyboxSp[_skyboxIndexNet.Value];
-        RenderSettings.skybox = chosenSkybox;
-        RenderSettings.customReflectionTexture = chosenSkybox.GetTexture("_Tex");
-
         windManager.WindChange(float.MinValue, windAmountNet.Value);
         windAmountNet.OnValueChanged += windManager.WindChange;
         drawTrajectory.showTrajectory = trajectoryVisible.Value;
-
+        skyboxHeightFogManager.InitSkybox(_skyboxIndexNet.Value);
     }
 
 
@@ -338,7 +332,7 @@ public class GameManager : NetworkBehaviour
         {
             return;
         }
-
+        
         if (numOfPlayers > 1)
         {
             Utils.GameStarted?.Invoke();

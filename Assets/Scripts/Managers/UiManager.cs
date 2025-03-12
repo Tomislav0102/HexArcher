@@ -12,6 +12,7 @@ using UnityEngine.Serialization;
 public class UiManager : NetworkBehaviour
 {
     GameManager gm;
+    [SerializeField] GameObject[] characterUi;
     [SerializeField] TextMeshProUGUI[] displayScores, displayEndScores;
     [SerializeField] Button[] buttonsExit, buttonsRestart;
     enum PanelState { Main, End, Practice_Tut, Camp };
@@ -77,7 +78,7 @@ public class UiManager : NetworkBehaviour
                 buttonsRestart[i].gameObject.SetActive(false);
             }
 
-            Invoke(nameof(ScoreDisplaying), 0.3f);//unity bug
+            Invoke(nameof(ScoreDisplaying), 0.3f); //unity bug
             SetDisplays(UiDisplays.CampStart, string.Empty);
         }
         else if (Utils.GameType == MainGameType.Multiplayer)
@@ -93,6 +94,16 @@ public class UiManager : NetworkBehaviour
             }
         }
 
+        if (IsServer)
+        {
+            Utils.Activation(characterUi[0], true);
+            Utils.Activation(characterUi[1], false);
+        }
+        else
+        {
+            Utils.Activation(characterUi[1], true);
+            Utils.Activation(characterUi[0], false);
+        }
     }
 
     public override void OnNetworkDespawn()

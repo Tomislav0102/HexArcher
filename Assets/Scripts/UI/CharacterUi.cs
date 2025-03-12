@@ -8,6 +8,7 @@ public class CharacterUi : MonoBehaviour
 {
     [SerializeField] TextMeshProUGUI coinsText, totalText, winsText, defeatsText, scoresText, lbText, xpText, levelText, 
         leagueText, equipmentText;
+    [SerializeField] GameObject  window;
 
     DatabaseManager _dm;
     void Awake()
@@ -15,7 +16,7 @@ public class CharacterUi : MonoBehaviour
         _dm = Launch.Instance.myDatabaseManager;
     }
 
-    void OnEnable()
+    public void Refresh()
     {
         coinsText.text = $"Gold: {_dm.observableData[MyData.Coins]}";
         totalText.text = $"Total matches: {_dm.observableData[MyData.TotalMatches]}";

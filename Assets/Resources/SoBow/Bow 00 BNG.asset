@@ -12,6 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b39b3c9bacce794bbbc3e780d33929f, type: 3}
   m_Name: Bow 00 BNG
   m_EditorClassIdentifier: 
-  index: 0
   itemName: Techno Bow
-  power: 70
+  power: 60
