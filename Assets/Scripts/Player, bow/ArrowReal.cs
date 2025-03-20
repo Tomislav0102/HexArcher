@@ -30,7 +30,7 @@ public class ArrowReal : ArrowMain
         myRigidbody.useGravity = true;
         myRigidbody.isKinematic = false;
      //   print($"force is {gm.forceArrow} and power is {gm.playerDatas[gm.indexInSo].playerControl.shooting.power}");
-        if(vel == Vector3.zero) myRigidbody.velocity = gm.forceArrow * myTransform.forward;
+        if(vel == Vector3.zero) myRigidbody.velocity = gm.arrowManager.forceArrow * myTransform.forward;
         else   myRigidbody.velocity = vel;
         StartCoroutine(ArrowDirectionWhileFlying(myRigidbody.velocity.magnitude > 0f));
     }
@@ -48,12 +48,12 @@ public class ArrowReal : ArrowMain
 
     void Update()
     {
-        gm.ShadowArrow_NotMeRpc(myTransform.position, myTransform.rotation);
+        gm.arrowManager.ShadowArrow_NotMeRpc(myTransform.position, myTransform.rotation);
         
         if (myArrowState == ArrowState.Notched)
         {
-            bool draw = !Mathf.Approximately(0f, gm.forceArrow);
-            gm.drawTrajectory.Trajectory(myTransform, gm.playerTurnNet.Value, myRigidbody.mass, gm.forceArrow, draw);
+            bool draw = !Mathf.Approximately(0f, gm.arrowManager.forceArrow);
+            gm.drawTrajectory.Trajectory(myTransform, gm.playerTurnNet.Value, myRigidbody.mass, gm.arrowManager.forceArrow, draw);
             return;
         }
         gm.drawTrajectory.Trajectory(false);

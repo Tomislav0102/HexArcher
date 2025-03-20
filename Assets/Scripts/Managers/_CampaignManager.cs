@@ -38,6 +38,7 @@ public class CampaignManager
                 break;
         }
         gm.uImanager.SetDisplays(UiDisplays.CampEnd, st);
+        Launch.Instance.myDatabaseManager.observableData[MyData.Coins] += Utils.CoinsCampDone;
     }
 
     public GameObject NextLevel() => levels[Utils.CampLevel];

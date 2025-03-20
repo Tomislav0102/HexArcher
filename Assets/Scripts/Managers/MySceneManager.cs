@@ -24,11 +24,11 @@ public class MySceneManager : NetworkBehaviour
         if (!canReloadSameScene && Utils.GameType == gameType) yield break;
         Utils.GameType = gameType;
 
-        int fadeDuration = 2;
+        WaitForSeconds wait = Utils.GetWait(2);
         if (/*false &&*/ useFade)
         {
             Utils.FadeOut?.Invoke(false);
-            yield return new WaitForSeconds(fadeDuration);
+            yield return wait;
         }
 
         switch (Utils.GameType)

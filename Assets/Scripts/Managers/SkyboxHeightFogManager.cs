@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Unity.Netcode;
+using Random = UnityEngine.Random;
 
 
 public class SkyboxHeightFogManager : MonoBehaviour
@@ -11,7 +12,7 @@ public class SkyboxHeightFogManager : MonoBehaviour
     enum SkyBoxMode {NoFog, Fog}
 
     [SerializeField] SkyBoxMode mode = SkyBoxMode.NoFog;
-     Material _fogMat;
+    Material _fogMat;
     [SerializeField] GameObject parFog;
 
     public Material[] Mats()
@@ -31,11 +32,13 @@ public class SkyboxHeightFogManager : MonoBehaviour
         return _materialsSky;
     }
     Material[] _materialsSky;
+    Vector2 _moveDir = Vector2.zero;
 
     public void InitSkybox(int index)
     {
         Utils.Activation(parFog, false);
-        
+        float offset = 0.02f;
+        _moveDir = new Vector2(Random.Range(-offset, offset), Random.Range(-offset, offset));
         Material chosenSkybox = null;
         chosenSkybox = Mats()[index];
         RenderSettings.skybox = chosenSkybox;
@@ -52,5 +55,10 @@ public class SkyboxHeightFogManager : MonoBehaviour
         }
     }
 
+    void Update()
+    {
+        if (mode == SkyBoxMode.NoFog) return;
+        _fogMat.mainTextureOffset = Time.time * _moveDir;
+    }
 }
 

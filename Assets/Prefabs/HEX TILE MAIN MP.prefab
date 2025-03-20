@@ -2136,7 +2136,7 @@ MonoBehaviour:
   finalHexScore: {fileID: 6173577945932610514}
   finalHexFrameMesh: {fileID: 3779914900350695139}
   valueForBot: 0
-  hitValueTest: 3
+  hitValueTest: 1
 --- !u!1 &3791866170399489461
 GameObject:
   m_ObjectHideFlags: 0

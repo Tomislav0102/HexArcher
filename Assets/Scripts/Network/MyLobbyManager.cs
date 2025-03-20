@@ -72,7 +72,7 @@ public class MyLobbyManager : MonoBehaviour
         DontDestroyOnLoad(this);
 
 #if (UNITY_EDITOR)
-       // Invoke(nameof(Btn_Ready), 0.3f);
+        Invoke(nameof(Btn_Ready), 0.3f);
 #endif
     }
 

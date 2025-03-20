@@ -103,8 +103,8 @@ public class BotManager : MonoBehaviour
                                  .SetEase(Ease.OutElastic)
                                  .OnComplete(() =>
                                  {
-                                     gm.SpawnRealArrow(arrowSpawnPoint.position, arrowSpawnPoint.rotation);
-                                     gm.arrowReal.Release(vel);
+                                     gm.arrowManager.SpawnRealArrow(arrowSpawnPoint.position, arrowSpawnPoint.rotation);
+                                     gm.arrowManager.arrowReal.Release(vel);
                                      gm.audioManager.PlayOnMyAudioSource(audioSource, gm.audioManager.bowRelease);
                                  });
     }

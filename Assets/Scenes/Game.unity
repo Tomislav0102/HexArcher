@@ -20960,13 +20960,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 1
-  pairs:
-  - mat: {fileID: 2100000, guid: e3c3911f1859fe44d835600f07fdcfff, type: 2}
-    col: {r: 0.23529413, g: 0.49411768, b: 0.8196079, a: 1}
-  - mat: {fileID: 2100000, guid: b9551a1135bf4f14d925fe58ac224036, type: 2}
-    col: {r: 0.7803922, g: 0, b: 0, a: 1}
-  - mat: {fileID: 2100000, guid: 5f3ac69a198677d4faa393054536bea6, type: 2}
-    col: {r: 0, g: 0.7725491, b: 0, a: 1}
   parFog: {fileID: 797062617}
 --- !u!1001 &1433832002
 PrefabInstance:
@@ -24555,7 +24548,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 06d13deaa052fc24f874f0f0d4592801, type: 2}
+  - {fileID: 2100000, guid: 3eabb0e0ab087ba46aa909baa0b756d9, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -26402,6 +26395,77 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1887622062}
   m_CullTransparentMesh: 1
+--- !u!1 &1887638891
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1887638893}
+  - component: {fileID: 1887638894}
+  - component: {fileID: 1887638892}
+  m_Layer: 0
+  m_Name: Arrow Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1887638892
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1887638891}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f44a6a62c39cacd4aad11ba6928ffe0a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  prefabArrowReal: {fileID: 5423421532028743676, guid: a9b8b9e9791e5ee41857c7abb13fdbaf, type: 3}
+  prefabArrowShadow: {fileID: 8057447922751399955, guid: 763f74b72017f704f9867eb56de4f6d2, type: 3}
+  arrowReal: {fileID: 0}
+  arrowShadow: {fileID: 0}
+  forceArrow: 0
+--- !u!4 &1887638893
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1887638891}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1887638894
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1887638891}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 1269152608
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
 --- !u!1 &1898367812
 GameObject:
   m_ObjectHideFlags: 0
@@ -35845,6 +35909,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1186171306}
     - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
+      propertyPath: arrowManager
+      value: 
+      objectReference: {fileID: 1887638892}
+    - target: {fileID: 347728365507364977, guid: fa5fbaf0fd5113f46a07aa73d400a964, type: 3}
       propertyPath: audioManager
       value: 
       objectReference: {fileID: 1113538230}
@@ -38496,6 +38564,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Music selection
       objectReference: {fileID: 0}
+    - target: {fileID: 5399748686750245400, guid: 51817e6a5f1481747a50766fcda22887, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 8ac9c3540b423b943ab17bdb4a466216, type: 3}
     - target: {fileID: 5491055949589833068, guid: 51817e6a5f1481747a50766fcda22887, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -38820,6 +38892,7 @@ SceneRoots:
   - {fileID: 1423582968}
   - {fileID: 3305581665725407150}
   - {fileID: 1186171307}
+  - {fileID: 1887638893}
   - {fileID: 1419100499}
   - {fileID: 730192435}
   - {fileID: 2044680450}

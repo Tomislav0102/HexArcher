@@ -22,6 +22,7 @@ public class Utils
     public static string WindAmount_Fl = "wind amount";
     public static string TrajectoryVisible_Int = "trajectory is visible";
     public static string HeightFog_Int = "height fog";
+    public static string Coins_Int = "coins";
     public static string Bow_Int = "chosen bow player";
     public static string Head_Int = "head";
     public static string Hands_Int = "hand";
@@ -41,6 +42,10 @@ public class Utils
     public static int CampLevel;
     public static int WaitTimeStartGame = 2;
     public static Vector2Int ScoreLeaderboardGlobalValues = new Vector2Int(10, -3);
+    public static int CoinsWin = 3;
+    public static int CoinsDefeat= 1;
+    public static int CoinsDraw = 2;
+    public static int CoinsCampDone= 10;
 
 
     #region HELPER METHODS
@@ -50,6 +55,7 @@ public class Utils
                   $"Size: {(GenSize)PlayerPrefs.GetInt(Size_Int)}\n" +
                   $"XP: {PlayerPrefs.GetInt(PlXp_Int)}\n" +
                   $"Player name: {PlayerPrefs.GetString(PlName_Str)} \n" +
+                  $"Coins: {PlayerPrefs.GetString(Coins_Int)} \n" +
                   "----------------\n" +
                   $"Bow: {PlayerPrefs.GetInt(Bow_Int)} \n" +
                   $"Head: {PlayerPrefs.GetInt(Head_Int)} \n" +

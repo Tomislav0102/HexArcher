@@ -21,6 +21,7 @@ public class GameManager : NetworkBehaviour
     public UiManager uImanager;
     public SkyboxHeightFogManager skyboxHeightFogManager;
     public AudioManager audioManager;
+    public ArrowManager arrowManager;
     public BowRack[] bowRacks;
     public BotManager botManager;
     public GridManager gridManager;
@@ -38,11 +39,6 @@ public class GameManager : NetworkBehaviour
     [PropertySpace(SpaceAfter = 0, SpaceBefore = 10)]
     [Title("Players...", TitleAlignment = TitleAlignments.Centered)]
     [SerializeField] GameObject prefabPlayer;
-    public GameObject prefabArrowReal;
-    public GameObject prefabArrowShadow;
-    [Sirenix.OdinInspector.ReadOnly] public ArrowMain arrowReal;
-    [Sirenix.OdinInspector.ReadOnly] public ArrowMain arrowShadow;
-    [Sirenix.OdinInspector.ReadOnly] public float forceArrow;
     public NetworkObject[] bowTablesNet;
     [SerializeField] MeshRenderer[] playerMeshMarker;
     [SerializeField] GameObject[] scoreVisualMarker;
@@ -154,11 +150,12 @@ public class GameManager : NetworkBehaviour
                 st = "Bot is active";
                 break;
         }
+        WaitForSeconds wait = Utils.GetWait(1);
         while (seconds > 1)
         {
             seconds--;
             uImanager.SetDisplays(UiDisplays.InfoStart, $"Bot will spawn in {seconds} seconds");
-            yield return new WaitForSeconds(1);
+            yield return wait;
         }
         Utils.GameStarted?.Invoke();
         uImanager.SetDisplays(UiDisplays.InfoStart, st);
@@ -167,35 +164,6 @@ public class GameManager : NetworkBehaviour
 
 
 
-    #region ARROWS
-    [Rpc(SendTo.Everyone)]
-    void ClearAllArrows_EveryoneRpc()
-    {
-        if (arrowReal != null) Destroy(arrowReal.gameObject);
-        if (arrowShadow != null) Destroy(arrowShadow.gameObject);
-    }
-
-    public void SpawnRealArrow(Vector3 pos, Quaternion rot)
-    {
-        arrowReal = Instantiate(prefabArrowReal, pos, rot).GetComponent<ArrowMain>();
-        SpawnShadowArrow_NotMeRpc(pos, rot);
-    }
-
-    [Rpc(SendTo.NotMe)]
-    void SpawnShadowArrow_NotMeRpc(Vector3 pos, Quaternion rot)
-    {
-        GameObject go = Instantiate(prefabArrowShadow, pos, rot);
-        arrowShadow = go.GetComponent<ArrowMain>();
-    }
-
-    [Rpc(SendTo.NotMe)]
-    public void ShadowArrow_NotMeRpc(Vector3 pos, Quaternion rot)
-    {
-        if (arrowShadow == null) return;
-        arrowShadow.myTransform.SetPositionAndRotation(pos, rot);
-        arrowShadow.SetTrail();
-    }
-    #endregion
 
     #region CALL EVENTS
     void CallEv_ClientDisconnected(ulong obj)
@@ -209,7 +177,8 @@ public class GameManager : NetworkBehaviour
 
     private void NetVarEv_PlayerVictorious(PlayerColor previousValue, PlayerColor newValue)
     {
-        if (Utils.GameType == MainGameType.Multiplayer && NetworkManager.Singleton.ConnectedClients.Count > 1) PlayerVictorious_EveryoneRpc(newValue);
+       // if (Utils.GameType == MainGameType.Multiplayer && NetworkManager.Singleton.ConnectedClients.Count > 1) PlayerVictorious_EveryoneRpc(newValue);
+        PlayerVictorious_EveryoneRpc(newValue);
         
         botManager.EndBot();
     }
@@ -220,17 +189,17 @@ public class GameManager : NetworkBehaviour
         switch (newValue)
         {
             case PlayerColor.Blue:
-                PlayerVictoriousContinue(IsServer ? GenResult.Win : GenResult.Lose);
+                Content(IsServer ? GenResult.Win : GenResult.Lose);
                 break;
             case PlayerColor.Red:
-                PlayerVictoriousContinue(!IsServer ? GenResult.Win : GenResult.Lose);
+                Content(!IsServer ? GenResult.Win : GenResult.Lose);
                 break;
             case PlayerColor.None:
-                PlayerVictoriousContinue(GenResult.Draw);
+                Content(GenResult.Draw);
                 break;
         }
         
-        void PlayerVictoriousContinue(GenResult gameResult)
+        void Content(GenResult gameResult)
         {
             DatabaseManager dm = Launch.Instance.myDatabaseManager;
 
@@ -248,6 +217,7 @@ public class GameManager : NetworkBehaviour
                     wins++;
                     dm.observableData[MyData.Wins] = wins.ToString();
                     PlayerLeveling.AddToXp(GenResult.Win);
+                    dm.observableData[MyData.Coins] += Utils.CoinsWin;
                     break;
                 
                 case GenResult.Lose:
@@ -255,12 +225,15 @@ public class GameManager : NetworkBehaviour
                     Launch.Instance.myDatabaseManager.LocalScore += Utils.ScoreLeaderboardGlobalValues.y;
                     int defeats = dm.GetValAndCastTo<int>(MyData.Defeats);
                     defeats++;
+                    print(defeats);
                     dm.observableData[MyData.Defeats] = defeats.ToString();
                     PlayerLeveling.AddToXp(GenResult.Lose);
+                    dm.observableData[MyData.Coins] += Utils.CoinsDefeat;
                     break;
                 case GenResult.Draw:
                     audioManager.PlaySFX(audioManager.draw);
                     PlayerLeveling.AddToXp(GenResult.Draw);
+                    dm.observableData[MyData.Coins] += Utils.CoinsDraw;
                     break;
             }
             dm.UploadMyScore();
@@ -373,7 +346,7 @@ public class GameManager : NetworkBehaviour
     public void NextPlayer_ServerRpc(bool countGridMisses = true, string caller = "")
     {
         if (playerVictoriousNet.Value != PlayerColor.Undefined) return;
-        ClearAllArrows_EveryoneRpc();
+        arrowManager.ClearAllArrows_EveryoneRpc();
         if (countGridMisses)
         {
             _counterMisses++;

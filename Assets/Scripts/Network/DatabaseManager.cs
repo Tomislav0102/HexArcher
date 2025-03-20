@@ -58,6 +58,7 @@ public class DatabaseManager : SerializedMonoBehaviour
         observableData[MyData.LeaderboardId] = Utils.MyId();
         observableData[MyData.LeaderboardRank] = PlayerPrefs.GetInt(Utils.PlLeaderBoardRank_Int).ToString();
         observableData[MyData.LeaderboardScore] = PlayerPrefs.GetInt(Utils.PlLeaderBoardLocalScore_Int).ToString();
+        observableData[MyData.Coins] = PlayerPrefs.GetInt(Utils.Coins_Int).ToString();
     }
 
     void CallEv_ValueChanged(MyData arg1, string arg2)
@@ -99,6 +100,9 @@ public class DatabaseManager : SerializedMonoBehaviour
                 break;
             case MyData.LeaderboardScore:
                 PlayerPrefs.SetInt(Utils.PlLeaderBoardLocalScore_Int, int.Parse(arg2));
+                break;
+            case MyData.Coins:
+                PlayerPrefs.SetInt(Utils.Coins_Int, int.Parse(arg2));
                 break;
         }
 
